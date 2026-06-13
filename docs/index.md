@@ -78,5 +78,5 @@ Search this site first. If the problem remains:
 
 - review [Troubleshooting](guides/troubleshooting.md);
 - collect `datamuru doctor --output json` and the structured error code;
-- open a [GitHub issue](https://github.com/AjayAJ2000/DataMuru/issues) without
-  including tokens, customer data, or private workspace details.
+- choose the appropriate route in [Support and feedback](operations/support.md)
+  without including tokens, customer data, or private workspace details.

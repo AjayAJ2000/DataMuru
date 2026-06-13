@@ -1,0 +1,37 @@
+name: Documentation issue
+description: Report unclear, missing, or incorrect documentation.
+title: "docs: "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include tokens, private workspace URLs, account identifiers, or customer data.
+  - type: input
+    id: page
+    attributes:
+      label: Page or section
+      description: Link to the page and name the relevant heading.
+      placeholder: https://ajayaj2000.github.io/DataMuru/...
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: What were you trying to do?
+      description: Describe the task and the outcome you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What blocked you?
+      description: Identify the unclear, missing, outdated, or incorrect information.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Explain what information would have helped.

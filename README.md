@@ -63,6 +63,8 @@ This repository now includes a full MkDocs documentation site.
 - MkDocs config: [mkdocs.yml](mkdocs.yml)
 - Docs source: [docs](docs/)
 - Published documentation: [ajayaj2000.github.io/DataMuru](https://ajayaj2000.github.io/DataMuru/)
+- Support and documentation feedback:
+  [Support and feedback](https://ajayaj2000.github.io/DataMuru/operations/support/)
 
 To work on the documentation locally:
 
@@ -95,6 +97,7 @@ For package-oriented team usage, also read:
 - `docs/`: versioned product documentation published through GitHub Pages
 - `schemas/`: public configuration contracts
 - `tests/`: unit, provider-contract, and end-to-end tests
-- `.github/workflows/`: CI, documentation deployment, and trusted PyPI publishing
+- `.github/workflows/`: CI, documentation deployment, link validation, and
+  trusted PyPI publishing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the required local quality gate.

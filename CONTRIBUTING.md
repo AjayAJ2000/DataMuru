@@ -26,6 +26,12 @@ Do not commit credentials, `.datamuru` state, generated package distributions, b
 
 - Add or update tests for behavioral changes.
 - Keep public configuration, schemas, examples, and documentation aligned.
+- Update documentation in the same pull request as user-visible behavior.
 - Preserve conservative deletion defaults for cloud and identity resources.
 - Document edition boundaries when adding Enterprise-only behavior.
 - Update `CHANGELOG.md` for user-visible changes.
+
+For documentation changes, follow the
+[documentation style guide](https://ajayaj2000.github.io/DataMuru/contributing/documentation-style-guide/)
+and complete the
+[documentation review checklist](https://ajayaj2000.github.io/DataMuru/contributing/documentation-review-checklist/).

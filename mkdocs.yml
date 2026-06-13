@@ -1,6 +1,8 @@
 site_name: DataMuru
-site_description: Python-first enterprise data infrastructure framework documentation
+site_description: Declarative Databricks infrastructure and governance documentation
 site_url: https://ajayaj2000.github.io/DataMuru/
+site_author: DataMuru contributors
+copyright: Copyright 2026 DataMuru contributors. Documentation licensed under Apache-2.0.
 repo_name: AjayAJ2000/DataMuru
 repo_url: https://github.com/AjayAJ2000/DataMuru
 edit_uri: edit/main/docs/
@@ -26,6 +28,14 @@ theme:
     - content.tabs.link
     - search.suggest
     - search.highlight
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_git_follow: false
+      fallback_to_build_date: true
+      strict: false
+      type: timeago
 
 markdown_extensions:
   - admonition
@@ -79,6 +89,7 @@ nav:
       - Provider architecture: architecture/provider-model.md
       - OSS and Enterprise: product/editions.md
   - Reference:
+      - Glossary: reference/glossary.md
       - CLI Reference: reference/cli.md
       - Root configuration: reference/root-config.md
       - Workspace configuration: reference/workspace-config.md
@@ -95,9 +106,11 @@ nav:
       - Operating model: operations/usage-guidelines.md
       - Team adoption: operations/team-adoption-guidelines.md
       - Security and credentials: operations/security.md
+      - Support and feedback: operations/support.md
       - ACL and RBAC guidelines: operations/acl-guidelines.md
       - Production readiness: operations/production-readiness.md
       - Upgrades and compatibility: operations/upgrades.md
+      - Documentation maintenance: operations/documentation-maintenance.md
       - Testing and release: operations/testing-and-release.md
       - Package and docs publishing: operations/publishing.md
       - FAQ: operations/faq.md
@@ -109,6 +122,7 @@ nav:
   - Contribute:
       - Contributing: contributing/index.md
       - Documentation style guide: contributing/documentation-style-guide.md
+      - Documentation review checklist: contributing/documentation-review-checklist.md
       - Architecture overview: architecture/overview.md
       - Core runtime: architecture/core-runtime.md
       - Configuration model: architecture/configuration-model.md

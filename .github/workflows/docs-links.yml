@@ -1,0 +1,35 @@
+name: Documentation links
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "mkdocs.yml"
+      - ".github/workflows/docs-links.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Check external documentation links
+        uses: lycheeverse/lychee-action@v2.8.0
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --exclude-mail
+            --exclude-loopback
+            --exclude "github.com/AjayAJ2000/DataMuru/issues/new"
+            README.md
+            docs/**/*.md
+          fail: true

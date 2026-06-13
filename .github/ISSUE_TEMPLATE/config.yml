@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/AjayAJ2000/DataMuru/security/advisories/new
+    about: Report vulnerabilities and exposed credentials privately.
+  - name: Documentation
+    url: https://ajayaj2000.github.io/DataMuru/
+    about: Search the product documentation before opening an issue.

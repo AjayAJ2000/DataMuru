@@ -1,0 +1,44 @@
+name: Bug report
+description: Report reproducible DataMuru behavior that differs from the documentation.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Redact tokens, email addresses, workspace URLs, account identifiers, and customer data.
+  - type: input
+    id: version
+    attributes:
+      label: DataMuru version
+      placeholder: 0.1.0a0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, Databricks edition, and cloud.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest sanitized configuration and command sequence.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the DataMuru error code and a redacted provider response.
+    validations:
+      required: true

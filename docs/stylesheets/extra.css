@@ -39,7 +39,8 @@
 }
 
 .md-typeset a:hover {
-  color: var(--dm-gold);
+  color: var(--dm-teal);
+  text-decoration: underline;
 }
 
 .md-typeset code {
@@ -53,4 +54,30 @@
 
 .md-search__form {
   border-radius: 999px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--dm-gold);
+  outline-offset: 3px;
+}
+
+.md-typeset a {
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.md-typeset table:not([class]) {
+  display: table;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

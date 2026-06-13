@@ -13,6 +13,11 @@ and this project aims to follow Semantic Versioning.
 - Reference pages for configuration, provider fields, environment variables, resource addresses, result contracts, error codes, and current capability limits
 - Automated tests for MkDocs navigation targets and relative Markdown links
 - Documentation style guide based on Google technical-writing principles
+- Documentation governance based on Write the Docs principles, including
+  ownership, maintenance, feedback, review, accessibility, and terminology
+- Scheduled external-link validation and expanded documentation contract tests
+- Structured GitHub issue forms and a documentation-aware pull request template
+- Git-backed page revision metadata and a product glossary
 - Shared-core OSS and Enterprise track scaffolding
 - MkDocs-based product documentation
 - Databricks Free Edition setup guidance
