@@ -1,21 +1,57 @@
-# FAQ
+# Frequently asked questions
 
-## Is DataMuru production-ready today?
+## Is DataMuru production-ready?
 
-Not yet. This repository currently represents an alpha bootstrap intended to establish architecture, interfaces, tests, and documentation patterns.
+Not generally. `0.1.0a0` is an alpha release with real but bounded provider
+support. Use the [production-readiness checklist](production-readiness.md)
+before a pilot.
 
-## Does the current provider call real Databricks APIs?
+## Does DataMuru call real Databricks APIs?
 
-No. The current provider models desired resources and local orchestration behavior. Live provider mutations are a later phase.
+Yes. Live modes can observe supported workspace resources. `live-apply` can
+create and delete supported catalogs and schemas, apply supported Unity Catalog
+grants, and perform enabled Enterprise identity operations where account SCIM
+is available.
 
-## Why document so much at alpha stage?
+## Does `live-readonly` create resources?
 
-Because DataMuru is intended to become an enterprise-facing platform product. Documentation quality is part of product quality, not a later marketing exercise.
+No. It permits connectivity, observation, doctor checks, plans, and import
+discovery but blocks provider mutations.
 
-## Why MkDocs?
+## Why did apply report zero changes?
 
-MkDocs provides a clean path to maintainable, versionable, documentation-as-code workflows that fit a product engineering repository well.
+The desired resources may already match live or local state. Run plan and check
+whether entries are no-op. Also verify that the target matches a declared or
+state-managed address.
 
-## Why is the cloud strategy Azure-first but multi-cloud-aware?
+## Why does default-storage catalog creation need a SQL warehouse?
 
-Because the implementation needs one concrete end-to-end target first, while the architecture still needs to preserve the future for AWS and GCP.
+DataMuru uses `CREATE CATALOG` through the SQL Statements API so Databricks can
+choose account default storage. The direct Unity Catalog REST API can require an
+explicit storage root.
+
+## Does DataMuru replace Terraform?
+
+DataMuru is a product-specific data platform and governance framework. It does
+not aim to manage every cloud resource or replace a general infrastructure
+tool.
+
+## Can OSS manage users and groups?
+
+OSS can reference existing principals for permissions. Managed account identity
+lifecycle is an Enterprise capability and requires Databricks account SCIM.
+
+## Where is state stored?
+
+The OSS alpha implements local JSON state at the configured `state.path`. Cloud
+backend names are reserved in the contract but are not implemented yet.
+
+## Can I import an existing workspace?
+
+You can discover supported resources and generate starter workspace YAML.
+Automatic conflict-safe ownership adoption is not yet implemented.
+
+## How do I report a problem?
+
+Collect the DataMuru version, command, structured error code, and redacted
+doctor output. Open a GitHub issue without secrets or private workspace data.

@@ -1,51 +1,53 @@
 # Python API
 
-The current public Python entrypoint is:
+The `DataMuru` class wraps the same engine used by the CLI.
 
 ```python
-from datamuru import DataMuru
-```
+from datamuru.api import DataMuru
 
-## Primary operations
-
-### Validate
-
-```python
-dm = DataMuru(config_path="datamuru.yml")
+dm = DataMuru("datamuru.yml")
 issues = dm.validate()
-```
-
-### Plan
-
-```python
-plan = dm.plan()
-```
-
-### Doctor
-
-```python
 report = dm.doctor()
+plan = dm.plan(target="catalog:analytics")
 ```
 
-### Apply
+## Constructor
 
 ```python
-result = dm.apply()
+DataMuru(config_path: str | Path, environment: str | None = None)
 ```
 
-### Destroy
+## Methods
+
+| Method | Result |
+| --- | --- |
+| `validate()` | validation issues |
+| `doctor()` | `DoctorReport` |
+| `edition_summary()` | `EditionSummary` |
+| `plan(target=None)` | `Plan` |
+| `save_plan(output_path, target=None)` | saved-plan result |
+| `apply(target=None)` | `ApplyResult` |
+| `apply_saved_plan(plan_path)` | `ApplyResult` |
+| `destroy(target=None)` | `ApplyResult` |
+| `import_discover(include_system=False)` | `ImportDiscoveryReport` |
+| `import_generate(...)` | generated workspace configuration result |
+
+## Example: guarded apply
 
 ```python
-result = dm.destroy()
+from datamuru.api import DataMuru
+
+dm = DataMuru("datamuru.yml")
+
+if not dm.doctor().success:
+    raise RuntimeError("Provider diagnostics failed")
+
+plan = dm.plan(target="catalog:analytics")
+destructive = [change for change in plan.changes if change.action == "destroy"]
+if destructive:
+    raise RuntimeError("Review destroy actions before apply")
+
+result = dm.apply(target="catalog:analytics")
 ```
 
-## API philosophy
-
-The alpha keeps the Python API intentionally close to the core orchestration model:
-
-- simple constructor
-- explicit config path
-- direct operational methods
-- the same live-readiness rules as the CLI
-
-This keeps the CLI and Python usage aligned and makes future API evolution easier to document.
+The Python contracts are alpha APIs. Pin the package version and test upgrades.

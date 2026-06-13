@@ -1,234 +1,99 @@
-# Databricks Free Edition Setup
+# Use Databricks Free Edition
 
-This guide is the fastest way to try the current DataMuru alpha against your own Databricks personal workspace.
+Databricks Free Edition is suitable for learning and limited integration tests.
+It is not equivalent to a full enterprise Databricks account.
 
-## Current stage
+Because Databricks capabilities and quotas can change, review the current
+[Free Edition documentation](https://docs.databricks.com/aws/en/getting-started/free-edition)
+and [limitations](https://docs.databricks.com/aws/en/getting-started/free-edition-limitations)
+before testing.
 
-DataMuru is currently in the `v0.1 alpha bootstrap` stage, but the Databricks provider is now a little more real than the original scaffold.
+## What to test
 
-That means:
+Free Edition can be useful for:
 
-- the framework shape is real
-- the CLI and config model are usable locally
-- the provider can now perform a safe read-only workspace connectivity probe
-- the planner can now observe some existing workspace resources in live-readonly mode
-- the first live Databricks mutation path exists for Unity Catalog catalogs and schemas
+- PAT-based workspace connectivity;
+- catalog and schema discovery;
+- catalog and schema creation when your workspace permits it;
+- default-storage catalog creation through a SQL warehouse;
+- Unity Catalog grants supported by the workspace;
+- import discovery and YAML generation.
 
-So today, you can use Databricks Free Edition to understand the intended workspace and governance model, validate credentials, and verify workspace connectivity while we continue filling in live provider execution.
+Do not rely on Free Edition for:
 
-## What Databricks Free Edition is
+- multi-workspace orchestration;
+- account-console administration;
+- enterprise SSO, SCIM, or networking;
+- production scale, quotas, or service commitments.
 
-According to Databricks' current official docs, Free Edition is the no-cost personal offering that replaced the legacy Community Edition in 2025, and it provides a serverless-only, quota-limited workspace for learning and experimentation. It also has important admin limitations: one workspace and one metastore per account, no account console or account-level APIs, and no private networking or enterprise identity features.
-
-## What this means for DataMuru
-
-For the current alpha:
-
-- Free Edition is good enough to explore the target platform concepts
-- Free Edition is useful for validating PAT-based connectivity from DataMuru
-- Free Edition is **not** a full substitute for a paid Databricks account if you want to test account-level workspace provisioning later
-- some long-term DataMuru features in the PRD will require capabilities not available in Free Edition
-
-### Identity capability
-
-Databricks documents Free Edition as lacking SCIM administration, but DataMuru probes the connected workspace at runtime because capability exposure can vary.
-
-Run `datamuru doctor` and inspect `provider.identity_management`:
-
-- `ok`: the current workspace and credential can use the tested account SCIM endpoint
-- `warning` or `error`: use existing principals for ACLs; managed identity mutations are blocked
-
-Managed identity declarations still require DataMuru Enterprise.
-
-## Step 1: create your Databricks Free Edition account
-
-Use the official signup flow:
-
-- Sign up for Databricks Free Edition: [Databricks Free Edition signup guide](https://docs.databricks.com/aws/en/getting-started/free-edition)
-
-If you are evaluating Databricks for commercial or full-platform use instead of personal experimentation, compare it with the free trial:
-
-- Free Edition vs free trial: [Databricks signup options](https://docs.databricks.com/aws/en/getting-started/free-trial-vs-free-edition)
-
-## Step 2: understand the current limitations
-
-Review the official limitations before you try to map PRD expectations to your workspace:
-
-- Official limitations: [Databricks Free Edition limitations](https://docs.databricks.com/aws/en/getting-started/free-edition-limitations)
-
-The most relevant ones for DataMuru today are:
-
-- serverless-only compute
-- one workspace and one metastore
-- no account-level APIs
-- no private networking customization
-- no SSO or SCIM
-
-## Step 3: install DataMuru locally
-
-From this repository:
-
-```bash
-python -m pip install -e .
-```
-
-If you want the optional SDK available in the same environment, install the Databricks extra too:
-
-```bash
-python -m pip install -e ".[databricks]"
-```
-
-Set your Databricks personal access token in the shell before running the doctor command:
-
-```bash
-set DATABRICKS_TOKEN=your_token_here
-```
-
-## Step 4: configure provider execution mode
-
-Update `providers/databricks.yml`.
-
-The two important alpha modes are:
-
-- `state-only`
-  This is the default. It keeps DataMuru fully local and skips network probing.
-- `live-readonly`
-  This enables a safe read-only workspace connectivity probe in `doctor`, but still blocks Databricks mutations in `apply`.
-- `live-apply`
-  This enables the current first live mutation slice. Today that means catalog and schema creation and deletion only.
-
-Recommended Free Edition setup:
+## Configure the provider
 
 ```yaml
 provider:
   cloud: azure
-  credential_mode: personal-access-token
   execution_mode: live-readonly
+  host: https://your-workspace.cloud.databricks.com
   auth_type: pat
   token_env: DATABRICKS_TOKEN
-  host: https://adb-your-workspace.azuredatabricks.net
+  sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID
 ```
 
-## Step 5: run doctor, validate, and plan
+The hostname can contain `cloud.databricks.com` even when the provider cloud is
+Azure. Use the actual workspace URL shown by Databricks.
 
-First, confirm local setup and optional live connectivity:
+## Test in stages
 
-```bash
-python -m datamuru.cli.main doctor --config datamuru.yml
+### 1. Validate locally
+
+```powershell
+datamuru validate --config datamuru.yml
 ```
 
-Then validate the project:
+### 2. Verify read-only connectivity
 
-```bash
-python -m datamuru.cli.main validate --config datamuru.yml
-python -m datamuru.cli.main plan --config datamuru.yml
+```powershell
+datamuru doctor --config datamuru.yml
+datamuru import discover --config datamuru.yml
 ```
 
-Current live-read planning coverage:
+### 3. Create a unique test catalog
 
-- workspace presence
-- groups
-- Unity Catalog catalogs
-- Unity Catalog schemas
-
-This means `plan` can now reduce false create actions for those resource types when they already exist in the connected workspace.
-
-## Step 5b: test live catalog and schema creation
-
-If you want to create real objects in Databricks now, switch to:
+Switch to `live-apply` and use a name that cannot collide with important
+resources:
 
 ```yaml
-execution_mode: live-apply
+catalogs:
+  - name: dm_free_tutorial_01
+    use_default_storage: true
+    schemas:
+      - bronze
+      - silver
 ```
 
-Then simplify `workspaces/alpha-dev.yml` so it only contains a catalog and schema set you want to test first. A good first example is:
-
-```yaml
-workspace:
-  name: alpha-dev
-  cloud: azure
-  region: eastus2
-  catalogs:
-    - name: alpha_marketing
-      schemas:
-        - raw
+```powershell
+datamuru plan --target catalog:dm_free_tutorial_01
+datamuru apply --target catalog:dm_free_tutorial_01 --auto-approve
+datamuru plan --target catalog:dm_free_tutorial_01
 ```
 
-If your workspace requires an explicit managed location for catalog creation, use:
+## Understand default storage
 
-```yaml
-workspace:
-  name: alpha-dev
-  cloud: azure
-  region: eastus2
-  catalogs:
-    - name: alpha_marketing
-      managed_location: abfss://catalog-root@storageaccount.dfs.core.windows.net/alpha_marketing
-      schemas:
-        - name: raw
-          managed_location: abfss://schema-root@storageaccount.dfs.core.windows.net/alpha_marketing/raw
+The Unity Catalog REST API can reject catalog creation when the metastore has no
+storage root. `use_default_storage: true` makes DataMuru submit `CREATE CATALOG`
+through a configured SQL warehouse, allowing Databricks to select account
+default storage where available.
+
+## Identity limitation
+
+Use existing users and groups for ACL assignments. Managed identity lifecycle
+is an Enterprise feature and requires account SCIM capability. DataMuru probes
+capability when managed identities are declared; edition configuration alone
+cannot create an unavailable Databricks API.
+
+## Clean up
+
+Confirm that the catalog contains no needed data, then:
+
+```powershell
+datamuru destroy --target catalog:dm_free_tutorial_01 --confirm-destroy
 ```
-
-DataMuru maps `managed_location` to the Unity Catalog storage root fields for the live catalog and schema create APIs.
-
-Then run:
-
-```bash
-python -m datamuru.cli.main plan --config datamuru.yml --target catalog:alpha_marketing
-python -m datamuru.cli.main apply --config datamuru.yml --target catalog:alpha_marketing --auto-approve
-```
-
-Why `--target` matters right now:
-
-- live catalog and schema creation is implemented
-- groups and service principals are not implemented for live apply yet
-- targeting the catalog avoids unrelated unsupported resource types
-
-## Step 6: map your Free Edition workspace to the current config model
-
-Update these files for your local trial:
-
-- `providers/databricks.yml`
-- `workspaces/alpha-dev.yml`
-- optionally `governance/*.yml`
-
-At a minimum, set:
-
-- your Databricks workspace host URL
-- the selected cloud family
-- a PAT-backed auth configuration for local trial usage
-- the provider execution mode
-- workspace naming and starter catalog intent
-
-## Step 7: use the alpha for safe workflow validation
-
-At the current stage, the most realistic trial flow is:
-
-1. sign up for Free Edition
-2. inspect your workspace shape in Databricks
-3. mirror that shape in the DataMuru config files
-4. run `doctor`, `validate`, and `plan`
-5. use `apply` only in local `state-only` modeling mode
-6. review how DataMuru models your intended environment
-
-## What you cannot fully test yet
-
-Because the provider is still in the alpha execution stage, this repository does not yet:
-
-- provision a real Databricks workspace
-- manage account-level resources
-- perform live `apply` mutations for every resource type
-- observe every PRD resource type from the live workspace
-
-Those gaps are expected at this stage and are the next implementation direction after the connectivity baseline.
-
-## Recommended trial expectation
-
-Treat your first Databricks Free Edition run as:
-
-- a product walkthrough
-- a config-model evaluation
-- a credential and connectivity validation flow
-- a future-operator onboarding test
-
-Do not treat it yet as full end-to-end production provisioning.

@@ -1,38 +1,62 @@
-# Getting Started Overview
+# Choose a starting path
 
-This repository contains the first structured implementation slice of DataMuru. It is intentionally narrow, but it establishes the core shape of the framework.
+Choose the shortest path that matches what you need to learn. You do not need
+Databricks access to evaluate configuration, planning, state, or the CLI.
 
-## Alpha goals
+## Before you begin
 
-The current alpha is designed to prove four things:
+You need:
 
-1. DataMuru can model a platform as configuration rather than scripts.
-2. The framework can compute deterministic desired-state plans.
-3. Provider-specific platform behavior can live behind a stable abstraction.
-4. Governance concepts can be compiled early rather than bolted on later.
+- Python 3.10 through 3.13;
+- a terminal with permission to create a virtual environment;
+- Git only if you plan to contribute or use repository examples.
 
-## What is included
+For live Databricks work, you also need:
 
-- Root project configuration in `datamuru.yml`
-- Environment, provider, workspace, and governance starter files
-- Python package scaffold under `datamuru/`
-- MkDocs-based documentation site under `docs/`
-- JSON schema artifacts under `schemas/`
-- Unit and end-to-end bootstrap tests under `tests/`
+- a workspace URL;
+- a personal access token or another configured authentication method;
+- permissions for the objects you plan to read or change;
+- a SQL warehouse ID when using default-storage catalog creation or live ACLs.
 
-## What is intentionally out of scope
+## Select your path
 
-The alpha does not yet include:
+### I want a safe local evaluation
 
-- Brownfield import
-- Cloud state backends beyond local state
-- Full ABAC enforcement
-- Ingestion, transformation, or observability engines
-- Real Databricks API execution logic
-- SaaS control plane features
+Follow the [five-minute local quickstart](quickstart.md). It uses `state-only`
+mode and does not contact Databricks.
 
-## Recommended reader path
+You will learn how to validate a complete project, read a plan, apply changes to
+local state, and verify idempotency.
 
-- Product or engineering leadership: read **Product > Platform Overview**
-- Contributors: read **Architecture > Overview** and **Reference > CLI Reference**
-- Evaluators: read **Installation** and **Quickstart**
+### I have a Databricks workspace
+
+Follow [Connect a Databricks workspace](../tutorials/connect-databricks.md).
+Start in `live-readonly` mode. This verifies credentials and discovers supported
+objects without allowing mutations.
+
+### I use Databricks Free Edition
+
+Read [Databricks Free Edition](databricks-free-edition.md) before enabling live
+apply. Free Edition has product and account-level limitations that affect
+identity and workspace administration.
+
+### I already have catalogs and schemas
+
+Use the [import tutorial](../tutorials/import-existing-workspace.md). Discovery
+is read-only. Generated YAML is a review artifact and does not automatically
+adopt or mutate every discovered object.
+
+### I am integrating DataMuru into a team workflow
+
+Read:
+
+- [Operating model](../operations/usage-guidelines.md)
+- [Team adoption](../operations/team-adoption-guidelines.md)
+- [Security and credentials](../operations/security.md)
+- [Production readiness](../operations/production-readiness.md)
+
+## Understand the alpha boundary
+
+DataMuru performs real live operations for selected resources. It does not yet
+implement the complete PRD. Before each test, check
+[Current capabilities and limits](../reference/capabilities.md).

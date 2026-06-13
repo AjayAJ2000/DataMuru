@@ -21,7 +21,7 @@ Together these packages provide:
 - state management
 - deterministic planning
 - apply and destroy orchestration
-- future brownfield import extension points
+- brownfield discovery and configuration-generation workflows
 
 ### Providers
 
@@ -29,7 +29,7 @@ Located in `datamuru/providers/`, this layer provides:
 
 - a provider interface
 - a Databricks provider factory
-- an Azure-first Databricks implementation scaffold
+- an Azure-first Databricks implementation with live support for selected resources
 
 ### Governance
 
@@ -52,9 +52,12 @@ The repository is intentionally structured so future features can be added witho
 - providers should own platform-specific resource modeling
 - governance should remain composable and separable
 
-## Current implementation caveat
+## Current implementation boundary
 
-The Databricks provider in this phase builds desired resources and records local outcomes, but it does not yet perform real platform API mutations. That is appropriate for the alpha bootstrap because it proves the execution model safely.
+The Databricks provider performs real API operations for supported catalogs,
+schemas, Unity Catalog grants, and discovery workflows. Other resources remain
+local-only or Enterprise-only. The
+[capability reference](../reference/capabilities.md) is the source of truth.
 
 ## Product direction
 

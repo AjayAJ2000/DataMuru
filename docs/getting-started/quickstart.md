@@ -1,58 +1,94 @@
-# Quickstart
+# Five-minute local quickstart
 
-This quickstart walks through the current alpha experience using the repo scaffold.
+This quickstart runs entirely on your computer. It does not require credentials
+and does not contact Databricks.
 
-## 1. Validate the root configuration
+## 1. Create a clean environment
 
-```bash
-python -m datamuru.cli.main validate --config datamuru.yml
+=== "Windows PowerShell"
+
+    ```powershell
+    mkdir datamuru-quickstart
+    cd datamuru-quickstart
+    python -m venv .venv
+    .\.venv\Scripts\Activate.ps1
+    python -m pip install --upgrade pip
+    pip install datamuru==0.1.0a0
+    ```
+
+=== "macOS or Linux"
+
+    ```bash
+    mkdir datamuru-quickstart
+    cd datamuru-quickstart
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    pip install datamuru==0.1.0a0
+    ```
+
+Verify the installation:
+
+```console
+$ datamuru --help
+Usage: datamuru [OPTIONS] COMMAND [ARGS]...
 ```
 
-Expected outcome:
+## 2. Initialize a project
 
-- Configuration files load successfully
-- Required root sections are present
-- Workspace and governance starter files pass alpha validation
-
-## 2. Inspect the plan
-
-```bash
-python -m datamuru.cli.main plan --config datamuru.yml
+```powershell
+datamuru init --name quickstart --output-dir .
 ```
 
-Expected outcome:
+The command creates a root configuration and supporting directories. Keep the
+provider in `state-only` mode for this tutorial.
 
-- A list of `create` operations for workspace, catalog, schema, governance, and access-control resources
+## 3. Validate the configuration
 
-## 3. Apply the local desired state
-
-```bash
-python -m datamuru.cli.main apply --config datamuru.yml --auto-approve
+```powershell
+datamuru validate --config datamuru.yml --strict
 ```
 
-Expected outcome:
+Expected result:
 
-- The local state file is created under `.datamuru/`
-- Declared resources are recorded in state
-
-## 4. Re-run the plan
-
-```bash
-python -m datamuru.cli.main plan --config datamuru.yml
+```text
+Configuration is valid.
 ```
 
-Expected outcome:
+`--strict` treats warnings as a failed validation. It is useful in CI and team
+workflows.
 
-- The plan becomes idempotent
-- Existing resources show as `noop`
+## 4. Review the plan
 
-## 5. Destroy the local state
-
-```bash
-python -m datamuru.cli.main destroy --config datamuru.yml --confirm-destroy
+```powershell
+datamuru plan --config datamuru.yml
 ```
 
-Expected outcome:
+The first plan uses `+`, `~`, `=`, and `-` to represent create, update, no-op,
+and destroy actions. Review every destroy action before continuing.
 
-- Managed resources are removed from local state
-- The project returns to a clean declared-state baseline
+## 5. Apply to local state
+
+```powershell
+datamuru apply --config datamuru.yml --auto-approve
+```
+
+In `state-only` mode, apply records the desired resources in the configured
+local state file. It does not create cloud resources.
+
+## 6. Verify idempotency
+
+```powershell
+datamuru plan --config datamuru.yml
+```
+
+Expected result: declared resources report `resource already matches` or the
+plan contains no required changes.
+
+## What you learned
+
+You completed DataMuru's core loop: initialize, validate, plan, apply, and
+re-plan.
+
+Next, [connect a Databricks workspace](../tutorials/connect-databricks.md) in
+`live-readonly` mode.

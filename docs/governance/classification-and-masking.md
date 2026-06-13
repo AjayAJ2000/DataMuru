@@ -21,6 +21,9 @@ The alpha ships starter built-in masking definitions, including:
 
 These are currently compiled into internal mask resources so the rest of the framework can reason about them consistently.
 
-## Design direction
+## Current boundary
 
-In later phases, taxonomy and masking will become the source material for richer policy compilation and provider-backed governance enforcement.
+Taxonomy and masking definitions are validated and compiled into deterministic
+resources. The OSS alpha does not install live Databricks column masks. Treat
+these files as versioned governance intent until provider-backed enforcement is
+implemented.

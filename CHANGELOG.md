@@ -8,6 +8,11 @@ and this project aims to follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Product-grade documentation organized into tutorials, task guides, concepts, references, operations, and contributor guidance
+- Complete operator documentation for authentication, execution modes, planning, saved plans, targeting, import, ACLs, destruction, and troubleshooting
+- Reference pages for configuration, provider fields, environment variables, resource addresses, result contracts, error codes, and current capability limits
+- Automated tests for MkDocs navigation targets and relative Markdown links
+- Documentation style guide based on Google technical-writing principles
 - Shared-core OSS and Enterprise track scaffolding
 - MkDocs-based product documentation
 - Databricks Free Edition setup guidance

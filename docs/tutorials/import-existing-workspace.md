@@ -1,0 +1,72 @@
+# Import an existing workspace
+
+This tutorial discovers supported Databricks resources and generates a starter
+workspace YAML file. Import is a review workflow, not automatic ownership
+transfer.
+
+## Prerequisites
+
+- `live-readonly` or `live-apply` execution mode;
+- successful workspace connectivity;
+- exactly one workspace declaration in scope.
+
+## Discover resources
+
+```powershell
+datamuru import discover --config datamuru.yml
+```
+
+By default, DataMuru filters common system catalogs, schemas, and groups.
+
+For machine-readable output:
+
+```powershell
+datamuru import discover --config datamuru.yml --output json
+```
+
+## Generate a starter file
+
+Select catalogs explicitly:
+
+```powershell
+datamuru import generate `
+  --config datamuru.yml `
+  --catalog existing_sales `
+  --catalog existing_marketing `
+  --out .\workspaces\imported-review.yml
+```
+
+Add `--include-groups` only if you intend to review group references.
+
+## Review before adoption
+
+Inspect the generated file for:
+
+- system or vendor-managed objects;
+- resources owned by another team;
+- names that should remain external references;
+- missing managed locations or governance intent;
+- groups that DataMuru should not manage.
+
+Generated YAML describes discovered shape. It does not establish that DataMuru
+has permission or authority to mutate every object.
+
+## Reconcile safely
+
+1. Back up the existing local state file.
+2. Keep `execution_mode: live-readonly`.
+3. Move the reviewed YAML into the intended workspace scope.
+4. Run validation and a targeted plan.
+
+```powershell
+datamuru validate --config datamuru.yml
+datamuru plan --config datamuru.yml --target catalog:existing_sales
+```
+
+Do not switch to `live-apply` until the plan contains only understood actions.
+
+## Include system objects only for diagnosis
+
+`--include-system` can expose `system`, `samples`, `workspace`,
+`information_schema`, `admins`, and `users`. Do not adopt or delete these
+objects merely because they appear in discovery.

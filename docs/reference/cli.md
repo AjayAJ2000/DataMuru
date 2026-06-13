@@ -1,133 +1,110 @@
-# CLI Reference
+# CLI reference
 
-The current CLI is intentionally small and focused, but it is now organized as thin command modules over the shared Python API.
+```text
+datamuru [OPTIONS] COMMAND [ARGS]...
+```
 
-## CLI design goals
+## `init`
 
-- thin command handlers
-- structured error rendering
-- machine-friendly JSON output where relevant
-- human-friendly review output for plans and diagnostics
+Create a starter project.
 
-## `datamuru init`
+```text
+datamuru init
+  [--name TEXT]
+  [--provider TEXT]
+  [--cloud TEXT]
+  [--edition TEXT]
+  [--output-dir TEXT]
+```
 
-Creates a bootstrap project structure.
+Defaults: name `datamuru-project`, provider `databricks`, cloud `azure`,
+edition `open-source`, and current output directory.
 
-Key options:
+## `validate`
 
-- `--name`
-- `--provider`
-- `--cloud`
-- `--edition`
-- `--output-dir`
+```text
+datamuru validate [--config TEXT] [--strict]
+```
 
-## `datamuru validate`
+`--strict` fails when validation returns warnings.
 
-Validates the configuration tree for the selected root config.
+## `doctor`
 
-Key options:
+```text
+datamuru doctor [--config TEXT] [--output text|json]
+```
 
-- `--config`
-- `--strict`
+Runs provider-aware diagnostics. Default config: `datamuru.yml`.
 
-## `datamuru plan`
+## `plan`
 
-Computes desired-state changes for the current configuration.
+```text
+datamuru plan
+  [--config TEXT]
+  [--target TEXT]
+  [--out TEXT]
+  [--output text|json]
+```
 
-Key options:
+`--out` writes a saved plan. `--target` accepts a resource address.
 
-- `--config`
-- `--target`
-- `--out`
-- `--output {text,json}`
+## `apply`
 
-## `datamuru apply`
+```text
+datamuru apply
+  [--config TEXT]
+  [--target TEXT]
+  [--plan TEXT]
+  [--auto-approve]
+```
 
-Applies the current plan through the active provider abstraction and records successful resources in DataMuru state.
+Use either current configuration planning or `--plan` for a saved plan.
 
-Key options:
+## `destroy`
 
-- `--config`
-- `--target`
-- `--plan`
-- `--auto-approve`
+```text
+datamuru destroy
+  [--config TEXT]
+  [--target TEXT]
+  [--confirm-destroy]
+```
 
-Current note:
+Destruction requires `--confirm-destroy`.
 
-- saved-plan apply is supported through `--plan`
+## `import discover`
 
-## `datamuru destroy`
+```text
+datamuru import discover
+  [--config TEXT]
+  [--include-system]
+  [--output text|json]
+```
 
-Destroys managed resources from local state.
+Requires one workspace declaration and a live execution mode.
 
-Key options:
+## `import generate`
 
-- `--config`
-- `--target`
-- `--confirm-destroy`
+```text
+datamuru import generate
+  [--config TEXT]
+  [--catalog TEXT]...
+  [--include-groups]
+  [--include-system]
+  [--out TEXT]
+  [--output text|json]
+```
 
-## `datamuru edition show`
+Repeat `--catalog` to select more than one catalog.
 
-Inspects the active edition and reports enabled and restricted feature sets.
+## `edition show`
 
-Key options:
+```text
+datamuru edition show [--config TEXT] [--output text|json]
+```
 
-- `--config`
-- `--output {text,json}`
+Reports the configured edition and enabled or restricted features.
 
-## `datamuru doctor`
+## Exit behavior
 
-Runs provider-aware setup checks intended to help operators validate local configuration before trying a workflow.
-
-Key options:
-
-- `--config`
-- `--output {text,json}`
-
-Current note:
-
-- live ACL discovery and grant application require a Databricks SQL warehouse ID when RBAC permission bindings are declared
-
-## `datamuru import discover`
-
-Discovers brownfield resources from the live provider and prints a reviewable inventory.
-
-Key options:
-
-- `--config`
-- `--include-system`
-- `--output {text,json}`
-
-Current note:
-
-- the alpha import flow expects exactly one workspace declaration in scope
-
-## `datamuru import generate`
-
-Generates a `workspace:` YAML fragment from live provider discovery so teams can onboard existing objects intentionally.
-
-Key options:
-
-- `--config`
-- `--catalog`
-- `--include-groups`
-- `--include-system`
-- `--out`
-
-## Usage guidance
-
-Recommended day-to-day sequence:
-
-1. `datamuru validate`
-2. `datamuru doctor`
-3. `datamuru plan`
-4. `datamuru apply --auto-approve`
-
-For shared environments, save the plan first and treat it as a review artifact.
-
-For live Databricks RBAC work, use a narrower loop:
-
-1. `datamuru validate`
-2. `datamuru doctor`
-3. `datamuru plan --target permission_binding:<principal>:<role>`
-4. `datamuru apply --target permission_binding:<principal>:<role> --auto-approve`
+Commands return a nonzero exit code for structured DataMuru errors. Do not parse
+human-formatted Rich output in automation; use JSON output where available.

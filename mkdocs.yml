@@ -17,8 +17,13 @@ theme:
   features:
     - navigation.tabs
     - navigation.sections
+    - navigation.indexes
+    - navigation.footer
     - navigation.top
+    - content.action.edit
+    - content.action.view
     - content.code.copy
+    - content.tabs.link
     - search.suggest
     - search.highlight
 
@@ -39,34 +44,71 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Overview: getting-started/overview.md
+  - Start:
+      - Choose a path: getting-started/overview.md
       - Installation: getting-started/installation.md
-      - Databricks Free Edition Setup: getting-started/databricks-free-edition.md
-      - Quickstart: getting-started/quickstart.md
-  - Product:
-      - Platform Overview: product/platform-overview.md
-      - Editions and Commercial Model: product/editions.md
-      - Packaging and Distribution: product/packaging-and-distribution.md
-      - Release Roadmap: product/roadmap.md
-  - Architecture:
-      - Overview: architecture/overview.md
-      - Core Runtime Layout: architecture/core-runtime.md
-      - Configuration Model: architecture/configuration-model.md
-      - Provider Model: architecture/provider-model.md
-  - Governance:
-      - Governance Overview: governance/overview.md
-      - Classification and Masking: governance/classification-and-masking.md
-      - RBAC Model: governance/rbac.md
+      - Five-minute local quickstart: getting-started/quickstart.md
+      - Databricks Free Edition: getting-started/databricks-free-edition.md
+  - Tutorials:
+      - Learn with a local project: tutorials/local-first-project.md
+      - Connect a Databricks workspace: tutorials/connect-databricks.md
+      - Provision a catalog and schemas: tutorials/catalog-and-schemas.md
+      - Import an existing workspace: tutorials/import-existing-workspace.md
+  - How-to guides:
+      - Configure a project: guides/configure-project.md
+      - Authenticate to Databricks: guides/authentication.md
+      - Choose an execution mode: guides/execution-modes.md
+      - Validate and diagnose setup: guides/validate-and-doctor.md
+      - Review and apply changes: guides/plan-and-apply.md
+      - Target related resources: guides/target-resources.md
+      - Use saved plans: guides/saved-plans.md
+      - Manage catalogs and schemas: guides/catalogs-and-schemas.md
+      - Manage Unity Catalog permissions: guides/permissions.md
+      - Work with existing resources: guides/import-resources.md
+      - Destroy resources safely: guides/destroy-resources.md
+      - Troubleshoot DataMuru: guides/troubleshooting.md
+  - Concepts:
+      - How DataMuru works: concepts/how-datamuru-works.md
+      - Configuration hierarchy: concepts/configuration-hierarchy.md
+      - State and reconciliation: concepts/state-and-reconciliation.md
+      - Resources, addresses, and targets: concepts/resources-and-addresses.md
+      - Safety model: concepts/safety-model.md
+      - Governance model: governance/overview.md
+      - RBAC model: governance/rbac.md
+      - Classification and masking: governance/classification-and-masking.md
+      - Provider architecture: architecture/provider-model.md
+      - OSS and Enterprise: product/editions.md
   - Reference:
       - CLI Reference: reference/cli.md
-      - Error Model: reference/errors.md
+      - Root configuration: reference/root-config.md
+      - Workspace configuration: reference/workspace-config.md
+      - Databricks provider: reference/databricks-provider.md
+      - Governance configuration: reference/governance-config.md
+      - Environment variables: reference/environment-variables.md
+      - Resource types and addresses: reference/resources.md
+      - Plan and apply results: reference/results.md
+      - Error codes: reference/errors.md
       - Python API: reference/python-api.md
-      - Schemas and Config Files: reference/schemas.md
+      - JSON schemas: reference/schemas.md
+      - Current capabilities and limits: reference/capabilities.md
   - Operations:
-      - Product Usage Guidelines: operations/usage-guidelines.md
-      - Team Adoption Guidelines: operations/team-adoption-guidelines.md
-      - ACL And RBAC Guidelines: operations/acl-guidelines.md
-      - Testing and Release: operations/testing-and-release.md
-      - Publishing: operations/publishing.md
+      - Operating model: operations/usage-guidelines.md
+      - Team adoption: operations/team-adoption-guidelines.md
+      - Security and credentials: operations/security.md
+      - ACL and RBAC guidelines: operations/acl-guidelines.md
+      - Production readiness: operations/production-readiness.md
+      - Upgrades and compatibility: operations/upgrades.md
+      - Testing and release: operations/testing-and-release.md
+      - Package and docs publishing: operations/publishing.md
       - FAQ: operations/faq.md
+  - Product:
+      - Platform overview: product/platform-overview.md
+      - Editions and commercial model: product/editions.md
+      - Packaging and distribution: product/packaging-and-distribution.md
+      - Roadmap: product/roadmap.md
+  - Contribute:
+      - Contributing: contributing/index.md
+      - Documentation style guide: contributing/documentation-style-guide.md
+      - Architecture overview: architecture/overview.md
+      - Core runtime: architecture/core-runtime.md
+      - Configuration model: architecture/configuration-model.md

@@ -1,53 +1,39 @@
-# Error Model
+# Error codes
 
-DataMuru now exposes a structured error contract instead of treating every failure as a raw exception string.
+DataMuru errors contain a code, title, description, context, suggestion, and
+exit code.
 
-## Base error
+| Code | Error | Typical cause |
+| --- | --- | --- |
+| `DMR-CFG-1001` | Configuration Load Failed | missing file, invalid YAML, or unresolved value |
+| `DMR-CFG-1002` | Configuration Validation Failed | invalid field or unsafe combination |
+| `DMR-PROV-1001` | Provider Operation Failed | credentials, connectivity, permission, or API failure |
+| `DMR-PLAN-1001` | Saved Plan Error | missing, stale, or malformed saved plan |
+| `DMR-STATE-1001` | State Backend Error | unsupported backend or inaccessible state |
+| `DMR-CORE-1001` | Unsupported Operation | capability is not implemented for the selected mode |
 
-All product-facing failures inherit from `DataMuruError`.
+## Read an error
 
-Each error can carry:
+```text
+DMR-PROV-1001 Provider Operation Failed
+Databricks API create request failed.
+status_code: 400
+response: ...
+Suggestion: Verify Unity Catalog permissions and the target object name.
+```
 
-- `code`
-- `title`
-- `description`
-- `context`
-- `suggestion`
-- `exit_code`
+Use the description to identify the failed action, context to locate the
+provider response, and suggestion as the first recovery step.
 
-## Current structured error families
+## Report an error safely
 
-### `ConfigLoadError`
+Include:
 
-Used when configuration files cannot be found, parsed, or interpreted.
+- DataMuru version;
+- command and resource target;
+- error code and redacted context;
+- execution mode;
+- whether validation and doctor succeed.
 
-### `ValidationError`
-
-Used when configuration content is structurally or semantically invalid.
-
-### `ProviderError`
-
-Used when provider selection or provider execution cannot proceed safely.
-
-### `SavedPlanError`
-
-Used when a saved plan file is missing or invalid for apply-time execution.
-
-### `StateBackendError`
-
-Used when state loading or backend selection fails.
-
-### `UnsupportedOperationError`
-
-Used for capabilities that are intentionally reserved for later milestones, such as brownfield import in the current alpha.
-
-## CLI behavior
-
-The CLI renders structured DataMuru errors with:
-
-- a stable error code
-- a human-readable title
-- descriptive context
-- an actionable suggestion
-
-This is especially important once the framework is distributed on PyPI and consumed by multiple teams, because consistent error contracts reduce support friction and improve automation reliability.
+Exclude tokens, full account identifiers, private URLs, emails, and customer
+data.
