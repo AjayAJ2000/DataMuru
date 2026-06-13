@@ -1,0 +1,19 @@
+workspace:
+  name: example-dev
+  cloud: azure
+  region: eastus2
+  tier: premium
+  catalogs:
+    - name: datamuru_example
+      use_default_storage: true
+      schemas:
+        - raw
+        - bronze
+        - silver
+        - gold
+  principals:
+    groups:
+      - datamuru-platform-engineers
+      - datamuru-data-consumers
+    service_principals:
+      - datamuru-example-service-principal

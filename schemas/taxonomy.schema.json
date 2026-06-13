@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Governance Taxonomy",
+  "type": "object",
+  "required": ["taxonomy"],
+  "properties": {
+    "taxonomy": {
+      "type": "object",
+      "required": ["name", "version", "categories"]
+    }
+  }
+}

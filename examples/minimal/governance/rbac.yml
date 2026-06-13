@@ -1,0 +1,15 @@
+rbac:
+  roles:
+    - id: example_reader
+      name: Example Reader
+      permissions:
+        - resource_type: schema
+          resource_pattern: "*.curated"
+          privilege: SELECT
+  assignments:
+    - principal: example-readers
+      type: group
+      roles:
+        - example_reader
+      domains:
+        - example_analytics

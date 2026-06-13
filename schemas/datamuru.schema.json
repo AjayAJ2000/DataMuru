@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.datamuru.dev/0.1/datamuru.schema.json",
+  "title": "DataMuru Root Configuration",
+  "type": "object",
+  "required": ["project", "environments", "default_environment", "features", "state", "provider"],
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": ["name", "version", "edition", "provider"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "description": {"type": "string"},
+        "edition": {"enum": ["open-source", "enterprise"]},
+        "provider": {"type": "string"}
+      }
+    },
+    "environments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "config"],
+        "properties": {
+          "name": {"type": "string"},
+          "config": {"type": "string"}
+        }
+      }
+    },
+    "default_environment": {"type": "string"},
+            "features": {
+              "type": "object",
+              "properties": {
+                "governance": {"type": "boolean"},
+                "data_mesh": {"type": "boolean"},
+                "ingestion": {"type": "boolean"},
+                "modeling": {"type": "boolean"},
+                "observability": {"type": "boolean"},
+                "compliance_reporting": {"type": "boolean"},
+                "multi_workspace": {"type": "boolean"},
+                "hosted_control_plane": {"type": "boolean"},
+                "identity_management": {"type": "boolean"}
+              }
+            },
+    "state": {
+      "type": "object",
+      "required": ["backend", "path"],
+      "properties": {
+        "backend": {"enum": ["local", "s3", "azure_blob", "gcs"]},
+        "path": {"type": "string"}
+      }
+    },
+    "provider": {
+      "type": "object",
+      "required": ["name", "cloud", "config"],
+      "properties": {
+        "name": {"type": "string"},
+        "cloud": {"enum": ["azure", "aws", "gcp"]},
+        "config": {"type": "string"}
+      }
+    },
+    "ai": {"type": "object"}
+  }
+}

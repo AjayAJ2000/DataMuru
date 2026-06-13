@@ -1,0 +1,35 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project aims to follow Semantic Versioning.
+
+## [Unreleased]
+
+### Added
+- Shared-core OSS and Enterprise track scaffolding
+- MkDocs-based product documentation
+- Databricks Free Edition setup guidance
+- Edition-aware validation
+- CLI doctor and edition inspection flows
+- Saved-plan apply support
+- Databricks account SCIM capability discovery
+- Enterprise users, groups, service principals, and group membership lifecycle
+- Identity drift observation with conservative deletion safeguards
+- Runtime identity capability detection that takes precedence over edition assumptions
+- Complete runnable OSS example project
+- GitHub Actions CI across Python 3.10 through 3.13
+- GitHub Pages documentation deployment
+- OIDC-based PyPI Trusted Publishing workflow
+- Contributor and security policies
+
+### Changed
+- PyPI-oriented package metadata expanded
+- CLI output foundation moved toward rich-themed product output
+- Legacy string principals now behave as existing references instead of managed lifecycle resources
+- Target selection now uses explicit catalog/schema and group/membership relationships
+- Identity validation now rejects misplaced principal blocks and reserved example-domain managed users
+- Targeted plan and apply commands now explain when no declared or state-managed resource matched
+- Package metadata now targets public PyPI distribution and GitHub Pages documentation
+- Unused runtime dependencies were removed to reduce install size and dependency risk

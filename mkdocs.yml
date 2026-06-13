@@ -1,0 +1,72 @@
+site_name: DataMuru
+site_description: Python-first enterprise data infrastructure framework documentation
+site_url: https://ajayaj2000.github.io/DataMuru/
+repo_name: AjayAJ2000/DataMuru
+repo_url: https://github.com/AjayAJ2000/DataMuru
+edit_uri: edit/main/docs/
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Overview: getting-started/overview.md
+      - Installation: getting-started/installation.md
+      - Databricks Free Edition Setup: getting-started/databricks-free-edition.md
+      - Quickstart: getting-started/quickstart.md
+  - Product:
+      - Platform Overview: product/platform-overview.md
+      - Editions and Commercial Model: product/editions.md
+      - Packaging and Distribution: product/packaging-and-distribution.md
+      - Release Roadmap: product/roadmap.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Core Runtime Layout: architecture/core-runtime.md
+      - Configuration Model: architecture/configuration-model.md
+      - Provider Model: architecture/provider-model.md
+  - Governance:
+      - Governance Overview: governance/overview.md
+      - Classification and Masking: governance/classification-and-masking.md
+      - RBAC Model: governance/rbac.md
+  - Reference:
+      - CLI Reference: reference/cli.md
+      - Error Model: reference/errors.md
+      - Python API: reference/python-api.md
+      - Schemas and Config Files: reference/schemas.md
+  - Operations:
+      - Product Usage Guidelines: operations/usage-guidelines.md
+      - Team Adoption Guidelines: operations/team-adoption-guidelines.md
+      - ACL And RBAC Guidelines: operations/acl-guidelines.md
+      - Testing and Release: operations/testing-and-release.md
+      - Publishing: operations/publishing.md
+      - FAQ: operations/faq.md

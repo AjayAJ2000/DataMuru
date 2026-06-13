@@ -1,0 +1,6 @@
+environment:
+  name: dev
+  workspace_selector: alpha-dev
+  tags:
+    lifecycle: alpha
+    owner: platform-engineering

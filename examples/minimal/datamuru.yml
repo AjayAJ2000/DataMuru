@@ -1,0 +1,32 @@
+project:
+  name: example-minimal
+  version: "0.1.0"
+  description: "Minimal DataMuru example"
+  edition: open-source
+  provider: databricks
+
+environments:
+  - name: dev
+    config: ./environments/dev.yml
+
+default_environment: dev
+
+features:
+  governance: true
+  data_mesh: false
+  ingestion: false
+  modeling: false
+  observability: false
+  compliance_reporting: false
+  multi_workspace: false
+  hosted_control_plane: false
+  identity_management: false
+
+state:
+  backend: local
+  path: ./.datamuru/example-state.json
+
+provider:
+  name: databricks
+  cloud: azure
+  config: ./providers/databricks.yml

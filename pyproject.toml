@@ -1,0 +1,120 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datamuru"
+version = "0.1.0a0"
+description = "Open source enterprise data infrastructure framework"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [
+  { name = "DataMuru" },
+]
+keywords = ["databricks", "data-platform", "data-mesh", "data-governance", "infrastructure"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Systems Administration",
+  "Typing :: Typed",
+]
+dependencies = [
+  "click>=8.1,<9",
+  "pydantic>=2.0,<3",
+  "PyYAML>=6.0,<7",
+  "requests>=2.31,<3",
+  "rich>=13.0,<14",
+]
+
+[project.optional-dependencies]
+databricks = [
+  "databricks-sdk>=0.18,<1",
+]
+aws = [
+  "boto3>=1.34,<2",
+]
+azure = [
+  "azure-identity>=1.15,<2",
+  "azure-keyvault-secrets>=4.7,<5",
+  "azure-storage-blob>=12.19,<13",
+]
+gcp = [
+  "google-cloud-secret-manager>=2.16,<3",
+  "google-cloud-storage>=2.13,<3",
+]
+dev = [
+  "build>=1.2,<2",
+  "mypy>=1.8,<2",
+  "pre-commit>=3.6,<4",
+  "pytest>=8.0,<9",
+  "pytest-asyncio>=0.23,<1",
+  "pytest-cov>=4.1,<6",
+  "pytest-mock>=3.12,<4",
+  "respx>=0.21,<1",
+  "ruff>=0.2,<1",
+  "twine>=5,<7",
+]
+docs = [
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.5,<10",
+  "mkdocstrings[python]>=0.25,<1",
+]
+test = [
+  "moto>=5,<6",
+  "pytest>=8.0,<9",
+  "pytest-asyncio>=0.23,<1",
+  "pytest-cov>=4.1,<6",
+  "pytest-mock>=3.12,<4",
+  "respx>=0.21,<1",
+]
+
+[project.scripts]
+datamuru = "datamuru.cli.main:cli"
+
+[project.urls]
+Homepage = "https://github.com/AjayAJ2000/DataMuru"
+Documentation = "https://ajayaj2000.github.io/DataMuru/"
+Repository = "https://github.com/AjayAJ2000/DataMuru"
+Issues = "https://github.com/AjayAJ2000/DataMuru/issues"
+Changelog = "https://github.com/AjayAJ2000/DataMuru/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["datamuru*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint.per-file-ignores]
+"datamuru/types.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+source = ["datamuru"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

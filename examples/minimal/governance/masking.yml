@@ -1,0 +1,5 @@
+masking:
+  builtins:
+    - id: partial_mask
+      description: Show only the final four characters.
+      strategy: partial_mask

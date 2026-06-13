@@ -1,0 +1,36 @@
+project:
+  name: datamuru-alpha
+  version: "0.1.0"
+  description: "DataMuru alpha bootstrap project"
+  edition: open-source
+  provider: databricks
+
+environments:
+  - name: dev
+    config: ./environments/dev.yml
+
+default_environment: dev
+
+features:
+  governance: true
+  data_mesh: true
+  ingestion: false
+  modeling: false
+  observability: false
+  compliance_reporting: false
+  multi_workspace: false
+  hosted_control_plane: false
+  identity_management: false
+
+state:
+  backend: local
+  path: ./.datamuru/state-dev.json
+
+provider:
+  name: databricks
+  cloud: azure
+  config: ./providers/databricks.yml
+
+ai:
+  mcp_server: false
+  llms_txt: false

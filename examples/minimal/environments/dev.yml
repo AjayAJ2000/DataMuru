@@ -1,0 +1,6 @@
+environment:
+  name: dev
+  workspace_selector: example-dev
+  tags:
+    lifecycle: example
+    owner: platform-engineering

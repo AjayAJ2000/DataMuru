@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Workspace Configuration",
+  "type": "object",
+  "required": ["workspace"],
+  "properties": {
+    "workspace": {
+      "type": "object",
+      "required": ["name", "cloud", "region"],
+      "properties": {
+        "name": {"type": "string"},
+        "cloud": {"enum": ["azure", "aws", "gcp"]},
+        "region": {"type": "string"},
+        "catalogs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {"type": "string"},
+              "managed_location": {"type": "string"},
+              "schemas": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {"type": "string"},
+                    {
+                      "type": "object",
+                      "required": ["name"],
+                      "properties": {
+                        "name": {"type": "string"},
+                        "managed_location": {"type": "string"}
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "principals": {
+          "type": "object",
+          "properties": {
+            "users": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {"type": "string"},
+                  {
+                    "type": "object",
+                    "required": ["email"],
+                    "properties": {
+                      "email": {"type": "string"},
+                      "display_name": {"type": "string"},
+                      "lifecycle": {"enum": ["existing", "managed", "external"]},
+                      "allow_delete": {"type": "boolean"}
+                    }
+                  }
+                ]
+              }
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {"type": "string"},
+                  {
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                      "name": {"type": "string"},
+                      "lifecycle": {"enum": ["existing", "managed", "external"]},
+                      "allow_delete": {"type": "boolean"},
+                      "members": {
+                        "type": "object",
+                        "properties": {
+                          "users": {"type": "array", "items": {"type": "string"}},
+                          "groups": {"type": "array", "items": {"type": "string"}},
+                          "service_principals": {"type": "array", "items": {"type": "string"}}
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "service_principals": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {"type": "string"},
+                  {
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                      "name": {"type": "string"},
+                      "application_id": {"type": "string"},
+                      "lifecycle": {"enum": ["existing", "managed", "external"]},
+                      "allow_delete": {"type": "boolean"}
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

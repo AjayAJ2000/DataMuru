@@ -1,0 +1,10 @@
+taxonomy:
+  name: example
+  version: "0.1"
+  categories:
+    - id: internal
+      label: Internal
+      description: "Internal example data"
+      handling:
+        retention_years: 1
+        encryption: at_rest

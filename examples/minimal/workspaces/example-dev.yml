@@ -1,0 +1,9 @@
+workspace:
+  name: example-dev
+  cloud: azure
+  region: eastus2
+  catalogs:
+    - name: example_analytics
+      schemas:
+        - raw
+        - curated
