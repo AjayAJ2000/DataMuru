@@ -1,4 +1,10 @@
-# DataMuru
+<div class="dm-docs-hero">
+  <img src="assets/datamuru-mark.svg" alt="DataMuru Vel Eye logo">
+  <div>
+    <h1>DataMuru Documentation</h1>
+    <p>Provider-agnostic data infrastructure, governed by design.</p>
+  </div>
+</div>
 
 DataMuru is a declarative data infrastructure and governance framework for
 Databricks. You describe the platform resources and access rules that you want.

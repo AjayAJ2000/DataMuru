@@ -1,4 +1,10 @@
-# DataMuru
+<p align="center">
+  <img src="docs/assets/datamuru-mark.svg" alt="DataMuru Vel Eye logo" width="112">
+</p>
+
+<h1 align="center">DataMuru</h1>
+
+<p align="center"><strong>Provider-agnostic data infrastructure, governed by design.</strong></p>
 
 [![CI](https://github.com/AjayAJ2000/DataMuru/actions/workflows/ci.yml/badge.svg)](https://github.com/AjayAJ2000/DataMuru/actions/workflows/ci.yml)
 [![Documentation](https://github.com/AjayAJ2000/DataMuru/actions/workflows/docs.yml/badge.svg)](https://ajayaj2000.github.io/DataMuru/)
