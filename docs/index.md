@@ -1,15 +1,18 @@
+# DataMuru Documentation
+
 <div class="dm-docs-hero">
   <img src="assets/datamuru-mark.svg" alt="DataMuru Vel Eye logo">
   <div>
-    <h1>DataMuru Documentation</h1>
     <p>Provider-agnostic data infrastructure, governed by design.</p>
   </div>
 </div>
 
-DataMuru is a declarative data infrastructure and governance framework for
-Databricks. You describe the platform resources and access rules that you want.
+DataMuru is a provider-agnostic declarative data infrastructure and governance
+framework. You describe the platform resources and access rules that you want.
 DataMuru validates the configuration, compares it with state and supported live
-resources, shows a deterministic plan, and applies approved changes.
+resources, shows a deterministic plan, and applies approved changes. Databricks
+is the first live provider adapter in the current alpha, not the product
+boundary.
 
 ```powershell
 pip install datamuru

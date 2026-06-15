@@ -83,6 +83,12 @@ class StateBackendError(DataMuruError):
     default_suggestion = "Check the configured backend and state file permissions."
 
 
+class ImportAdoptionError(DataMuruError):
+    default_code = "DMR-IMPORT-1001"
+    default_title = "Import Adoption Blocked"
+    default_suggestion = "Resolve every reported conflict or missing live resource, then preview adoption again."
+
+
 class UnsupportedOperationError(DataMuruError):
     default_code = "DMR-CORE-1001"
     default_title = "Unsupported Operation"

@@ -51,19 +51,47 @@ Inspect the generated file for:
 Generated YAML describes discovered shape. It does not establish that DataMuru
 has permission or authority to mutate every object.
 
-## Reconcile safely
+## Preview state adoption
 
 1. Back up the existing local state file.
 2. Keep `execution_mode: live-readonly`.
 3. Move the reviewed YAML into the intended workspace scope.
-4. Run validation and a targeted plan.
+4. Run validation, a targeted plan, and an adoption preview.
 
 ```powershell
 datamuru validate --config datamuru.yml
 datamuru plan --config datamuru.yml --target catalog:existing_sales
+datamuru import adopt --config datamuru.yml --target catalog:existing_sales
 ```
 
-Do not switch to `live-apply` until the plan contains only understood actions.
+The preview must show only resources you intend DataMuru to manage. Adoption is
+blocked if a selected resource is missing live, differs from the declaration,
+or already has conflicting local state.
+
+## Commit ownership to state
+
+```powershell
+datamuru import adopt `
+  --config datamuru.yml `
+  --target catalog:existing_sales `
+  --auto-approve
+```
+
+Expected result:
+
+```text
+Adopted 3 resources into state.
+```
+
+Re-run the targeted plan. Adopted resources should be no-op:
+
+```powershell
+datamuru plan --config datamuru.yml --target catalog:existing_sales
+```
+
+Adoption writes local state only. It does not change Databricks resources.
+Do not switch to `live-apply` until the resulting plan contains only understood
+actions.
 
 ## Include system objects only for diagnosis
 

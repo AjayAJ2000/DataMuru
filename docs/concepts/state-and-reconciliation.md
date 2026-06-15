@@ -16,6 +16,14 @@ In live modes, DataMuru observes supported desired resources from Databricks and
 uses those observations during planning. Observation is intentionally scoped;
 DataMuru does not import every object into state automatically.
 
+## Adoption establishes ownership
+
+`datamuru import adopt` records an existing, declared live resource in the
+configured state backend without mutating the provider. Adoption requires an
+explicit target and exact agreement between the live and desired fingerprints.
+The operation is atomic: conflicts or missing resources prevent all selected
+state writes.
+
 ## State is not a backup
 
 State does not contain the data stored in a catalog or schema. Back up state,

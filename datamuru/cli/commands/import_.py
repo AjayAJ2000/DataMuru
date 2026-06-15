@@ -81,3 +81,50 @@ def import_generate_command(
     if out_path:
         console.print(f"[success]Wrote[/success] starter workspace YAML to [code]{Path(out_path).resolve()}[/code]")
     console.print(result.workspace_file_text)
+
+
+@import_group.command("adopt")
+@click.option("--config", "config_path", default="datamuru.yml", show_default=True)
+@click.option(
+    "--target",
+    "targets",
+    multiple=True,
+    required=True,
+    help="Declared resource address to adopt. Repeat for multiple targets.",
+)
+@click.option("--auto-approve", is_flag=True, default=False, help="Commit matching live resources to state.")
+@click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
+@with_cli_errors
+def import_adopt_command(
+    config_path: str,
+    targets: tuple[str, ...],
+    auto_approve: bool,
+    output_format: str,
+) -> None:
+    dm = DataMuru(config_path=config_path)
+    preview = dm.import_adopt(targets=list(targets), commit=False)
+    if output_format == "json" and not auto_approve:
+        console.print_json(json.dumps(preview.to_dict(), indent=2))
+        return
+
+    console.print(f"[primary]Import Adoption Preview[/primary] - environment: [code]{preview.environment}[/code]")
+    for address in preview.candidates:
+        console.print(f"  [create]+[/create] [code]{address}[/code] ready to adopt")
+    for address in preview.already_managed:
+        console.print(f"  [nochange]=[/nochange] [code]{address}[/code] already managed")
+    for address in preview.missing:
+        console.print(f"  [error]![/error] [code]{address}[/code] was not observed live")
+    for conflict in preview.conflicts:
+        console.print(f"  [error]![/error] [code]{conflict.address}[/code] {conflict.reason}")
+
+    if not auto_approve:
+        console.print("[warning]Preview only. Re-run with --auto-approve to write matching resources to state.[/warning]")
+        return
+    if not preview.ready:
+        raise click.ClickException("Import adoption has blockers; state was not changed.")
+
+    result = dm.import_adopt(targets=list(targets), commit=True)
+    if output_format == "json":
+        console.print_json(json.dumps(result.to_dict(), indent=2))
+        return
+    console.print(f"[success]Adopted[/success] {len(result.adopted)} resources into state.")

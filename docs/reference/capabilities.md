@@ -41,7 +41,7 @@ OSS can reference existing principals for Unity Catalog permissions.
 - production cloud state backends;
 - multi-workspace orchestration;
 - AWS and GCP feature parity;
-- conflict-safe automatic brownfield adoption;
+- automatic adoption without explicit targets or fingerprint review;
 - ingestion, modeling, observability, and compliance implementations;
 - transactional rollback;
 - full provider coverage for every PRD resource.

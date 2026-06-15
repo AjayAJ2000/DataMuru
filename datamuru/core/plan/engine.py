@@ -9,7 +9,7 @@ from .models import Plan, PlanChange, ResourceDescriptor
 from .renderer import fingerprint
 
 
-def _matches_target(address: str, target: str | None) -> bool:
+def matches_target(address: str, target: str | None) -> bool:
     if target is None:
         return True
     if address == target:
@@ -44,12 +44,12 @@ class PlanEngine:
         desired = {
             resource.address: resource
             for resource in desired_resources
-            if _matches_target(resource.address, target)
+            if matches_target(resource.address, target)
         }
         existing = {
             address: value
             for address, value in _normalize_existing(current_state).items()
-            if _matches_target(address, target)
+            if matches_target(address, target)
         }
         changes: list[PlanChange] = []
 

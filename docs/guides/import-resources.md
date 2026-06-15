@@ -26,10 +26,26 @@ For each resource, decide whether it is:
 - an **existing reference** used by grants or dependencies;
 - **external** and intentionally outside DataMuru.
 
-The alpha generator produces workspace shape. It does not write state or
-guarantee conflict-free adoption.
+The generator produces workspace shape. It does not write state.
 
-## Reconcile before live apply
+## Preview and commit adoption
 
-Keep `live-readonly`, validate, and plan each imported catalog separately.
-Investigate all create, update, and destroy actions before enabling mutation.
+Keep `live-readonly`, validate, and plan each imported catalog separately:
+
+```powershell
+datamuru import adopt --config datamuru.yml --target catalog:analytics
+```
+
+When the preview has no blockers:
+
+```powershell
+datamuru import adopt `
+  --config datamuru.yml `
+  --target catalog:analytics `
+  --auto-approve
+```
+
+Adoption is atomic for the selected targets. DataMuru does not write partial
+state when any selected resource is missing or has a fingerprint conflict.
+Investigate all later create, update, and destroy actions before enabling live
+mutation.

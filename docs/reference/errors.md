@@ -9,6 +9,7 @@ exit code.
 | `DMR-CFG-1002` | Configuration Validation Failed | invalid field or unsafe combination |
 | `DMR-PROV-1001` | Provider Operation Failed | credentials, connectivity, permission, or API failure |
 | `DMR-PLAN-1001` | Saved Plan Error | missing, stale, or malformed saved plan |
+| `DMR-IMPORT-1001` | Import Adoption Blocked | missing live resources or fingerprint conflicts prevent state adoption |
 | `DMR-STATE-1001` | State Backend Error | unsupported backend or inaccessible state |
 | `DMR-CORE-1001` | Unsupported Operation | capability is not implemented for the selected mode |
 

@@ -28,7 +28,7 @@ Focus:
 
 ### v0.3
 
-- Brownfield import design implementation
+- Brownfield discovery, generation, and targeted state adoption
 - Cloud state backend abstraction
 - Stronger provider contract coverage
 

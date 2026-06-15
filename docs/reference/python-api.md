@@ -31,6 +31,7 @@ DataMuru(config_path: str | Path, environment: str | None = None)
 | `destroy(target=None)` | `ApplyResult` |
 | `import_discover(include_system=False)` | `ImportDiscoveryReport` |
 | `import_generate(...)` | generated workspace configuration result |
+| `import_adopt(targets=[...], commit=False)` | `ImportAdoptionResult` |
 
 ## Example: guarded apply
 

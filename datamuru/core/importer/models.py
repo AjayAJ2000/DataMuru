@@ -41,3 +41,31 @@ class ImportGenerationResult(DataMuruModel):
 
     def to_dict(self) -> dict:
         return self.model_dump(mode="python")
+
+
+class ImportAdoptionConflict(DataMuruModel):
+    address: str
+    reason: str
+    desired_fingerprint: str
+    actual_fingerprint: str | None = None
+
+
+class ImportAdoptionResult(DataMuruModel):
+    provider: str
+    environment: str
+    targets: list[str] = Field(default_factory=list)
+    candidates: list[str] = Field(default_factory=list)
+    adopted: list[str] = Field(default_factory=list)
+    already_managed: list[str] = Field(default_factory=list)
+    missing: list[str] = Field(default_factory=list)
+    conflicts: list[ImportAdoptionConflict] = Field(default_factory=list)
+    committed: bool = False
+
+    @property
+    def ready(self) -> bool:
+        return bool(self.candidates or self.already_managed) and not self.missing and not self.conflicts
+
+    def to_dict(self) -> dict:
+        payload = self.model_dump(mode="python")
+        payload["ready"] = self.ready
+        return payload

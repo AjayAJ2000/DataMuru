@@ -74,4 +74,4 @@ This follows the PRD more closely than creating two separate product forks. The 
 - broader governance enforcement
 - release automation for PyPI and docs publishing
 
-Status: import discovery/config generation and release automation are implemented. State adoption, conflict-safe brownfield reconciliation, and broader governance enforcement remain open.
+Status: import discovery/config generation, targeted conflict-safe state adoption, and release automation are implemented. Richer live drift inspection, cloud state backends, and broader governance enforcement remain open.

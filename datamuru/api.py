@@ -48,3 +48,6 @@ class DataMuru:
             include_groups=include_groups,
             include_system=include_system,
         )
+
+    def import_adopt(self, *, targets: list[str], commit: bool = False):
+        return self.engine.import_adopt(targets=targets, commit=commit)

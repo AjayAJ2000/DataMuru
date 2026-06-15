@@ -110,6 +110,12 @@ class DataMuruEngine:
             include_system=include_system,
         )
 
+    def import_adopt(self, *, targets: list[str], commit: bool = False):
+        return ImportEngine(config_path=self.config_path, environment=self.environment).adopt(
+            targets=targets,
+            commit=commit,
+        )
+
     def destroy(self, target: str | None = None):
         project, environment, _, state_backend = self._load()
         state_snapshot = state_backend.load()

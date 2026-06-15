@@ -96,6 +96,21 @@ datamuru import generate
 
 Repeat `--catalog` to select more than one catalog.
 
+## `import adopt`
+
+```text
+datamuru import adopt
+  [--config TEXT]
+  --target TEXT...
+  [--auto-approve]
+  [--output text|json]
+```
+
+Preview is the default. Repeat `--target` to select multiple declared
+resources. A catalog target also selects its declared schemas.
+`--auto-approve` writes state only when every selected resource exists live and
+matches its declared fingerprint.
+
 ## `edition show`
 
 ```text
