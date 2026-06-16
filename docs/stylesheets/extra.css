@@ -38,17 +38,17 @@
   border: 1px solid rgba(13, 95, 138, 0.15);
   border-radius: 1rem;
   display: grid;
-  gap: 1.5rem;
-  grid-template-columns: minmax(90px, 130px) 1fr;
+  gap: 1.75rem;
+  grid-template-columns: 96px 1fr;
   margin: 0 0 2rem;
-  padding: 1.75rem;
+  padding: 1.5rem 1.75rem;
 }
 
 .dm-docs-hero img {
   display: block;
   margin: 0 auto;
-  max-height: 150px;
-  width: auto;
+  height: 120px;
+  width: 96px;
 }
 
 .dm-docs-hero h1 {

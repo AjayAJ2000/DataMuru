@@ -13,7 +13,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/datamuru.svg)](https://pypi.org/project/datamuru/)
 
 DataMuru is an Apache-2.0, Python-first data infrastructure framework.
-It provisions and governs a Databricks-centered data estate from declarative configuration.
+It provisions and governs provider-backed data estates from declarative configuration.
 This public repository is the canonical home of the DataMuru Open Source Edition,
 the shared configuration contract, the `datamuru` PyPI package, and the public documentation.
 
