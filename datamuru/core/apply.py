@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datamuru.core.plan import fingerprint
+from datamuru.errors import DataMuruError
 from datamuru.types import ApplyFailure, ApplyResult, Plan
 
 
@@ -25,7 +26,19 @@ def apply_plan(plan: Plan, provider, state_backend) -> ApplyResult:
                 }
             applied.append(change.resource.address)
         except Exception as exc:  # pragma: no cover
-            failures.append(ApplyFailure(resource=change.resource.address, reason=str(exc)))
+            if isinstance(exc, DataMuruError):
+                failures.append(
+                    ApplyFailure(
+                        resource=change.resource.address,
+                        reason=exc.description,
+                        code=exc.code,
+                        title=exc.title,
+                        context=exc.context,
+                        suggestion=exc.suggestion,
+                    )
+                )
+            else:
+                failures.append(ApplyFailure(resource=change.resource.address, reason=str(exc)))
 
     state_backend.save(state)
     return ApplyResult(success=not failures, applied=applied, failures=failures)

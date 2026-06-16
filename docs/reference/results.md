@@ -33,10 +33,15 @@ An apply result separates:
 
 - successfully applied changes;
 - resources that already matched;
-- failures with resource addresses and provider errors.
+- failures with resource addresses, reason text, optional error code, title,
+  context, and suggestion.
 
 Apply is not globally transactional. Successful parent-independent resources
 may remain applied when another resource fails.
+
+Structured apply failures preserve provider and core error metadata so
+automation can group failures by code without parsing formatted terminal text.
+Dependency skips use `DMR-APPLY-1001`.
 
 ## JSON output
 

@@ -26,6 +26,10 @@ class PlanExecutor:
                             ApplyFailure(
                                 resource=change.resource.address,
                                 reason=f"Skipped because parent catalog '{catalog_name}' failed earlier in this apply.",
+                                code="DMR-APPLY-1001",
+                                title="Apply Dependency Skipped",
+                                context={"parent_catalog": catalog_name},
+                                suggestion="Fix the parent catalog failure and run plan/apply again.",
                             )
                         )
                         continue
@@ -41,10 +45,7 @@ class PlanExecutor:
                 applied.append(change.resource.address)
             except Exception as exc:  # pragma: no cover
                 failures.append(
-                    ApplyFailure(
-                        resource=change.resource.address,
-                        reason=self._render_failure_reason(exc),
-                    )
+                    self._failure_from_exception(change.resource.address, exc)
                 )
                 if change.resource.resource_type == "catalog":
                     failed_catalogs.add(change.resource.name)
@@ -86,3 +87,16 @@ class PlanExecutor:
                 details.append(f"Suggestion: {exc.suggestion}")
             return " ".join(details)
         return str(exc)
+
+    @classmethod
+    def _failure_from_exception(cls, resource: str, exc: Exception) -> ApplyFailure:
+        if isinstance(exc, DataMuruError):
+            return ApplyFailure(
+                resource=resource,
+                reason=cls._render_failure_reason(exc),
+                code=exc.code,
+                title=exc.title,
+                context=exc.context,
+                suggestion=exc.suggestion,
+            )
+        return ApplyFailure(resource=resource, reason=str(exc))

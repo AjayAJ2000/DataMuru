@@ -4,6 +4,7 @@ from datamuru.core.apply.models import ApplyResult
 from datamuru.core.plan.models import Plan, PlanChange, ResourceDescriptor
 from datamuru.core.state.backends.local import LocalStateBackend
 from datamuru.core.state.models import StateSnapshot
+from datamuru.errors import ProviderError
 
 
 def test_apply_makes_plan_idempotent(sample_project):
@@ -136,9 +137,43 @@ def test_apply_skips_schema_when_parent_catalog_failed(tmp_path):
 
     result: ApplyResult = PlanExecutor().execute(plan=plan, provider=FailingProvider(), state_backend=state_backend)
     reasons = {failure.resource: failure.reason for failure in result.failures}
+    failures = {failure.resource: failure for failure in result.failures}
     assert not result.success
     assert "catalog:alpha" in reasons
     assert reasons["schema:alpha.raw"] == "Skipped because parent catalog 'alpha' failed earlier in this apply."
+    assert failures["schema:alpha.raw"].code == "DMR-APPLY-1001"
+    assert failures["schema:alpha.raw"].context == {"parent_catalog": "alpha"}
+
+
+def test_apply_failure_preserves_structured_provider_error(tmp_path):
+    state_backend = LocalStateBackend(tmp_path / "state.json")
+
+    class FailingProvider:
+        def apply_resource(self, resource):
+            raise ProviderError(
+                description="Provider rejected the resource.",
+                context={"resource": resource.address, "status_code": 403},
+                suggestion="Grant the required provider privilege and retry.",
+            )
+
+        def destroy_resource(self, resource):
+            return True
+
+    resource = ResourceDescriptor(resource_type="catalog", name="alpha", attributes={})
+    plan = Plan(
+        environment="dev",
+        changes=[PlanChange(action="create", resource=resource, reason="missing")],
+    )
+
+    result = PlanExecutor().execute(plan=plan, provider=FailingProvider(), state_backend=state_backend)
+
+    assert not result.success
+    failure = result.failures[0]
+    assert failure.resource == "catalog:alpha"
+    assert failure.code == "DMR-PROV-1001"
+    assert failure.title == "Provider Operation Failed"
+    assert failure.context == {"resource": "catalog:alpha", "status_code": 403}
+    assert failure.suggestion == "Grant the required provider privilege and retry."
 
 
 def test_live_plan_marks_permission_binding_update_when_live_grants_are_missing(sample_project, monkeypatch):

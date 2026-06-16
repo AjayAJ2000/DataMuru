@@ -43,7 +43,10 @@ def apply_command(config_path: str, target: str | None, plan_path: str | None, a
         result = dm.apply(target=target)
     if not result.success:
         for failure in result.failures:
-            console.print(f"[error]FAILED[/error] {failure.resource}: {failure.reason}")
+            prefix = f"[error]FAILED[/error] {failure.resource}:"
+            if failure.code:
+                prefix = f"{prefix} [error]{failure.code}[/error]"
+            console.print(f"{prefix} {failure.reason}")
         raise SystemExit(1)
     noop_count = 0
     if preview_plan is not None:
