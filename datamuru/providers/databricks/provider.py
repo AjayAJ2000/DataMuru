@@ -59,11 +59,18 @@ class DatabricksProvider(DataMuruProvider):
                 DoctorCheck(level="ok", code="provider.host", message="Databricks workspace host URL is configured.")
             )
         else:
+            host_env = self.auth.host_env
+            if host_env and not self.auth.host:
+                message = f"Environment variable '{host_env}' is not set for Databricks workspace host."
+            elif host and "your-workspace" in host:
+                message = "Databricks workspace host URL is still the placeholder value."
+            else:
+                message = "Databricks workspace host URL is missing or invalid."
             checks.append(
                 DoctorCheck(
                     level="error",
                     code="provider.host",
-                    message="Databricks workspace host URL is missing or invalid.",
+                    message=message,
                 )
             )
 

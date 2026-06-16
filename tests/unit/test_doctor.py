@@ -69,6 +69,35 @@ def test_doctor_reports_live_connectivity_when_probe_succeeds(sample_project, mo
     assert any(check.code == "provider.connectivity" and "user@datamuru.dev" in check.message for check in report.checks)
 
 
+def test_doctor_resolves_workspace_host_from_environment(sample_project, monkeypatch):
+    monkeypatch.setenv("DATABRICKS_TOKEN", "token-value")
+    monkeypatch.setenv("DATABRICKS_HOST", "https://adb-test.azuredatabricks.net")
+    provider_path = sample_project / "providers" / "databricks.yml"
+    provider_path.write_text(
+        "\n".join(
+            [
+                "provider:",
+                "  cloud: azure",
+                "  connect_timeout_seconds: 1",
+                "  credential_mode: personal-access-token",
+                "  execution_mode: state-only",
+                "  auth_type: pat",
+                "  token_env: DATABRICKS_TOKEN",
+                "  host_env: DATABRICKS_HOST",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    project = load_project(sample_project / "datamuru.yml")
+    provider = load_provider(project)
+
+    report = provider.doctor(project, "dev")
+
+    assert provider.auth.host == "https://adb-test.azuredatabricks.net"
+    assert any(check.code == "provider.host" and check.level == "ok" for check in report.checks)
+
+
 def test_doctor_reports_sql_acl_requirement_for_live_permission_bindings(sample_project, monkeypatch):
     monkeypatch.setenv("DATABRICKS_TOKEN", "token-value")
     provider_path = sample_project / "providers" / "databricks.yml"

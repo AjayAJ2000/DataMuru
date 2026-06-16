@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from pydantic import model_validator
+
 from datamuru.errors import ProviderError
 from datamuru.modeling import DataMuruModel
 
@@ -14,7 +16,8 @@ class DatabricksAuthConfig(DataMuruModel):
     connect_timeout_seconds: int = 10
     credential_mode: str | None = None
     execution_mode: str = "state-only"
-    host: str
+    host: str = ""
+    host_env: str | None = None
     sql_warehouse_id: str | None = None
     sql_warehouse_id_env: str | None = None
     token_env: str | None = None
@@ -23,6 +26,14 @@ class DatabricksAuthConfig(DataMuruModel):
     def from_provider_data(cls, provider_data: dict[str, Any]) -> "DatabricksAuthConfig":
         provider = provider_data.get("provider", {})
         return cls.model_validate(provider)
+
+    @model_validator(mode="after")
+    def resolve_host_from_environment(self) -> "DatabricksAuthConfig":
+        if self.host_env and (not self.host or "your-workspace" in self.host):
+            env_host = os.getenv(self.host_env)
+            if env_host:
+                self.host = env_host
+        return self
 
     def resolve_token(self) -> str | None:
         if not self.token_env:
