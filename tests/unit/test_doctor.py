@@ -163,5 +163,6 @@ def test_live_readonly_apply_is_blocked(sample_project):
         provider.apply_resource(resource)
     except ProviderError as exc:
         assert "live-readonly" in exc.description.lower()
+        assert "Switch execution_mode to live-apply" in exc.suggestion
     else:  # pragma: no cover
         raise AssertionError("Expected ProviderError for live-readonly mutation guard")

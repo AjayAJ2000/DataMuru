@@ -26,7 +26,10 @@ class DatabricksExecutionPolicy:
             raise ProviderError(
                 description="Live-readonly execution mode blocks Databricks mutations.",
                 context={"execution_mode": self.auth.execution_mode, "resource": resource.address},
-                suggestion="Switch to state-only for local modeling or wait for live-apply support for this resource.",
+                suggestion=(
+                    "Use live-readonly for planning only. Switch execution_mode to live-apply after reviewing the "
+                    "plan and confirming the target workspace."
+                ),
             )
         if self.auth.allows_live_mutation() and resource.resource_type not in (
             self.LIVE_APPLY_SUPPORTED_RESOURCE_TYPES | self.LOCAL_ONLY_RESOURCE_TYPES

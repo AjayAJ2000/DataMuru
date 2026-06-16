@@ -3,7 +3,7 @@ provider:
   cloud: azure
   connect_timeout_seconds: 10
   credential_mode: personal-access-token
-  execution_mode: live-readonly
+  execution_mode: live-apply
   host_env: DATABRICKS_HOST
   auth_type: pat
   token_env: DATABRICKS_TOKEN
