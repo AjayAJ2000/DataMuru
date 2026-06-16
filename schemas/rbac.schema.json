@@ -6,7 +6,51 @@
   "properties": {
     "rbac": {
       "type": "object",
-      "required": ["roles", "assignments"]
+      "required": ["roles", "assignments"],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "permissions"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "name": {"type": "string"},
+              "inherits": {"type": "array", "items": {"type": "string"}},
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["resource_type", "resource_pattern", "privilege"],
+                  "properties": {
+                    "resource_type": {"type": "string", "minLength": 1},
+                    "resource_pattern": {"type": "string", "minLength": 1},
+                    "privilege": {"type": "string", "minLength": 1}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "assignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["principal", "roles"],
+            "properties": {
+              "principal": {"type": "string", "minLength": 1},
+              "type": {"enum": ["user", "group", "service_principal"]},
+              "roles": {"type": "array", "items": {"type": "string"}},
+              "domains": {"type": "array", "items": {"type": "string"}}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "additionalProperties": false
 }

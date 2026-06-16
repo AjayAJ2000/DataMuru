@@ -26,6 +26,15 @@ class SchemaValidator:
             return issues
 
         project = raw.get("project", {})
+        if project.get("provider") and raw.get("provider", {}).get("name"):
+            if project["provider"] != raw["provider"]["name"]:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path="provider.name",
+                        message="Root provider.name must match project.provider.",
+                    )
+                )
         if project.get("edition") not in self.EDITIONS:
             issues.append(
                 ValidationIssue(
@@ -39,6 +48,54 @@ class SchemaValidator:
 
         environments = raw.get("environments", [])
         names = [item.get("name") for item in environments if isinstance(item, dict)]
+        seen_environment_names: set[str] = set()
+        seen_environment_configs: set[str] = set()
+        for index, environment in enumerate(environments):
+            if not isinstance(environment, dict):
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"environments.{index}",
+                        message="Environment entries must be mappings with name and config.",
+                    )
+                )
+                continue
+            name = environment.get("name")
+            config = environment.get("config")
+            if not name:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"environments.{index}.name",
+                        message="Environment name is required.",
+                    )
+                )
+            elif name in seen_environment_names:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"environments.{index}.name",
+                        message=f"Environment name '{name}' is declared more than once.",
+                    )
+                )
+            seen_environment_names.add(name)
+            if not config:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"environments.{index}.config",
+                        message="Environment config path is required.",
+                    )
+                )
+            elif config in seen_environment_configs:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"environments.{index}.config",
+                        message=f"Environment config path '{config}' is reused.",
+                    )
+                )
+            seen_environment_configs.add(config)
         if raw.get("default_environment") not in names:
             issues.append(
                 ValidationIssue(
@@ -115,7 +172,92 @@ class SchemaValidator:
             )
             return issues
         issues.extend(self._validate_principals(principals, path))
+        issues.extend(self._validate_catalogs(workspace, path))
         return issues
+
+    def validate_workspace_against_root(
+        self,
+        raw: dict[str, Any],
+        *,
+        root_cloud: str,
+        path: str,
+    ) -> list[ValidationIssue]:
+        workspace = raw.get("workspace") or {}
+        if not isinstance(workspace, dict):
+            return []
+        cloud = workspace.get("cloud")
+        if cloud and root_cloud and cloud != root_cloud:
+            return [
+                ValidationIssue(
+                    level="error",
+                    path=f"{path}.workspace.cloud",
+                    message=f"Workspace cloud '{cloud}' must match root provider.cloud '{root_cloud}'.",
+                )
+            ]
+        return []
+
+    def _validate_catalogs(self, workspace: dict[str, Any], path: str) -> list[ValidationIssue]:
+        issues: list[ValidationIssue] = []
+        seen_catalogs: set[str] = set()
+        for catalog_index, catalog in enumerate(workspace.get("catalogs") or []):
+            if not isinstance(catalog, dict) or not catalog.get("name"):
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"{path}.workspace.catalogs.{catalog_index}",
+                        message="Catalog entries require a name.",
+                    )
+                )
+                continue
+            catalog_name = str(catalog["name"])
+            if catalog_name in seen_catalogs:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"{path}.workspace.catalogs.{catalog_index}.name",
+                        message=f"Catalog '{catalog_name}' is declared more than once in this workspace.",
+                    )
+                )
+            seen_catalogs.add(catalog_name)
+            seen_schemas: set[str] = set()
+            for schema_index, schema in enumerate(catalog.get("schemas") or []):
+                schema_name = self._schema_name(schema)
+                if not schema_name:
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.workspace.catalogs.{catalog_index}.schemas.{schema_index}",
+                            message="Schema entries must be a name string or a mapping with name.",
+                        )
+                    )
+                    continue
+                if schema_name == "information_schema":
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.workspace.catalogs.{catalog_index}.schemas.{schema_index}",
+                            message="information_schema is system-owned and cannot be declared as a managed schema.",
+                        )
+                    )
+                if schema_name in seen_schemas:
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.workspace.catalogs.{catalog_index}.schemas.{schema_index}",
+                            message=f"Schema '{schema_name}' is declared more than once in catalog '{catalog_name}'.",
+                        )
+                    )
+                seen_schemas.add(schema_name)
+        return issues
+
+    @staticmethod
+    def _schema_name(schema: Any) -> str | None:
+        if isinstance(schema, str):
+            return schema
+        if isinstance(schema, dict):
+            value = schema.get("name")
+            return str(value) if value else None
+        return None
 
     def _validate_principals(self, principals: dict[str, Any], path: str) -> list[ValidationIssue]:
         issues: list[ValidationIssue] = []
@@ -261,6 +403,66 @@ class SchemaValidator:
                     message="At least one RBAC role is required.",
                 )
             )
+        roles = rbac.get("roles") or []
+        role_ids: set[str] = set()
+        for index, role in enumerate(roles):
+            if not isinstance(role, dict) or not role.get("id"):
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"{path}.rbac.roles.{index}",
+                        message="Every RBAC role requires an id.",
+                    )
+                )
+                continue
+            role_id = str(role["id"])
+            if role_id in role_ids:
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"{path}.rbac.roles.{index}.id",
+                        message=f"RBAC role '{role_id}' is declared more than once.",
+                    )
+                )
+            role_ids.add(role_id)
+            for inherited_role in role.get("inherits") or []:
+                if inherited_role == role_id:
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.rbac.roles.{index}.inherits",
+                            message=f"RBAC role '{role_id}' cannot inherit from itself.",
+                        )
+                    )
+                elif inherited_role not in role_ids and not any(
+                    isinstance(candidate, dict) and candidate.get("id") == inherited_role for candidate in roles
+                ):
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.rbac.roles.{index}.inherits",
+                            message=f"RBAC role '{role_id}' inherits unknown role '{inherited_role}'.",
+                        )
+                    )
+            for permission_index, permission in enumerate(role.get("permissions") or []):
+                if not isinstance(permission, dict):
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.rbac.roles.{index}.permissions.{permission_index}",
+                            message="RBAC permissions must be mappings.",
+                        )
+                    )
+                    continue
+                for key in ("resource_type", "resource_pattern", "privilege"):
+                    if not permission.get(key):
+                        issues.append(
+                            ValidationIssue(
+                                level="error",
+                                path=f"{path}.rbac.roles.{index}.permissions.{permission_index}.{key}",
+                                message=f"RBAC permission {key} is required.",
+                            )
+                        )
         if not (rbac.get("assignments") or []):
             issues.append(
                 ValidationIssue(
@@ -269,6 +471,34 @@ class SchemaValidator:
                     message="No RBAC assignments defined yet.",
                 )
             )
+        for assignment_index, assignment in enumerate(rbac.get("assignments") or []):
+            if not isinstance(assignment, dict):
+                issues.append(
+                    ValidationIssue(
+                        level="error",
+                        path=f"{path}.rbac.assignments.{assignment_index}",
+                        message="RBAC assignments must be mappings.",
+                    )
+                )
+                continue
+            for key in ("principal", "roles"):
+                if not assignment.get(key):
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.rbac.assignments.{assignment_index}.{key}",
+                            message=f"RBAC assignment {key} is required.",
+                        )
+                    )
+            for role_id in assignment.get("roles") or []:
+                if role_id not in role_ids:
+                    issues.append(
+                        ValidationIssue(
+                            level="error",
+                            path=f"{path}.rbac.assignments.{assignment_index}.roles",
+                            message=f"RBAC assignment references unknown role '{role_id}'.",
+                        )
+                    )
         return issues
 
     def validate_provider(self, raw: dict[str, Any], *, provider_name: str, path: str) -> list[ValidationIssue]:
@@ -333,6 +563,13 @@ def validate_project(config_path: Path) -> list[ValidationIssue]:
     for workspace_path in sorted((project_root / "workspaces").glob("*.yml")):
         workspace_raw = load_yaml(workspace_path)
         issues.extend(validator.validate_workspace(workspace_raw, workspace_path.name))
+        issues.extend(
+            validator.validate_workspace_against_root(
+                workspace_raw,
+                root_cloud=root_raw["provider"].get("cloud", ""),
+                path=workspace_path.name,
+            )
+        )
         principals = (workspace_raw.get("workspace") or {}).get("principals") or {}
         managed_identities = any(
             isinstance(item, dict) and item.get("lifecycle", "existing") == "managed"

@@ -8,34 +8,36 @@
       "type": "object",
       "required": ["name", "cloud", "region"],
       "properties": {
-        "name": {"type": "string"},
+        "name": {"type": "string", "minLength": 1},
         "cloud": {"enum": ["azure", "aws", "gcp"]},
-        "region": {"type": "string"},
+        "region": {"type": "string", "minLength": 1},
         "catalogs": {
           "type": "array",
           "items": {
             "type": "object",
             "required": ["name"],
             "properties": {
-              "name": {"type": "string"},
+              "name": {"type": "string", "minLength": 1},
               "managed_location": {"type": "string"},
               "schemas": {
                 "type": "array",
                 "items": {
                   "oneOf": [
-                    {"type": "string"},
+                    {"type": "string", "minLength": 1},
                     {
                       "type": "object",
                       "required": ["name"],
                       "properties": {
-                        "name": {"type": "string"},
+                        "name": {"type": "string", "minLength": 1},
                         "managed_location": {"type": "string"}
-                      }
+                      },
+                      "additionalProperties": false
                     }
                   ]
                 }
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "principals": {
@@ -45,16 +47,17 @@
               "type": "array",
               "items": {
                 "oneOf": [
-                  {"type": "string"},
+                  {"type": "string", "minLength": 1},
                   {
                     "type": "object",
                     "required": ["email"],
                     "properties": {
-                      "email": {"type": "string"},
+                      "email": {"type": "string", "minLength": 1},
                       "display_name": {"type": "string"},
                       "lifecycle": {"enum": ["existing", "managed", "external"]},
                       "allow_delete": {"type": "boolean"}
-                    }
+                    },
+                    "additionalProperties": false
                   }
                 ]
               }
@@ -63,12 +66,12 @@
               "type": "array",
               "items": {
                 "oneOf": [
-                  {"type": "string"},
+                  {"type": "string", "minLength": 1},
                   {
                     "type": "object",
                     "required": ["name"],
                     "properties": {
-                      "name": {"type": "string"},
+                      "name": {"type": "string", "minLength": 1},
                       "lifecycle": {"enum": ["existing", "managed", "external"]},
                       "allow_delete": {"type": "boolean"},
                       "members": {
@@ -77,9 +80,11 @@
                           "users": {"type": "array", "items": {"type": "string"}},
                           "groups": {"type": "array", "items": {"type": "string"}},
                           "service_principals": {"type": "array", "items": {"type": "string"}}
-                        }
+                        },
+                        "additionalProperties": false
                       }
-                    }
+                    },
+                    "additionalProperties": false
                   }
                 ]
               }
@@ -88,23 +93,27 @@
               "type": "array",
               "items": {
                 "oneOf": [
-                  {"type": "string"},
+                  {"type": "string", "minLength": 1},
                   {
                     "type": "object",
                     "required": ["name"],
                     "properties": {
-                      "name": {"type": "string"},
+                      "name": {"type": "string", "minLength": 1},
                       "application_id": {"type": "string"},
                       "lifecycle": {"enum": ["existing", "managed", "external"]},
                       "allow_delete": {"type": "boolean"}
-                    }
+                    },
+                    "additionalProperties": false
                   }
                 ]
               }
             }
-          }
+          },
+          "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "additionalProperties": false
 }

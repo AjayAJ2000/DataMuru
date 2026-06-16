@@ -15,7 +15,13 @@ In this alpha, schemas act as:
 
 - published contract artifacts
 - a documentation surface for config shape
-- a bridge to stricter validation in future iterations
+- a bridge between editor tooling and the runtime validator
+
+The runtime validator is stricter than basic shape validation. It also catches
+cross-file and product-safety issues, including duplicate environments,
+duplicate catalogs and schemas, workspace/provider cloud mismatches,
+system-owned schema declarations, and RBAC assignments that reference unknown
+roles.
 
 ## Related config files
 

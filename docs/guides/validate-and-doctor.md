@@ -13,9 +13,13 @@ Validation detects:
 
 - missing required root keys and referenced files;
 - unsupported editions, clouds, and state backends;
+- duplicate environment names and reused environment config paths;
+- mismatched `project.provider`, `provider.name`, workspace cloud, and provider cloud;
 - invalid workspace and principal shapes;
+- duplicate catalog and schema declarations;
+- system-owned schema declarations such as `information_schema`;
 - unavailable edition features;
-- taxonomy and RBAC structural problems;
+- taxonomy and RBAC structural problems, including unknown role references;
 - invalid provider authentication configuration.
 
 Use strict mode in CI:
