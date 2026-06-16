@@ -12,8 +12,8 @@ site_dir: site
 theme:
   name: material
   language: en
-  logo: assets/datamuru-mark.svg
-  favicon: assets/datamuru-mark.svg
+  logo: assets/datamuru-icon-64.png
+  favicon: assets/datamuru-icon-64.png
   palette:
     - scheme: default
       primary: custom

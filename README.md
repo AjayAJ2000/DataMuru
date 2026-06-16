@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/datamuru-mark.svg" alt="DataMuru Vel Eye logo" width="96" height="120">
+  <img src="docs/assets/datamuru-lockup-horizontal-canva.png" alt="DataMuru logo" width="235" height="65">
 </p>
 
 <h1 align="center">DataMuru</h1>
