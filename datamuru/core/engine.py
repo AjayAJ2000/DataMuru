@@ -6,7 +6,12 @@ from pathlib import Path
 from datamuru.core.apply import apply_plan
 from datamuru.core.config import load_project, resolve_environment_name, validate_project
 from datamuru.core.importer import ImportEngine
-from datamuru.core.plan import build_plan
+from datamuru.core.plan import (
+    build_plan,
+    build_saved_plan_document,
+    load_saved_plan_document,
+    validate_saved_plan_document,
+)
 from datamuru.core.state import resolve_state_backend
 from datamuru.governance.masking import compile_masking_resources
 from datamuru.governance.rbac import compile_rbac_resources
@@ -52,24 +57,37 @@ class DataMuruEngine:
         return apply_plan(plan, provider, state_backend)
 
     def save_plan(self, output_path: str | Path, target: str | None = None) -> Path:
+        project, environment, _, _ = self._load()
         plan = self.plan(target=target)
+        document = build_saved_plan_document(
+            project=project,
+            environment=environment,
+            plan=plan,
+            target=target,
+        )
         resolved = Path(output_path).resolve()
-        resolved.write_text(json.dumps(plan.to_dict(), indent=2), encoding="utf-8")
+        resolved.parent.mkdir(parents=True, exist_ok=True)
+        resolved.write_text(json.dumps(document.to_dict(), indent=2), encoding="utf-8")
         return resolved
 
     def apply_saved_plan(self, plan_path: str | Path):
-        _, _, provider, state_backend = self._load()
+        project, environment, provider, state_backend = self._load()
         resolved = Path(plan_path).resolve()
         if not resolved.exists():
             raise SavedPlanError(
                 description=f"Saved plan file not found: {resolved}",
                 context={"plan_path": str(resolved)},
             )
-        loaded_plan = json.loads(resolved.read_text(encoding="utf-8"))
-        from datamuru.types import Plan as SavedPlan  # local import to avoid circular feeling in bootstrap
-
-        saved_plan = SavedPlan.from_dict(loaded_plan)
-        return apply_plan(saved_plan, provider, state_backend)
+        try:
+            loaded_document = json.loads(resolved.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SavedPlanError(
+                description="Saved plan file is not valid JSON.",
+                context={"plan_path": str(resolved), "json_error": str(exc)},
+            ) from exc
+        document = load_saved_plan_document(loaded_document)
+        validate_saved_plan_document(document, project=project, environment=environment)
+        return apply_plan(document.plan, provider, state_backend)
 
     def edition_summary(self):
         project, _, _, _ = self._load()

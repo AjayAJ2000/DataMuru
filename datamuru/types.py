@@ -56,6 +56,7 @@ class EditionSummary(DataMuruModel):
 # circular import while preserving the public datamuru.types surface.
 from datamuru.core.apply.models import ApplyFailure, ApplyResult
 from datamuru.core.plan.models import Plan, PlanChange, ResourceDescriptor
+from datamuru.core.plan.saved import SavedPlanDocument, SavedPlanMetadata
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
 
 __all__ = [
@@ -68,6 +69,8 @@ __all__ = [
     "Plan",
     "PlanChange",
     "ResourceDescriptor",
+    "SavedPlanDocument",
+    "SavedPlanMetadata",
     "StateResourceRecord",
     "StateSnapshot",
     "ValidationIssue",

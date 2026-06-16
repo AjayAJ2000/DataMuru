@@ -20,7 +20,7 @@ Focus:
 
 ### v0.2
 
-- Saved-plan apply support
+- Saved-plan apply hardening with metadata and stale-config checks
 - Richer schema validation
 - Better error modeling
 - More complete starter project scaffolding

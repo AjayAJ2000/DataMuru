@@ -6,6 +6,8 @@ from pathlib import Path
 import click
 
 from datamuru.api import DataMuru
+from datamuru.core.plan import load_saved_plan_document
+from datamuru.errors import SavedPlanError
 from datamuru.types import Plan
 
 from ..guard import with_cli_errors
@@ -24,7 +26,14 @@ def apply_command(config_path: str, target: str | None, plan_path: str | None, a
     dm = DataMuru(config_path=config_path)
     preview_plan: Plan | None = None
     if plan_path:
-        preview_plan = Plan.from_dict(json.loads(Path(plan_path).read_text(encoding="utf-8")))
+        try:
+            saved_plan_payload = json.loads(Path(plan_path).read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SavedPlanError(
+                description="Saved plan file is not valid JSON.",
+                context={"plan_path": plan_path, "json_error": str(exc)},
+            ) from exc
+        preview_plan = load_saved_plan_document(saved_plan_payload).plan
         result = dm.apply_saved_plan(plan_path)
     else:
         preview_plan = dm.plan(target=target)

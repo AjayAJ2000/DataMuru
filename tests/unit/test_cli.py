@@ -1,3 +1,5 @@
+import json
+
 from click.testing import CliRunner
 
 from datamuru.cli.main import cli
@@ -57,6 +59,11 @@ def test_saved_plan_apply_flow(sample_project):
     )
     assert plan_result.exit_code == 0
     assert plan_path.exists()
+    saved_plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert saved_plan["metadata"]["schema_version"] == "datamuru.saved_plan.v1"
+    assert saved_plan["metadata"]["environment"] == "dev"
+    assert saved_plan["metadata"]["target"] is None
+    assert saved_plan["plan"]["environment"] == "dev"
 
     apply_result = runner.invoke(
         cli,
@@ -64,6 +71,48 @@ def test_saved_plan_apply_flow(sample_project):
     )
     assert apply_result.exit_code == 0
     assert "Applied" in apply_result.output
+
+
+def test_saved_plan_apply_rejects_stale_config(sample_project):
+    runner = CliRunner()
+    config_path = sample_project / "datamuru.yml"
+    plan_path = sample_project / "saved-plan.dm"
+
+    plan_result = runner.invoke(
+        cli,
+        ["plan", "--config", str(config_path), "--out", str(plan_path)],
+    )
+    assert plan_result.exit_code == 0
+
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace(
+            'description: "Bootstrap DataMuru project"',
+            'description: "Changed after saved plan"',
+        ),
+        encoding="utf-8",
+    )
+
+    apply_result = runner.invoke(
+        cli,
+        ["apply", "--config", str(config_path), "--plan", str(plan_path), "--auto-approve"],
+    )
+    assert apply_result.exit_code == 1
+    assert "DMR-PLAN-1001" in apply_result.output
+    assert "Saved plan is stale" in apply_result.output
+
+
+def test_saved_plan_apply_rejects_legacy_plan_shape(sample_project):
+    runner = CliRunner()
+    plan_path = sample_project / "legacy-plan.json"
+    plan_path.write_text(json.dumps({"environment": "dev", "changes": []}), encoding="utf-8")
+
+    result = runner.invoke(
+        cli,
+        ["apply", "--config", str(sample_project / "datamuru.yml"), "--plan", str(plan_path), "--auto-approve"],
+    )
+    assert result.exit_code == 1
+    assert "DMR-PLAN-1001" in result.output
+    assert "expected DataMuru plan contract" in result.output
 
 
 def test_edition_show_command(sample_project):
