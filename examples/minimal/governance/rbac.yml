@@ -12,4 +12,4 @@ rbac:
       roles:
         - example_reader
       domains:
-        - example_analytics
+        - dm_example_analytics

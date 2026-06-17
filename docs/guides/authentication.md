@@ -10,9 +10,10 @@ thoroughly tested with PAT headers.
 ```yaml
 provider:
   cloud: azure
-  host: https://your-workspace.cloud.databricks.com
+  host_env: DATABRICKS_HOST
   auth_type: pat
   token_env: DATABRICKS_TOKEN
+  sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID
   execution_mode: live-readonly
 ```
 
@@ -21,13 +22,17 @@ Set the variable in the current process:
 === "Windows PowerShell"
 
     ```powershell
+    $env:DATABRICKS_HOST = "https://your-workspace.cloud.databricks.com"
     $env:DATABRICKS_TOKEN = "replace-with-your-token"
+    $env:DATABRICKS_SQL_WAREHOUSE_ID = "replace-with-your-warehouse-id"
     ```
 
 === "macOS or Linux"
 
     ```bash
+    export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
     export DATABRICKS_TOKEN="replace-with-your-token"
+    export DATABRICKS_SQL_WAREHOUSE_ID="replace-with-your-warehouse-id"
     ```
 
 ## Verify authentication

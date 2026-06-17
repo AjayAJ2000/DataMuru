@@ -3,6 +3,7 @@ provider:
   connect_timeout_seconds: 10
   credential_mode: personal-access-token
   execution_mode: state-only
-  host: "https://adb-placeholder.azuredatabricks.net"
+  host_env: DATABRICKS_HOST
   auth_type: pat
   token_env: DATABRICKS_TOKEN
+  sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID

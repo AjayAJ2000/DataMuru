@@ -15,11 +15,24 @@ from ..output import console
 @click.option("--provider", default="databricks", show_default=True)
 @click.option("--cloud", default="azure", show_default=True)
 @click.option("--edition", default="open-source", show_default=True)
+@click.option(
+    "--execution-mode",
+    default="state-only",
+    show_default=True,
+    type=click.Choice(["state-only", "live-readonly", "live-apply"]),
+)
 @click.option("--output-dir", default=".", show_default=True)
 @with_cli_errors
-def init_command(name: str, provider: str, cloud: str, edition: str, output_dir: str) -> None:
+def init_command(name: str, provider: str, cloud: str, edition: str, execution_mode: str, output_dir: str) -> None:
     scaffolder = ProjectScaffolder()
-    created = scaffolder.scaffold(output_dir, name=name, provider=provider, cloud=cloud, edition=edition)
+    created = scaffolder.scaffold(
+        output_dir,
+        name=name,
+        provider=provider,
+        cloud=cloud,
+        edition=edition,
+        execution_mode=execution_mode,
+    )
     console.print(
         f"[success]Created[/success] {len(created)} bootstrap artifacts in [code]{Path(output_dir).resolve()}[/code]"
     )

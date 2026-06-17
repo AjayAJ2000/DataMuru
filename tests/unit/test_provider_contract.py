@@ -89,13 +89,13 @@ def test_provider_observe_state_ignores_system_schemas(sample_project, monkeypat
     provider = load_provider(project)
     monkeypatch.setattr(provider.client, "probe_workspace", lambda: type("Probe", (), {"ok": True})())
     monkeypatch.setattr(provider.client, "list_groups", lambda: [])
-    monkeypatch.setattr(provider.client, "list_catalogs", lambda: ["alpha_marketing"])
+    monkeypatch.setattr(provider.client, "list_catalogs", lambda: ["dm_alpha_marketing"])
     monkeypatch.setattr(provider.client, "list_schemas", lambda catalog_name: ["default", "information_schema", "raw"])
 
     observed = provider.observe_current_state(project, "dev")
-    assert "schema:alpha_marketing.raw" in observed.resources
-    assert "schema:alpha_marketing.default" not in observed.resources
-    assert "schema:alpha_marketing.information_schema" not in observed.resources
+    assert "schema:dm_alpha_marketing.raw" in observed.resources
+    assert "schema:dm_alpha_marketing.default" not in observed.resources
+    assert "schema:dm_alpha_marketing.information_schema" not in observed.resources
 
 
 def test_provider_observes_live_permission_bindings(sample_project, monkeypatch):
@@ -122,7 +122,7 @@ def test_provider_observes_live_permission_bindings(sample_project, monkeypatch)
     provider = load_provider(project)
     monkeypatch.setattr(provider.client, "probe_workspace", lambda: type("Probe", (), {"ok": True})())
     monkeypatch.setattr(provider.client, "list_groups", lambda: [])
-    monkeypatch.setattr(provider.client, "list_catalogs", lambda: ["alpha_marketing"])
+    monkeypatch.setattr(provider.client, "list_catalogs", lambda: ["dm_alpha_marketing"])
     monkeypatch.setattr(provider.client, "list_schemas", lambda catalog_name: ["raw", "bronze", "silver", "gold"])
     monkeypatch.setattr(
         provider.client,
@@ -132,7 +132,7 @@ def test_provider_observes_live_permission_bindings(sample_project, monkeypatch)
                 "principal": "sample-consumers",
                 "privilege": "SELECT",
                 "securable_type": "schema",
-                "securable_name": "alpha_marketing.gold",
+                "securable_name": "dm_alpha_marketing.gold",
             }
         ],
     )
@@ -173,8 +173,8 @@ def test_provider_live_apply_creates_catalog_and_schema(sample_project, monkeypa
     created: list[tuple[str, str]] = []
     monkeypatch.setattr(
         provider.client,
-        "create_catalog",
-        lambda name, managed_location=None: created.append(("catalog", name)) or {},
+        "create_catalog_with_default_storage",
+        lambda name: created.append(("catalog", name)) or {},
     )
     monkeypatch.setattr(
         provider.client,
@@ -191,8 +191,8 @@ def test_provider_live_apply_creates_catalog_and_schema(sample_project, monkeypa
     provider.apply_resource(catalog)
     provider.apply_resource(schema)
 
-    assert ("catalog", "alpha_marketing") in created
-    assert ("schema", "alpha_marketing.raw") in created
+    assert ("catalog", "dm_alpha_marketing") in created
+    assert ("schema", "dm_alpha_marketing.raw") in created
 
 
 def test_provider_live_apply_passes_managed_locations(sample_project, monkeypatch):

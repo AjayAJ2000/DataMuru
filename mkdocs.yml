@@ -119,6 +119,7 @@ nav:
   - Product:
       - Platform overview: product/platform-overview.md
       - Editions and commercial model: product/editions.md
+      - Enterprise testing runbook: product/enterprise-testing.md
       - Packaging and distribution: product/packaging-and-distribution.md
       - Roadmap: product/roadmap.md
   - Contribute:

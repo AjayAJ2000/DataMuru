@@ -32,7 +32,8 @@ class DatabricksProvider(DataMuruProvider):
         self.execution_policy = DatabricksExecutionPolicy(self.auth)
 
     def authenticate(self, credentials: dict) -> bool:
-        return self.auth.cloud in {"azure", "aws", "gcp"} and self._is_valid_url(self.auth.host)
+        has_host_reference = self._is_valid_url(self.auth.host) or bool(self.auth.host_env)
+        return self.auth.cloud in {"azure", "aws", "gcp"} and has_host_reference
 
     def doctor(self, project, environment: str) -> DoctorReport:
         checks: list[DoctorCheck] = []
@@ -59,6 +60,7 @@ class DatabricksProvider(DataMuruProvider):
                 DoctorCheck(level="ok", code="provider.host", message="Databricks workspace host URL is configured.")
             )
         else:
+            level = "error" if self.auth.should_probe_connectivity() else "warning"
             host_env = self.auth.host_env
             if host_env and not self.auth.host:
                 message = f"Environment variable '{host_env}' is not set for Databricks workspace host."
@@ -68,7 +70,7 @@ class DatabricksProvider(DataMuruProvider):
                 message = "Databricks workspace host URL is missing or invalid."
             checks.append(
                 DoctorCheck(
-                    level="error",
+                    level=level,
                     code="provider.host",
                     message=message,
                 )
@@ -147,13 +149,14 @@ class DatabricksProvider(DataMuruProvider):
                     )
                 )
             else:
+                level = "error" if self.auth.allows_live_mutation() else "warning"
                 checks.append(
                     DoctorCheck(
-                        level="error",
+                        level=level,
                         code="provider.sql_warehouse",
                         message=(
                             "At least one catalog uses default storage, but no SQL warehouse ID is configured. "
-                            "Set sql_warehouse_id or sql_warehouse_id_env in providers/databricks.yml."
+                            "Set sql_warehouse_id or sql_warehouse_id_env before live-apply."
                         ),
                     )
                 )

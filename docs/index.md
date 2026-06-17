@@ -1,7 +1,7 @@
 # DataMuru Documentation
 
 <div class="dm-docs-hero">
-  <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="96" height="96">
+  <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="144" height="144">
   <div>
     <p>Provider-agnostic data infrastructure, governed by design.</p>
   </div>
@@ -22,7 +22,7 @@ datamuru plan --config datamuru.yml
 ```
 
 !!! warning "Alpha software"
-    DataMuru `0.1.0a0` is an alpha release. It supports real Databricks
+    DataMuru `0.2.0a0` is an alpha release. It supports real Databricks
     operations for the resource types listed in the
     [capability reference](reference/capabilities.md), but it is not yet a
     complete production platform. Test with non-production resources first.

@@ -7,6 +7,20 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.2.0a0] - 2026-06-17
+
+### Added
+- Saved-plan metadata, schema versioning, and stale-configuration checks.
+- Richer cross-file validation for environments, provider/cloud consistency, catalogs, schemas, and RBAC references.
+- Structured apply failure metadata for provider errors and dependency skips.
+- Environment-based Databricks starter configuration with generated `.env.example`.
+- Improved `datamuru init` scaffolding with safer default catalog names and starter README output.
+
+### Changed
+- Starter Databricks provider configuration now uses `host_env`, `token_env`, and `sql_warehouse_id_env`.
+- Public docs and schemas now reflect the stricter v0.2 validation behavior.
+- DataMuru logo usage is enlarged across README, documentation, and landing surfaces.
+
 ### Added
 - Product-grade documentation organized into tutorials, task guides, concepts, references, operations, and contributor guidance
 - Complete operator documentation for authentication, execution modes, planning, saved plans, targeting, import, ACLs, destruction, and troubleshooting

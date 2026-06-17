@@ -3,6 +3,7 @@ import json
 from click.testing import CliRunner
 
 from datamuru.cli.main import cli
+from datamuru.core.config import validate_project
 
 
 def test_validate_command(sample_project):
@@ -17,6 +18,58 @@ def test_plan_command_outputs_resource_changes(sample_project):
     result = runner.invoke(cli, ["plan", "--config", str(sample_project / "datamuru.yml")])
     assert result.exit_code == 0
     assert "workspace:alpha-dev" in result.output
+
+
+def test_init_command_creates_env_based_databricks_project(tmp_path):
+    runner = CliRunner()
+    output_dir = tmp_path / "generated-project"
+
+    result = runner.invoke(
+        cli,
+        [
+            "init",
+            "--name",
+            "generated-project",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    provider_config = (output_dir / "providers" / "databricks.yml").read_text(encoding="utf-8")
+    workspace_config = (output_dir / "workspaces" / "alpha-dev.yml").read_text(encoding="utf-8")
+    assert "host_env: DATABRICKS_HOST" in provider_config
+    assert "token_env: DATABRICKS_TOKEN" in provider_config
+    assert "sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID" in provider_config
+    assert "execution_mode: state-only" in provider_config
+    assert "host: https://adb-placeholder" not in provider_config
+    assert "dm_alpha_marketing" in workspace_config
+    assert (output_dir / ".env.example").exists()
+    assert (output_dir / "README.md").exists()
+    issues = validate_project(output_dir / "datamuru.yml")
+    assert not [issue for issue in issues if issue.level == "error"]
+
+
+def test_init_command_accepts_live_readonly_execution_mode(tmp_path):
+    runner = CliRunner()
+    output_dir = tmp_path / "readonly-project"
+
+    result = runner.invoke(
+        cli,
+        [
+            "init",
+            "--name",
+            "readonly-project",
+            "--execution-mode",
+            "live-readonly",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    provider_config = (output_dir / "providers" / "databricks.yml").read_text(encoding="utf-8")
+    assert "execution_mode: live-readonly" in provider_config
 
 
 def test_plan_command_reports_unmatched_target(sample_project):

@@ -41,7 +41,9 @@ datamuru init --name quickstart --output-dir .
 ```
 
 The command creates a root configuration and supporting directories. Keep the
-provider in `state-only` mode for this tutorial.
+provider in `state-only` mode for this tutorial. It also creates `.env.example`
+with the Databricks environment variable names used when you later connect to a
+workspace.
 
 ## 3. Validate the configuration
 

@@ -14,11 +14,16 @@ datamuru init
   [--provider TEXT]
   [--cloud TEXT]
   [--edition TEXT]
+  [--execution-mode state-only|live-readonly|live-apply]
   [--output-dir TEXT]
 ```
 
 Defaults: name `datamuru-project`, provider `databricks`, cloud `azure`,
-edition `open-source`, and current output directory.
+edition `open-source`, execution mode `state-only`, and current output
+directory.
+
+The generated Databricks provider config uses `host_env`, `token_env`, and
+`sql_warehouse_id_env` so workspace-specific values stay outside YAML.
 
 ## `validate`
 

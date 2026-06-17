@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/datamuru-mark-canva.png" alt="DataMuru logo" width="144" height="144">
+  <img src="docs/assets/datamuru-mark-canva.png" alt="DataMuru logo" width="196" height="196">
 </p>
 
 <h1 align="center">DataMuru</h1>
@@ -17,7 +17,7 @@ It provisions and governs provider-backed data estates from declarative configur
 This public repository is the canonical home of the DataMuru Open Source Edition,
 the shared configuration contract, the `datamuru` PyPI package, and the public documentation.
 
-This repository contains the `v0.1 alpha` implementation with the following scope:
+This repository contains the `v0.2 alpha` implementation with the following scope:
 
 - Foundation layer: config loading, validation, local state, planning, apply, and destroy.
 - Azure-first Databricks provider abstraction with multi-cloud-ready interfaces.
@@ -28,7 +28,7 @@ This repository contains the `v0.1 alpha` implementation with the following scop
 
 ## Current stage
 
-DataMuru is currently in the `v0.1 alpha` stage.
+DataMuru is currently in the `v0.2 alpha` stage.
 
 The package and CLI execute supported live Databricks operations when `execution_mode: live-apply` is configured. Alpha support currently covers catalogs, schemas, Unity Catalog ACLs, import discovery/config generation, and capability-aware account SCIM identity operations.
 

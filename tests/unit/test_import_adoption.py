@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import pytest
 from click.testing import CliRunner
@@ -31,7 +31,7 @@ def _observed_catalog_state(sample_project, target: str) -> StateSnapshot:
 
 
 def test_import_adopt_previews_then_commits_matching_live_resources(sample_project, monkeypatch):
-    target = "catalog:alpha_marketing"
+    target = "catalog:dm_alpha_marketing"
     observed = _observed_catalog_state(sample_project, target)
     monkeypatch.setattr(
         DatabricksProvider,
@@ -54,10 +54,10 @@ def test_import_adopt_previews_then_commits_matching_live_resources(sample_proje
 
 
 def test_import_adopt_blocks_live_definition_conflict(sample_project, monkeypatch):
-    target = "catalog:alpha_marketing"
+    target = "catalog:dm_alpha_marketing"
     conflicting_catalog = ResourceDescriptor(
         resource_type="catalog",
-        name="alpha_marketing",
+        name="dm_alpha_marketing",
         attributes={"workspace": "another-workspace"},
     )
     monkeypatch.setattr(
@@ -83,7 +83,7 @@ def test_import_adopt_blocks_live_definition_conflict(sample_project, monkeypatc
 
 
 def test_import_adopt_cli_requires_approval_to_write_state(sample_project, monkeypatch):
-    target = "catalog:alpha_marketing"
+    target = "catalog:dm_alpha_marketing"
     observed = _observed_catalog_state(sample_project, target)
     monkeypatch.setattr(
         DatabricksProvider,

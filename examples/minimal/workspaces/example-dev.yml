@@ -3,7 +3,8 @@ workspace:
   cloud: azure
   region: eastus2
   catalogs:
-    - name: example_analytics
+    - name: dm_example_analytics
+      use_default_storage: true
       schemas:
         - raw
         - curated
