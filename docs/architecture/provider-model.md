@@ -18,9 +18,10 @@ The alpha provider interface includes:
 
 - `authenticate`
 - `build_desired_resources`
+- `observe_current_state`
 - `apply_resource`
 - `destroy_resource`
-- `get_resource_types`
+- discovery and import hooks for supported providers
 
 ## Current implementation
 
@@ -33,7 +34,10 @@ The current Databricks provider:
 - reads provider configuration
 - validates the selected cloud family
 - constructs desired resources from workspace declarations
-- records local apply/destroy behavior
+- observes supported live resources
+- applies selected live mutations
+- compiles RBAC assignments into provider grants
+- supports brownfield discovery and state adoption
 
 ## Cloud strategy
 

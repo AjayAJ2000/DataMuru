@@ -1,6 +1,30 @@
 # Architecture Overview
 
-The alpha repository is organized to reflect the long-term shape of the framework while keeping implementation scope tight and PyPI-friendly.
+DataMuru is organized as an installable Python library, a CLI, provider
+adapters, governance compilers, public schemas, examples, tests, and product
+documentation. The architecture is shaped for a product framework rather than a
+one-off automation script.
+
+For the detailed package-level explanation, read
+[Library architecture](library-architecture.md).
+
+## Architectural goals
+
+The architecture is designed to support:
+
+- PyPI distribution for OSS users;
+- Enterprise extension without forking the core contracts;
+- provider-specific behavior without leaking provider APIs into the planner;
+- deterministic plans that are reviewable by humans and automation;
+- conservative brownfield adoption;
+- governance intent that participates in the same lifecycle as infrastructure;
+- a CLI that remains thin over a reusable Python API.
+
+The core product promise is not "run a Databricks API call." It is "give data
+platform teams a repeatable operating model for declaring, reviewing, applying,
+and governing platform changes." That is why the architecture treats
+configuration, planning, state, provider execution, governance, documentation,
+and packaging as one product system.
 
 ## Major layers in the current codebase
 
@@ -22,6 +46,8 @@ Together these packages provide:
 - deterministic planning
 - apply and destroy orchestration
 - brownfield discovery and configuration-generation workflows
+- saved-plan safety checks
+- structured apply outcomes
 
 ### Providers
 
@@ -51,6 +77,22 @@ The repository is intentionally structured so future features can be added witho
 - the core engine should own orchestration semantics
 - providers should own platform-specific resource modeling
 - governance should remain composable and separable
+- errors should carry stable codes and recovery guidance
+- docs and schemas should evolve with runtime behavior
+
+## Design boundaries
+
+DataMuru intentionally keeps these concerns separate:
+
+| Concern | Owned by |
+| --- | --- |
+| Command parsing and terminal output | CLI layer |
+| Config loading and validation | Core config layer |
+| Desired/current state comparison | Plan layer |
+| Provider mutation and observation | Provider layer |
+| Taxonomy, RBAC, and masking compilation | Governance layer |
+| State persistence | State backend layer |
+| OSS/Enterprise feature boundary | Edition layer |
 
 ## Current implementation boundary
 
@@ -58,6 +100,31 @@ The Databricks provider performs real API operations for supported catalogs,
 schemas, Unity Catalog grants, and discovery workflows. Other resources remain
 local-only or Enterprise-only. The
 [capability reference](../reference/capabilities.md) is the source of truth.
+
+## Architecture map
+
+| Area | Why it exists | What to read |
+| --- | --- | --- |
+| Library architecture | Explains the importable package, runtime flow, dependencies, and extension points. | [Library architecture](library-architecture.md) |
+| Command lifecycle | Explains what happens when users run validate, doctor, plan, apply, destroy, and import. | [Command lifecycle](command-lifecycle.md) |
+| Core runtime | Explains config, state, planning, apply, and importer packages. | [Core runtime](core-runtime.md) |
+| Provider model | Explains how platform-specific adapters fit into a cloud-neutral core. | [Provider model](provider-model.md) |
+| Configuration model | Explains how root, provider, workspace, environment, and governance files relate. | [Configuration model](configuration-model.md) |
+| Governance architecture | Explains taxonomy, RBAC, masking, and provider grant compilation. | [Governance architecture](../governance/overview.md) |
+
+## How to read the architecture docs
+
+- Start with this page for the product-level shape.
+- Read [Library architecture](library-architecture.md) for the package map and
+  execution flow.
+- Read [Command lifecycle](command-lifecycle.md) for command-by-command runtime
+  behavior.
+- Read [Core runtime](core-runtime.md) when changing config, state, plan,
+  apply, or import behavior.
+- Read [Provider model](provider-model.md) when adding or extending platform
+  adapters.
+- Read [Configuration model](configuration-model.md) when changing YAML
+  contracts or validation.
 
 ## Product direction
 

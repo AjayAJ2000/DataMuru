@@ -51,13 +51,14 @@ Main responsibilities:
 
 ### `datamuru/core/importer/`
 
-This package exists now to preserve the contract for future brownfield import workflows.
+Owns brownfield discovery, YAML generation, and conservative state adoption.
 
 Current alpha behavior:
 
-- explicit unsupported-operation stubs
-
-That is intentional. The repository is being shaped for the long-term product while keeping the current milestone honest.
+- discover supported live Databricks resources;
+- generate reviewable workspace YAML;
+- adopt explicitly targeted matching live resources into local state;
+- block adoption when live fingerprints conflict with declared config.
 
 ## Why this matters
 

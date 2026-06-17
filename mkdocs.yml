@@ -19,11 +19,13 @@ theme:
       primary: custom
       accent: custom
   features:
-    - navigation.tabs
-    - navigation.sections
     - navigation.indexes
+    - navigation.path
     - navigation.footer
     - navigation.top
+    - navigation.tracking
+    - toc.follow
+    - toc.integrate
     - content.action.edit
     - content.action.view
     - content.code.copy
@@ -58,6 +60,7 @@ nav:
   - Home: index.md
   - Start:
       - Choose a path: getting-started/overview.md
+      - Evaluation checklist: getting-started/evaluation-checklist.md
       - Installation: getting-started/installation.md
       - Five-minute local quickstart: getting-started/quickstart.md
       - Databricks Free Edition: getting-started/databricks-free-edition.md
@@ -83,13 +86,22 @@ nav:
       - How DataMuru works: concepts/how-datamuru-works.md
       - Configuration hierarchy: concepts/configuration-hierarchy.md
       - State and reconciliation: concepts/state-and-reconciliation.md
+      - Lifecycle model: concepts/lifecycle-model.md
       - Resources, addresses, and targets: concepts/resources-and-addresses.md
       - Safety model: concepts/safety-model.md
+  - Architecture:
+      - Architecture overview: architecture/overview.md
+      - Library architecture: architecture/library-architecture.md
+      - Command lifecycle: architecture/command-lifecycle.md
+      - Core runtime: architecture/core-runtime.md
+      - Provider model: architecture/provider-model.md
+      - Configuration model: architecture/configuration-model.md
+      - Governance architecture: governance/overview.md
+      - OSS and Enterprise boundary: product/editions.md
+  - Governance:
       - Governance model: governance/overview.md
       - RBAC model: governance/rbac.md
       - Classification and masking: governance/classification-and-masking.md
-      - Provider architecture: architecture/provider-model.md
-      - OSS and Enterprise: product/editions.md
   - Reference:
       - Glossary: reference/glossary.md
       - CLI Reference: reference/cli.md
@@ -107,6 +119,7 @@ nav:
   - Operations:
       - Operating model: operations/usage-guidelines.md
       - Team adoption: operations/team-adoption-guidelines.md
+      - Enterprise rollout playbook: operations/enterprise-rollout-playbook.md
       - Security and credentials: operations/security.md
       - Support and feedback: operations/support.md
       - ACL and RBAC guidelines: operations/acl-guidelines.md
@@ -118,6 +131,7 @@ nav:
       - FAQ: operations/faq.md
   - Product:
       - Platform overview: product/platform-overview.md
+      - Product requirements summary: product/product-requirements-summary.md
       - Editions and commercial model: product/editions.md
       - Enterprise testing runbook: product/enterprise-testing.md
       - Packaging and distribution: product/packaging-and-distribution.md
@@ -126,6 +140,3 @@ nav:
       - Contributing: contributing/index.md
       - Documentation style guide: contributing/documentation-style-guide.md
       - Documentation review checklist: contributing/documentation-review-checklist.md
-      - Architecture overview: architecture/overview.md
-      - Core runtime: architecture/core-runtime.md
-      - Configuration model: architecture/configuration-model.md
