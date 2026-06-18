@@ -19,6 +19,7 @@ from .models import (
     ImportAdoptionResult,
     ImportDiscoveryReport,
     ImportGenerationResult,
+    ImportProgressCallback,
 )
 
 
@@ -39,14 +40,20 @@ class ImportEngine:
         include_system: bool = False,
         include_identities: bool = False,
         include_grants: bool = False,
+        catalogs: list[str] | None = None,
+        progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
+        self._emit_progress(progress, "Loading DataMuru configuration.", total=6, completed=0)
         project, environment, provider = self._load()
+        self._emit_progress(progress, "Configuration loaded. Connecting to provider.", completed=1)
         return provider.discover_importable_resources(
             project,
             environment,
             include_system=include_system,
             include_identities=include_identities,
             include_grants=include_grants,
+            catalogs=catalogs,
+            progress=progress,
         )
 
     def generate(
@@ -57,11 +64,14 @@ class ImportEngine:
         include_identities: bool = False,
         include_grants: bool = False,
         include_system: bool = False,
+        progress: ImportProgressCallback | None = None,
     ) -> ImportGenerationResult:
         report = self.discover(
             include_system=include_system,
             include_identities=include_identities or include_groups,
             include_grants=include_grants,
+            catalogs=catalogs,
+            progress=progress,
         )
         selected_catalogs = sorted(catalogs or [catalog.name for catalog in report.workspace.catalogs])
         available_catalogs = {catalog.name: catalog for catalog in report.workspace.catalogs}
@@ -154,12 +164,14 @@ class ImportEngine:
         output_dir: str | Path,
         catalogs: list[str] | None = None,
         include_system: bool = False,
+        progress: ImportProgressCallback | None = None,
     ) -> ImportGenerationResult:
         result = self.generate(
             catalogs=catalogs,
             include_identities=True,
             include_grants=True,
             include_system=include_system,
+            progress=progress,
         )
         root = Path(output_dir).resolve()
         workspace_dir = root / "workspaces"
@@ -180,6 +192,26 @@ class ImportEngine:
         if result.masking_file_text:
             files["masking"].write_text(result.masking_file_text, encoding="utf-8")
         return result.model_copy(update={"suite_files": {key: str(path) for key, path in files.items() if path.exists()}})
+
+    @staticmethod
+    def _emit_progress(
+        progress: ImportProgressCallback | None,
+        message: str,
+        *,
+        total: int | None = None,
+        completed: int | None = None,
+        advance: int | None = None,
+    ) -> None:
+        if progress is None:
+            return
+        event: dict = {"message": message}
+        if total is not None:
+            event["total"] = total
+        if completed is not None:
+            event["completed"] = completed
+        if advance is not None:
+            event["advance"] = advance
+        progress(event)
 
     @staticmethod
     def _generate_rbac_text(grants, selected_catalogs: list[str]) -> str:

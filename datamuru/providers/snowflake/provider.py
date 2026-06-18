@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datamuru.core.importer.models import ImportDiscoveryReport
+from datamuru.core.importer.models import ImportDiscoveryReport, ImportProgressCallback
 from datamuru.core.state.models import StateSnapshot
 from datamuru.errors import ProviderError
 from datamuru.providers.base import DataMuruProvider
@@ -120,6 +120,8 @@ class SnowflakeProvider(DataMuruProvider):
         include_system: bool = False,
         include_identities: bool = False,
         include_grants: bool = False,
+        catalogs: list[str] | None = None,
+        progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
         raise ProviderError(
             description="Snowflake import discovery is not enabled yet.",
@@ -127,6 +129,7 @@ class SnowflakeProvider(DataMuruProvider):
                 "provider": "snowflake",
                 "include_identities": include_identities,
                 "include_grants": include_grants,
+                "catalogs": catalogs,
             },
             suggestion="Use the Snowflake state-only provider scaffold now; live discovery is the next provider milestone.",
         )

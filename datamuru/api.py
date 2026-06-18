@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from datamuru.core.engine import DataMuruEngine
+from datamuru.core.importer.models import ImportProgressCallback
 
 
 class DataMuru:
@@ -38,11 +39,15 @@ class DataMuru:
         include_system: bool = False,
         include_identities: bool = False,
         include_grants: bool = False,
+        catalogs: list[str] | None = None,
+        progress: ImportProgressCallback | None = None,
     ):
         return self.engine.import_discover(
             include_system=include_system,
             include_identities=include_identities,
             include_grants=include_grants,
+            catalogs=catalogs,
+            progress=progress,
         )
 
     def import_generate(
@@ -53,6 +58,7 @@ class DataMuru:
         include_identities: bool = False,
         include_grants: bool = False,
         include_system: bool = False,
+        progress: ImportProgressCallback | None = None,
     ):
         return self.engine.import_generate(
             catalogs=catalogs,
@@ -60,6 +66,7 @@ class DataMuru:
             include_identities=include_identities,
             include_grants=include_grants,
             include_system=include_system,
+            progress=progress,
         )
 
     def import_suite(
@@ -68,11 +75,13 @@ class DataMuru:
         output_dir: str | Path,
         catalogs: list[str] | None = None,
         include_system: bool = False,
+        progress: ImportProgressCallback | None = None,
     ):
         return self.engine.import_suite(
             output_dir=output_dir,
             catalogs=catalogs,
             include_system=include_system,
+            progress=progress,
         )
 
     def import_adopt(self, *, targets: list[str], commit: bool = False):

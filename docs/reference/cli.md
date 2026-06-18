@@ -81,11 +81,21 @@ Destruction requires `--confirm-destroy`.
 ```text
 datamuru import discover
   [--config TEXT]
+  [--catalog TEXT]...
   [--include-system]
+  [--include-identities]
+  [--include-grants]
   [--output text|json]
 ```
 
-Requires one workspace declaration and a live execution mode.
+Requires one workspace declaration and a live execution mode. Text output shows
+a progress bar with the current provider stage. JSON output suppresses progress
+so automation can parse stdout safely.
+
+Repeat `--catalog` to restrict catalog, schema, and grant discovery to selected
+catalogs. Use this in enterprise workspaces before enabling `--include-grants`,
+because grant discovery executes SQL grant inspection for every catalog and
+schema in scope.
 
 ## `import generate`
 
@@ -94,8 +104,11 @@ datamuru import generate
   [--config TEXT]
   [--catalog TEXT]...
   [--include-groups]
+  [--include-identities]
+  [--include-grants]
   [--include-system]
   [--out TEXT]
+  [--suite-out TEXT]
   [--output text|json]
 ```
 

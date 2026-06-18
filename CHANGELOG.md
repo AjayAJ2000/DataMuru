@@ -7,6 +7,16 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.3a0] - 2026-06-18
+
+### Added
+- Import discovery now shows interactive progress for text output, including the current Databricks provider stage.
+- `datamuru import discover` now supports repeated `--catalog` filters to scope catalog, schema, and grant discovery.
+- Python import APIs accept an optional progress callback for product integrations.
+
+### Changed
+- Enterprise import documentation now explains why grant discovery can take longer and recommends scoped discovery before broad scans.
+
 ## [0.3.2a0] - 2026-06-18
 
 ### Fixed

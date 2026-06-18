@@ -6,6 +6,7 @@ from pathlib import Path
 from datamuru.core.apply import apply_plan
 from datamuru.core.config import load_project, resolve_environment_name, validate_project
 from datamuru.core.importer import ImportEngine
+from datamuru.core.importer.models import ImportProgressCallback
 from datamuru.core.plan import (
     build_plan,
     build_saved_plan_document,
@@ -116,11 +117,15 @@ class DataMuruEngine:
         include_system: bool = False,
         include_identities: bool = False,
         include_grants: bool = False,
+        catalogs: list[str] | None = None,
+        progress: ImportProgressCallback | None = None,
     ):
         return ImportEngine(config_path=self.config_path, environment=self.environment).discover(
             include_system=include_system,
             include_identities=include_identities,
             include_grants=include_grants,
+            catalogs=catalogs,
+            progress=progress,
         )
 
     def import_generate(
@@ -131,6 +136,7 @@ class DataMuruEngine:
         include_identities: bool = False,
         include_grants: bool = False,
         include_system: bool = False,
+        progress: ImportProgressCallback | None = None,
     ):
         return ImportEngine(config_path=self.config_path, environment=self.environment).generate(
             catalogs=catalogs,
@@ -138,6 +144,7 @@ class DataMuruEngine:
             include_identities=include_identities,
             include_grants=include_grants,
             include_system=include_system,
+            progress=progress,
         )
 
     def import_suite(
@@ -146,11 +153,13 @@ class DataMuruEngine:
         output_dir: str | Path,
         catalogs: list[str] | None = None,
         include_system: bool = False,
+        progress: ImportProgressCallback | None = None,
     ):
         return ImportEngine(config_path=self.config_path, environment=self.environment).write_suite(
             output_dir=output_dir,
             catalogs=catalogs,
             include_system=include_system,
+            progress=progress,
         )
 
     def import_adopt(self, *, targets: list[str], commit: bool = False):

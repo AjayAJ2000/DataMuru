@@ -29,9 +29,13 @@ DataMuru(config_path: str | Path, environment: str | None = None)
 | `apply(target=None)` | `ApplyResult` |
 | `apply_saved_plan(plan_path)` | `ApplyResult` |
 | `destroy(target=None)` | `ApplyResult` |
-| `import_discover(include_system=False)` | `ImportDiscoveryReport` |
+| `import_discover(include_system=False, catalogs=None, progress=None)` | `ImportDiscoveryReport` |
 | `import_generate(...)` | generated workspace configuration result |
 | `import_adopt(targets=[...], commit=False)` | `ImportAdoptionResult` |
+
+`progress` is an optional callback that receives dictionaries such as
+`{"message": "...", "total": 12, "completed": 5}`. CLI text output uses this to
+render import progress while keeping JSON output machine-readable.
 
 ## Example: guarded apply
 

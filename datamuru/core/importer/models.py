@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from pydantic import Field
 
 from datamuru.modeling import DataMuruModel
+
+ImportProgressCallback = Callable[[dict[str, Any]], None]
 
 
 class ImportSchemaResource(DataMuruModel):

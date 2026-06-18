@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from datamuru.core.importer.models import ImportProgressCallback
 from datamuru.core.state.models import StateSnapshot
 from datamuru.types import DoctorReport, ResourceDescriptor
 
@@ -37,4 +38,6 @@ class DataMuruProvider(ABC):
         include_system: bool = False,
         include_identities: bool = False,
         include_grants: bool = False,
+        catalogs: list[str] | None = None,
+        progress: ImportProgressCallback | None = None,
     ): ...

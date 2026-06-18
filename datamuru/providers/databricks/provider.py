@@ -7,6 +7,7 @@ from datamuru.core.importer.models import (
     ImportDiscoveryReport,
     ImportGrantResource,
     ImportGroupResource,
+    ImportProgressCallback,
     ImportSchemaResource,
     ImportServicePrincipalResource,
     ImportUserResource,
@@ -380,7 +381,10 @@ class DatabricksProvider(DataMuruProvider):
         include_system: bool = False,
         include_identities: bool = False,
         include_grants: bool = False,
+        catalogs: list[str] | None = None,
+        progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
+        self._emit_import_progress(progress, "Checking Databricks import prerequisites.", total=6, completed=1)
         if not self.auth.should_probe_connectivity():
             raise ProviderError(
                 description="Import discovery requires a live Databricks execution mode.",
@@ -394,6 +398,7 @@ class DatabricksProvider(DataMuruProvider):
                 suggestion="Keep one workspace YAML in scope while using the alpha import flow.",
             )
 
+        self._emit_import_progress(progress, "Verifying Databricks workspace connectivity.", completed=2)
         connectivity = self.client.probe_workspace()
         if not connectivity.ok:
             raise ProviderError(
@@ -405,23 +410,70 @@ class DatabricksProvider(DataMuruProvider):
         workspace_config = project.workspaces[0]
         workspace = workspace_config.raw.get("workspace", {})
         workspace_name = workspace.get("name", "workspace")
+        self._emit_import_progress(progress, "Discovering workspace groups.", completed=3)
         group_names = self._safe_list_groups(include_system=include_system)
+        self._emit_import_progress(progress, "Discovering account identities.", completed=4)
         users, group_details, service_principals = self._safe_discover_identities(
             include_system=include_system,
             enabled=include_identities,
         )
-        catalogs: list[ImportCatalogResource] = []
+        import_catalogs: list[ImportCatalogResource] = []
         grants: list[ImportGrantResource] = []
-        for catalog_name in self._safe_list_catalogs(include_system=include_system):
+        catalog_filter = {catalog.casefold() for catalog in catalogs or []}
+        self._emit_import_progress(progress, "Listing Unity Catalog catalogs.", completed=5)
+        discovered_catalog_names = self._safe_list_catalogs(include_system=include_system)
+        if catalog_filter:
+            discovered_catalog_names = [
+                catalog_name for catalog_name in discovered_catalog_names if catalog_name.casefold() in catalog_filter
+            ]
+        self._emit_import_progress(
+            progress,
+            f"Discovered {len(discovered_catalog_names)} catalog(s) in scope.",
+            total=max(6 + len(discovered_catalog_names), 6),
+            completed=6,
+        )
+        grant_scan_total = 0
+        grant_scan_completed = 0
+        catalog_schema_pairs: list[tuple[str, list[ImportSchemaResource]]] = []
+        for catalog_name in discovered_catalog_names:
+            self._emit_import_progress(
+                progress,
+                f"Listing schemas in catalog {catalog_name}.",
+                advance=1,
+            )
             schema_resources = [
                 ImportSchemaResource(name=schema_name)
                 for schema_name in self._safe_list_schemas(catalog_name, include_system=include_system)
             ]
-            catalogs.append(ImportCatalogResource(name=catalog_name, schemas=schema_resources))
-            if include_grants:
+            catalog_schema_pairs.append((catalog_name, schema_resources))
+            import_catalogs.append(ImportCatalogResource(name=catalog_name, schemas=schema_resources))
+            grant_scan_total += 1 + len(schema_resources)
+        if include_grants:
+            progress_base = 6 + len(discovered_catalog_names)
+            self._emit_import_progress(
+                progress,
+                f"Scanning Unity Catalog grants across {grant_scan_total} object(s).",
+                total=progress_base + max(grant_scan_total, 1),
+                completed=progress_base,
+            )
+            for catalog_name, schema_resources in catalog_schema_pairs:
                 grants.extend(self._safe_show_grants("catalog", catalog_name))
+                grant_scan_completed += 1
+                self._emit_import_progress(
+                    progress,
+                    f"Scanned grants for catalog {catalog_name}.",
+                    completed=progress_base + grant_scan_completed,
+                )
                 for schema_resource in schema_resources:
                     grants.extend(self._safe_show_grants("schema", f"{catalog_name}.{schema_resource.name}"))
+                    grant_scan_completed += 1
+                    self._emit_import_progress(
+                        progress,
+                        f"Scanned grants for schema {catalog_name}.{schema_resource.name}.",
+                        completed=progress_base + grant_scan_completed,
+                    )
+
+        self._emit_import_progress(progress, "Import discovery complete.")
 
         return ImportDiscoveryReport(
             provider="databricks",
@@ -431,7 +483,7 @@ class DatabricksProvider(DataMuruProvider):
                 name=workspace_name,
                 cloud=workspace.get("cloud", self.auth.cloud),
                 region=workspace.get("region", "unknown"),
-                catalogs=sorted(catalogs, key=lambda item: item.name),
+                catalogs=sorted(import_catalogs, key=lambda item: item.name),
                 groups=sorted(group_names),
                 users=sorted(users, key=lambda item: item.email),
                 group_details=sorted(group_details, key=lambda item: item.name),
@@ -447,6 +499,26 @@ class DatabricksProvider(DataMuruProvider):
                 ),
             ),
         )
+
+    @staticmethod
+    def _emit_import_progress(
+        progress: ImportProgressCallback | None,
+        message: str,
+        *,
+        total: int | None = None,
+        completed: int | None = None,
+        advance: int | None = None,
+    ) -> None:
+        if progress is None:
+            return
+        event: dict = {"message": message}
+        if total is not None:
+            event["total"] = total
+        if completed is not None:
+            event["completed"] = completed
+        if advance is not None:
+            event["advance"] = advance
+        progress(event)
 
     def build_desired_resources(self, project) -> list[ResourceDescriptor]:
         resources: list[ResourceDescriptor] = []

@@ -9,6 +9,28 @@ workspace.
 datamuru import discover --config datamuru.yml --output json
 ```
 
+For interactive use, omit `--output json` to see a progress bar and the current
+provider stage:
+
+```powershell
+datamuru import discover --config datamuru.yml
+```
+
+In enterprise workspaces, start with one catalog before requesting grants:
+
+```powershell
+datamuru import discover `
+  --config datamuru.yml `
+  --catalog analytics `
+  --include-identities `
+  --include-grants
+```
+
+Grant discovery can take longer than catalog/schema discovery because DataMuru
+uses the SQL warehouse to inspect grants for every catalog and schema in scope.
+If the warehouse is cold or the workspace has many schemas, scope the run with
+`--catalog` first.
+
 ## Generate selected configuration
 
 ```powershell

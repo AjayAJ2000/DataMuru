@@ -30,13 +30,13 @@ approved Enterprise credential extension.
 Install the released package:
 
 ```powershell
-python -m pip install --upgrade datamuru==0.3.2a0
+python -m pip install --upgrade datamuru==0.3.3a0
 ```
 
 For Databricks SDK experiments, install the optional extra:
 
 ```powershell
-python -m pip install --upgrade "datamuru[databricks]==0.3.2a0"
+python -m pip install --upgrade "datamuru[databricks]==0.3.3a0"
 ```
 
 ## 3. Create a project
@@ -233,13 +233,17 @@ Keep `live-readonly` for import review:
 
 ```powershell
 datamuru import discover --config datamuru.yml --output json
-datamuru import discover --config datamuru.yml --include-identities --include-grants --output json
+datamuru import discover --config datamuru.yml --catalog dm_enterprise_smoke_01
+datamuru import discover --config datamuru.yml --catalog dm_enterprise_smoke_01 --include-identities --include-grants
 datamuru import generate --config datamuru.yml --catalog dm_enterprise_smoke_01 --suite-out .\import-review
 datamuru import adopt --config datamuru.yml --target catalog:dm_enterprise_smoke_01
 datamuru import adopt --config datamuru.yml --target catalog:dm_enterprise_smoke_01 --auto-approve
 ```
 
 Adoption writes local state only. It does not mutate Databricks.
+Use scoped import discovery for the first enterprise test. Unscoped
+`--include-grants` scans every visible catalog and schema and can take longer
+when the SQL warehouse is cold.
 
 ## 11. Save and apply a reviewed plan
 
