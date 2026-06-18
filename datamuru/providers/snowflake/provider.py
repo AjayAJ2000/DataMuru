@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datamuru.core.importer.models import ImportDiscoveryReport, ImportWorkspaceResource
+from datamuru.core.importer.models import ImportDiscoveryReport
 from datamuru.core.state.models import StateSnapshot
 from datamuru.errors import ProviderError
 from datamuru.providers.base import DataMuruProvider

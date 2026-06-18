@@ -189,11 +189,9 @@ class ImportEngine:
         for grant in grants:
             if grant.securable_type == "catalog":
                 resource = grant.securable_name
-                domains = [grant.securable_name]
             elif grant.securable_type == "schema":
                 catalog, _, schema = grant.securable_name.partition(".")
                 resource = schema or grant.securable_name
-                domains = [catalog] if catalog else selected_catalogs
             else:
                 continue
             key = (grant.securable_type, grant.privilege)
