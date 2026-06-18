@@ -1,6 +1,7 @@
 from datamuru.core.config import load_project
 from datamuru.errors import ProviderError
 from datamuru.providers.databricks.auth import DatabricksAuthConfig
+from datamuru.providers.databricks.client import DatabricksWorkspaceClient
 from datamuru.providers.factory import load_provider
 
 
@@ -196,3 +197,46 @@ def test_databricks_auth_resolves_cli_profile(tmp_path, monkeypatch):
     assert auth.host == "https://dbc.example.cloud.databricks.com"
     assert auth.resolve_token() == "profile-token"
     assert auth.workspace_headers()["Authorization"] == "Bearer profile-token"
+
+
+def test_connectivity_probe_falls_back_when_scim_me_is_forbidden(monkeypatch):
+    auth = DatabricksAuthConfig.model_validate(
+        {
+            "cloud": "azure",
+            "auth_type": "pat",
+            "host": "https://adb-test.azuredatabricks.net",
+            "token_env": "DATABRICKS_TOKEN",
+            "execution_mode": "live-readonly",
+        }
+    )
+    monkeypatch.setenv("DATABRICKS_TOKEN", "token-value")
+    calls: list[str] = []
+
+    class FakeResponse:
+        def __init__(self, status_code: int, payload: dict | None = None) -> None:
+            self.status_code = status_code
+            self._payload = payload or {}
+            self.headers = {"Content-Type": "application/json"}
+            self.text = "{}"
+            self.url = "https://adb-test.azuredatabricks.net"
+
+        def json(self):
+            return self._payload
+
+    def fake_get(url, **kwargs):
+        calls.append(url)
+        if url.endswith("/api/2.0/preview/scim/v2/Me"):
+            return FakeResponse(403)
+        if url.endswith("/api/2.1/unity-catalog/catalogs"):
+            return FakeResponse(200, {"catalogs": []})
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    monkeypatch.setattr("datamuru.providers.databricks.client.requests.get", fake_get)
+
+    result = DatabricksWorkspaceClient(auth).probe_workspace()
+
+    assert result.ok
+    assert result.level == "ok"
+    assert "Unity Catalog connectivity probe succeeded" in result.message
+    assert result.details["identity_status_code"] == 403
+    assert len(calls) == 2

@@ -119,7 +119,17 @@ class DatabricksWorkspaceClient:
                 current_user=current_user,
                 details={"endpoint": endpoint},
             )
-        if response.status_code in {401, 403}:
+        if response.status_code == 403:
+            fallback = self._probe_catalogs_endpoint()
+            if fallback.ok:
+                fallback.details = {
+                    **fallback.details,
+                    "identity_endpoint": endpoint,
+                    "identity_status_code": response.status_code,
+                }
+                return fallback
+            return fallback
+        if response.status_code == 401:
             return ConnectivityProbeResult(
                 ok=False,
                 level="error",

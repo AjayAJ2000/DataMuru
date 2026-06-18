@@ -7,6 +7,11 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.1a0] - 2026-06-18
+
+### Fixed
+- Databricks enterprise connectivity checks now fall back to Unity Catalog when the SCIM `/Me` endpoint returns `403`.
+
 ## [0.3.0a0] - 2026-06-18
 
 ### Added
