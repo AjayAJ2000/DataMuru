@@ -7,6 +7,12 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.2a0] - 2026-06-18
+
+### Fixed
+- Databricks CLI profile authentication now uses Databricks SDK unified auth headers so SSO/OAuth profiles work the same way as `databricks catalogs list --profile <profile>`.
+- `doctor` no longer requires a static token inside `.databrickscfg` for Databricks CLI profile auth.
+
 ## [0.3.1a0] - 2026-06-18
 
 ### Fixed

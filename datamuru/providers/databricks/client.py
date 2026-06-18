@@ -14,8 +14,10 @@ from .auth import DatabricksAuthConfig
 
 try:  # pragma: no cover - optional dependency path
     from databricks.sdk import WorkspaceClient
+    from databricks.sdk.core import Config
 except Exception:  # pragma: no cover - optional dependency path
     WorkspaceClient = None
+    Config = None
 
 
 class ConnectivityProbeResult(DataMuruModel):
@@ -45,6 +47,56 @@ class DatabricksWorkspaceClient:
     def sdk_available(self) -> bool:
         return WorkspaceClient is not None
 
+    def workspace_headers(self) -> dict[str, str]:
+        if self.auth.auth_type == "databricks-cli":
+            return self._sdk_workspace_headers()
+        return self.auth.workspace_headers()
+
+    def _sdk_workspace_headers(self) -> dict[str, str]:
+        if Config is None:
+            token = self.auth.resolve_token()
+            if token:
+                return {"Authorization": f"Bearer {token}"}
+            raise ProviderError(
+                description="Databricks CLI profile auth requires databricks-sdk for unified authentication.",
+                context={
+                    "auth_type": self.auth.auth_type,
+                    "profile": self.auth.profile,
+                    "config_file": self.auth.config_file,
+                },
+                suggestion="Install the package with `pip install 'datamuru[databricks]'` and retry.",
+            )
+        try:
+            config_kwargs = self._sdk_config_kwargs()
+            config = Config(**config_kwargs)
+            return dict(config.authenticate())
+        except Exception as exc:
+            raise ProviderError(
+                description="Databricks SDK unified authentication could not resolve workspace credentials.",
+                context={
+                    "auth_type": self.auth.auth_type,
+                    "profile": self.auth.profile,
+                    "config_file": self.auth.config_file,
+                    "host": self.auth.host,
+                    "error": str(exc),
+                },
+                suggestion=(
+                    "Verify `databricks catalogs list --profile <profile>` works in the same shell, then set "
+                    "`profile` in providers/databricks.yml or DATABRICKS_CONFIG_PROFILE."
+                ),
+            ) from exc
+
+    def _sdk_config_kwargs(self) -> dict[str, str]:
+        kwargs: dict[str, str] = {}
+        if self.auth.host:
+            kwargs["host"] = self.auth.host
+        profile = self.auth.profile
+        if profile:
+            kwargs["profile"] = profile
+        if self.auth.config_file:
+            kwargs["config_file"] = self.auth.config_file
+        return kwargs
+
     def build_sdk_client(self):
         if WorkspaceClient is None:
             raise ProviderError(
@@ -52,7 +104,9 @@ class DatabricksWorkspaceClient:
                 context={"dependency": "databricks-sdk"},
                 suggestion="Install the package with `pip install 'datamuru[databricks]'`.",
             )
-        if self.auth.auth_type in {"pat", "databricks-cli", "oauth"}:
+        if self.auth.auth_type == "databricks-cli":
+            return WorkspaceClient(**self._sdk_config_kwargs())
+        if self.auth.auth_type in {"pat", "oauth"}:
             token = self.auth.resolve_token()
             if not token:
                 raise ProviderError(
@@ -90,7 +144,7 @@ class DatabricksWorkspaceClient:
         try:
             response = requests.get(
                 endpoint,
-                headers={**self.auth.workspace_headers(), "Accept": "application/json"},
+                headers={**self.workspace_headers(), "Accept": "application/json"},
                 timeout=self.auth.connect_timeout_seconds,
             )
         except requests.RequestException as exc:
@@ -150,7 +204,7 @@ class DatabricksWorkspaceClient:
         try:
             response = requests.get(
                 endpoint,
-                headers={**self.auth.workspace_headers(), "Accept": "application/json"},
+                headers={**self.workspace_headers(), "Accept": "application/json"},
                 params={"max_results": 1},
                 timeout=self.auth.connect_timeout_seconds,
             )
@@ -234,7 +288,7 @@ class DatabricksWorkspaceClient:
         try:
             response = requests.get(
                 url,
-                headers={**self.auth.workspace_headers(), "Accept": "application/scim+json"},
+                headers={**self.workspace_headers(), "Accept": "application/scim+json"},
                 params={"startIndex": 1, "count": 1},
                 timeout=self.auth.connect_timeout_seconds,
             )
@@ -500,7 +554,7 @@ class DatabricksWorkspaceClient:
         try:
             response = requests.get(
                 url,
-                headers={**self.auth.workspace_headers(), "Accept": "application/json"},
+                headers={**self.workspace_headers(), "Accept": "application/json"},
                 params=params,
                 timeout=timeout_seconds or self.auth.connect_timeout_seconds,
             )
@@ -580,7 +634,7 @@ class DatabricksWorkspaceClient:
     ) -> dict[str, Any]:
         url = f"{self.auth.host.rstrip('/')}{self.ACCOUNT_SCIM_BASE}/{resource_path.lstrip('/')}"
         headers = {
-            **self.auth.workspace_headers(),
+            **self.workspace_headers(),
             "Accept": "application/scim+json",
             "Content-Type": "application/scim+json",
         }
@@ -695,7 +749,7 @@ class DatabricksWorkspaceClient:
         try:
             response = requests.post(
                 url,
-                headers={**self.auth.workspace_headers(), "Content-Type": "application/json"},
+                headers={**self.workspace_headers(), "Content-Type": "application/json"},
                 json=payload,
                 timeout=self.auth.connect_timeout_seconds,
             )
@@ -760,7 +814,7 @@ class DatabricksWorkspaceClient:
         try:
             response = requests.delete(
                 url,
-                headers=self.auth.workspace_headers(),
+                headers=self.workspace_headers(),
                 params=params,
                 timeout=self.auth.connect_timeout_seconds,
             )

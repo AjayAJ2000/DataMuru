@@ -30,13 +30,13 @@ approved Enterprise credential extension.
 Install the released package:
 
 ```powershell
-python -m pip install --upgrade datamuru==0.3.1a0
+python -m pip install --upgrade datamuru==0.3.2a0
 ```
 
 For Databricks SDK experiments, install the optional extra:
 
 ```powershell
-python -m pip install --upgrade "datamuru[databricks]==0.3.1a0"
+python -m pip install --upgrade "datamuru[databricks]==0.3.2a0"
 ```
 
 ## 3. Create a project

@@ -108,16 +108,19 @@ class DatabricksProvider(DataMuruProvider):
         elif auth_type == "databricks-cli":
             profile = self.auth.profile or "DEFAULT"
             profile_data = self.auth.resolve_cli_profile()
+            profile_ready = bool(profile_data or self.auth.profile)
+            sdk_ready = self.client.sdk_available()
             checks.append(
                 DoctorCheck(
-                    level="ok" if profile_data and self.auth.resolve_token() else "error",
+                    level="ok" if profile_ready and sdk_ready else "error",
                     code="provider.auth_type",
                     message=(
-                        f"Databricks CLI profile auth is configured for profile '{profile}'."
-                        if profile_data and self.auth.resolve_token()
+                        f"Databricks CLI profile auth is configured for profile '{profile}' using Databricks SDK unified auth."
+                        if profile_ready and sdk_ready
                         else (
-                            f"Databricks CLI profile '{profile}' is missing or does not contain a usable token. "
-                            "Run `databricks auth login` or configure .databrickscfg."
+                            f"Databricks CLI profile '{profile}' is not ready for DataMuru. "
+                            "Run `databricks auth login`, verify `databricks catalogs list --profile <profile>`, "
+                            "and install `datamuru[databricks]`."
                         )
                     ),
                 )

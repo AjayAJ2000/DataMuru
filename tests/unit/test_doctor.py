@@ -199,6 +199,90 @@ def test_databricks_auth_resolves_cli_profile(tmp_path, monkeypatch):
     assert auth.workspace_headers()["Authorization"] == "Bearer profile-token"
 
 
+def test_databricks_cli_profile_headers_use_sdk_unified_auth(monkeypatch):
+    class FakeConfig:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def authenticate(self):
+            return {"Authorization": "Bearer sdk-profile-token"}
+
+    monkeypatch.setattr("datamuru.providers.databricks.client.Config", FakeConfig)
+
+    auth = DatabricksAuthConfig.model_validate(
+        {
+            "cloud": "azure",
+            "auth_type": "databricks-cli",
+            "profile": "US_POC_DEV",
+            "host": "https://adb-test.azuredatabricks.net",
+            "execution_mode": "live-readonly",
+        }
+    )
+
+    headers = DatabricksWorkspaceClient(auth).workspace_headers()
+
+    assert headers["Authorization"] == "Bearer sdk-profile-token"
+    assert auth.supports_live_connectivity()
+
+
+def test_doctor_accepts_cli_profile_without_static_token(sample_project, monkeypatch):
+    cfg = sample_project / ".databrickscfg"
+    cfg.write_text(
+        "\n".join(
+            [
+                "[US_POC_DEV]",
+                "host = https://adb-test.azuredatabricks.net",
+                "auth_type = databricks-cli",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DATABRICKS_CONFIG_FILE", str(cfg))
+    provider_path = sample_project / "providers" / "databricks.yml"
+    provider_path.write_text(
+        "\n".join(
+            [
+                "provider:",
+                "  cloud: azure",
+                "  connect_timeout_seconds: 1",
+                "  execution_mode: live-readonly",
+                "  auth_type: databricks-cli",
+                "  profile: US_POC_DEV",
+                "  sql_warehouse_id: test-warehouse",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    project = load_project(sample_project / "datamuru.yml")
+    provider = load_provider(project)
+    monkeypatch.setattr(provider.client, "sdk_available", lambda: True)
+    monkeypatch.setattr(
+        provider.client,
+        "probe_workspace",
+        lambda: type(
+            "Probe",
+            (),
+            {
+                "level": "ok",
+                "code": "provider.connectivity",
+                "message": "Databricks Unity Catalog connectivity probe succeeded.",
+                "current_user": None,
+                "details": {"endpoint": "https://adb-test.azuredatabricks.net/api/2.1/unity-catalog/catalogs"},
+            },
+        )(),
+    )
+
+    report = provider.doctor(project, "dev")
+
+    assert report.success
+    assert any(
+        check.code == "provider.auth_type" and "SDK unified auth" in check.message
+        for check in report.checks
+    )
+
+
 def test_connectivity_probe_falls_back_when_scim_me_is_forbidden(monkeypatch):
     auth = DatabricksAuthConfig.model_validate(
         {

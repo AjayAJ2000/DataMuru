@@ -1,6 +1,6 @@
 # Current capabilities and limits
 
-This page describes DataMuru OSS `0.3.1a0`.
+This page describes DataMuru OSS `0.3.2a0`.
 
 ## Implemented
 

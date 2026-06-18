@@ -82,8 +82,10 @@ class DatabricksAuthConfig(DataMuruModel):
         return None
 
     def supports_live_connectivity(self) -> bool:
-        if self.auth_type in {"pat", "databricks-cli", "oauth"}:
+        if self.auth_type in {"pat", "oauth"}:
             return bool(self.resolve_token())
+        if self.auth_type == "databricks-cli":
+            return bool(self.profile or os.getenv("DATABRICKS_CONFIG_PROFILE") or self.resolve_cli_profile())
         return self.auth_type == "azure-managed-identity"
 
     def allows_live_mutation(self) -> bool:
