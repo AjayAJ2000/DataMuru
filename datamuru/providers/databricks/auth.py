@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+from configparser import ConfigParser
+from pathlib import Path
 from typing import Any
 
 from pydantic import model_validator
@@ -18,6 +20,8 @@ class DatabricksAuthConfig(DataMuruModel):
     execution_mode: str = "state-only"
     host: str = ""
     host_env: str | None = None
+    profile: str | None = None
+    config_file: str | None = None
     sql_warehouse_id: str | None = None
     sql_warehouse_id_env: str | None = None
     token_env: str | None = None
@@ -28,17 +32,44 @@ class DatabricksAuthConfig(DataMuruModel):
         return cls.model_validate(provider)
 
     @model_validator(mode="after")
-    def resolve_host_from_environment(self) -> "DatabricksAuthConfig":
+    def resolve_host_from_environment_or_profile(self) -> "DatabricksAuthConfig":
         if self.host_env and (not self.host or "your-workspace" in self.host):
             env_host = os.getenv(self.host_env)
             if env_host:
                 self.host = env_host
+        profile = self.resolve_cli_profile()
+        if profile and (not self.host or "your-workspace" in self.host):
+            profile_host = profile.get("host")
+            if profile_host:
+                self.host = profile_host
         return self
 
     def resolve_token(self) -> str | None:
-        if not self.token_env:
-            return None
-        return os.getenv(self.token_env)
+        if self.token_env:
+            token = os.getenv(self.token_env)
+            if token:
+                return token
+        profile = self.resolve_cli_profile()
+        if profile:
+            return profile.get("token") or profile.get("access_token")
+        return None
+
+    def resolve_cli_profile(self) -> dict[str, str]:
+        if self.auth_type != "databricks-cli" and not self.profile:
+            return {}
+        profile_name = self.profile or os.getenv("DATABRICKS_CONFIG_PROFILE") or "DEFAULT"
+        config_path = Path(
+            self.config_file
+            or os.getenv("DATABRICKS_CONFIG_FILE", "")
+            or Path.home() / ".databrickscfg"
+        ).expanduser()
+        if not config_path.exists():
+            return {}
+        parser = ConfigParser()
+        parser.read(config_path, encoding="utf-8")
+        if not parser.has_section(profile_name):
+            return {}
+        return {key: value for key, value in parser.items(profile_name)}
 
     def has_pat(self) -> bool:
         return bool(self.auth_type == "pat" and self.resolve_token())
@@ -51,9 +82,9 @@ class DatabricksAuthConfig(DataMuruModel):
         return None
 
     def supports_live_connectivity(self) -> bool:
-        if self.auth_type == "pat":
-            return self.has_pat()
-        return self.auth_type in {"databricks-cli", "oauth", "azure-managed-identity"}
+        if self.auth_type in {"pat", "databricks-cli", "oauth"}:
+            return bool(self.resolve_token())
+        return self.auth_type == "azure-managed-identity"
 
     def allows_live_mutation(self) -> bool:
         return self.execution_mode == "live-apply"
@@ -66,10 +97,15 @@ class DatabricksAuthConfig(DataMuruModel):
 
     def workspace_headers(self) -> dict[str, str]:
         token = self.resolve_token()
-        if self.auth_type != "pat" or not token:
+        if self.auth_type in {"pat", "databricks-cli", "oauth"} and token:
+            return {"Authorization": f"Bearer {token}"}
+        if not token:
             raise ProviderError(
-                description="PAT-based workspace headers were requested without an available PAT token.",
+                description="Databricks workspace headers were requested without an available bearer token.",
                 context={"auth_type": self.auth_type, "token_env": self.token_env},
-                suggestion="Set the configured token environment variable or switch to a supported auth mode.",
+                suggestion=(
+                    "Set the configured token environment variable, configure a Databricks CLI profile with a token, "
+                    "or use a supported enterprise auth extension."
+                ),
             )
         return {"Authorization": f"Bearer {token}"}

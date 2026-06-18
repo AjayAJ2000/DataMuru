@@ -29,4 +29,12 @@ class DataMuruProvider(ABC):
     def observe_current_state(self, project, environment: str) -> StateSnapshot: ...
 
     @abstractmethod
-    def discover_importable_resources(self, project, environment: str, *, include_system: bool = False): ...
+    def discover_importable_resources(
+        self,
+        project,
+        environment: str,
+        *,
+        include_system: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
+    ): ...

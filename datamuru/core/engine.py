@@ -110,9 +110,17 @@ class DataMuruEngine:
         project, environment, provider, _ = self._load()
         return provider.doctor(project, environment)
 
-    def import_discover(self, *, include_system: bool = False):
+    def import_discover(
+        self,
+        *,
+        include_system: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
+    ):
         return ImportEngine(config_path=self.config_path, environment=self.environment).discover(
-            include_system=include_system
+            include_system=include_system,
+            include_identities=include_identities,
+            include_grants=include_grants,
         )
 
     def import_generate(
@@ -120,11 +128,28 @@ class DataMuruEngine:
         *,
         catalogs: list[str] | None = None,
         include_groups: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
         include_system: bool = False,
     ):
         return ImportEngine(config_path=self.config_path, environment=self.environment).generate(
             catalogs=catalogs,
             include_groups=include_groups,
+            include_identities=include_identities,
+            include_grants=include_grants,
+            include_system=include_system,
+        )
+
+    def import_suite(
+        self,
+        *,
+        output_dir: str | Path,
+        catalogs: list[str] | None = None,
+        include_system: bool = False,
+    ):
+        return ImportEngine(config_path=self.config_path, environment=self.environment).write_suite(
+            output_dir=output_dir,
+            catalogs=catalogs,
             include_system=include_system,
         )
 

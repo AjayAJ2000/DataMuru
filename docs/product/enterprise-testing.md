@@ -21,20 +21,22 @@ You need:
 - account SCIM/admin capability if testing managed users, groups, service
   principals, or group memberships.
 
-For the alpha package, PAT authentication is the most-tested path.
+For the alpha package, PAT authentication is the quickest smoke-test path.
+Enterprise testing should also validate Databricks CLI profile auth or the
+approved Enterprise credential extension.
 
 ## 2. Install DataMuru
 
 Install the released package:
 
 ```powershell
-python -m pip install --upgrade datamuru==0.2.0a0
+python -m pip install --upgrade datamuru==0.3.0a0
 ```
 
 For Databricks SDK experiments, install the optional extra:
 
 ```powershell
-python -m pip install --upgrade "datamuru[databricks]==0.2.0a0"
+python -m pip install --upgrade "datamuru[databricks]==0.3.0a0"
 ```
 
 ## 3. Create a project
@@ -57,6 +59,18 @@ provider:
   sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID
 ```
 
+For an enterprise laptop that already uses Databricks CLI SSO, replace the auth
+fields with:
+
+```yaml
+provider:
+  cloud: azure
+  execution_mode: live-readonly
+  auth_type: databricks-cli
+  profile: enterprise-dev
+  sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID
+```
+
 ## 4. Set environment variables
 
 Set values in the same shell that runs DataMuru:
@@ -64,6 +78,14 @@ Set values in the same shell that runs DataMuru:
 ```powershell
 $env:DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
 $env:DATABRICKS_TOKEN="your-token"
+$env:DATABRICKS_SQL_WAREHOUSE_ID="your-sql-warehouse-id"
+```
+
+For CLI profile auth:
+
+```powershell
+databricks auth login --profile enterprise-dev
+$env:DATABRICKS_CONFIG_PROFILE="enterprise-dev"
 $env:DATABRICKS_SQL_WAREHOUSE_ID="your-sql-warehouse-id"
 ```
 
@@ -211,7 +233,8 @@ Keep `live-readonly` for import review:
 
 ```powershell
 datamuru import discover --config datamuru.yml --output json
-datamuru import generate --config datamuru.yml --catalog dm_enterprise_smoke_01 --out .\workspaces\imported-smoke.yml
+datamuru import discover --config datamuru.yml --include-identities --include-grants --output json
+datamuru import generate --config datamuru.yml --catalog dm_enterprise_smoke_01 --suite-out .\import-review
 datamuru import adopt --config datamuru.yml --target catalog:dm_enterprise_smoke_01
 datamuru import adopt --config datamuru.yml --target catalog:dm_enterprise_smoke_01 --auto-approve
 ```

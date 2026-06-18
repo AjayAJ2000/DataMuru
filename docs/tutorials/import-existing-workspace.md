@@ -38,6 +38,29 @@ datamuru import generate `
 
 Add `--include-groups` only if you intend to review group references.
 
+## Generate an Enterprise review suite
+
+For enterprise brownfield onboarding, generate all review files together:
+
+```powershell
+datamuru import generate `
+  --config datamuru.yml `
+  --catalog existing_sales `
+  --suite-out .\import-review
+```
+
+This writes:
+
+- `import-review\workspaces\imported-dev.yml`
+- `import-review\governance\rbac.imported.yml`
+- `import-review\governance\taxonomy.imported.yml`
+- `import-review\governance\masking.imported.yml`
+
+The suite attempts to include identity context and grant-derived RBAC when the
+workspace supports account SCIM and a SQL warehouse is configured. If those
+capabilities are unavailable, DataMuru still writes the catalog/schema review
+file and leaves the missing enterprise sections empty for manual curation.
+
 ## Review before adoption
 
 Inspect the generated file for:

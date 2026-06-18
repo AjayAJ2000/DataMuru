@@ -33,19 +33,45 @@ class DataMuru:
     def doctor(self):
         return self.engine.doctor()
 
-    def import_discover(self, include_system: bool = False):
-        return self.engine.import_discover(include_system=include_system)
+    def import_discover(
+        self,
+        include_system: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
+    ):
+        return self.engine.import_discover(
+            include_system=include_system,
+            include_identities=include_identities,
+            include_grants=include_grants,
+        )
 
     def import_generate(
         self,
         *,
         catalogs: list[str] | None = None,
         include_groups: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
         include_system: bool = False,
     ):
         return self.engine.import_generate(
             catalogs=catalogs,
             include_groups=include_groups,
+            include_identities=include_identities,
+            include_grants=include_grants,
+            include_system=include_system,
+        )
+
+    def import_suite(
+        self,
+        *,
+        output_dir: str | Path,
+        catalogs: list[str] | None = None,
+        include_system: bool = False,
+    ):
+        return self.engine.import_suite(
+            output_dir=output_dir,
+            catalogs=catalogs,
             include_system=include_system,
         )
 

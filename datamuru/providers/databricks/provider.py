@@ -5,7 +5,11 @@ from urllib.parse import urlparse
 from datamuru.core.importer.models import (
     ImportCatalogResource,
     ImportDiscoveryReport,
+    ImportGrantResource,
+    ImportGroupResource,
     ImportSchemaResource,
+    ImportServicePrincipalResource,
+    ImportUserResource,
     ImportWorkspaceResource,
 )
 from datamuru.core.plan.renderer import fingerprint
@@ -101,12 +105,44 @@ class DatabricksProvider(DataMuruProvider):
                         message=f"Environment variable '{token_env}' is not set.",
                     )
                 )
-        elif auth_type in {"azure-managed-identity", "databricks-cli", "oauth"}:
+        elif auth_type == "databricks-cli":
+            profile = self.auth.profile or "DEFAULT"
+            profile_data = self.auth.resolve_cli_profile()
             checks.append(
                 DoctorCheck(
-                    level="ok",
+                    level="ok" if profile_data and self.auth.resolve_token() else "error",
                     code="provider.auth_type",
-                    message=f"Authentication mode '{auth_type}' is configured.",
+                    message=(
+                        f"Databricks CLI profile auth is configured for profile '{profile}'."
+                        if profile_data and self.auth.resolve_token()
+                        else (
+                            f"Databricks CLI profile '{profile}' is missing or does not contain a usable token. "
+                            "Run `databricks auth login` or configure .databrickscfg."
+                        )
+                    ),
+                )
+            )
+        elif auth_type == "oauth":
+            checks.append(
+                DoctorCheck(
+                    level="ok" if self.auth.resolve_token() else "error",
+                    code="provider.auth_type",
+                    message=(
+                        "OAuth bearer-token authentication is configured."
+                        if self.auth.resolve_token()
+                        else "OAuth auth requires token_env or an Enterprise auth extension to provide a bearer token."
+                    ),
+                )
+            )
+        elif auth_type == "azure-managed-identity":
+            checks.append(
+                DoctorCheck(
+                    level="warning",
+                    code="provider.auth_type",
+                    message=(
+                        "Azure managed identity is reserved for Enterprise auth extensions; "
+                        "the OSS alpha does not yet mint managed identity tokens directly."
+                    ),
                 )
             )
         else:
@@ -333,7 +369,15 @@ class DatabricksProvider(DataMuruProvider):
 
         return StateSnapshot(resources=observed_resources)
 
-    def discover_importable_resources(self, project, environment: str, *, include_system: bool = False) -> ImportDiscoveryReport:
+    def discover_importable_resources(
+        self,
+        project,
+        environment: str,
+        *,
+        include_system: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
+    ) -> ImportDiscoveryReport:
         if not self.auth.should_probe_connectivity():
             raise ProviderError(
                 description="Import discovery requires a live Databricks execution mode.",
@@ -359,13 +403,22 @@ class DatabricksProvider(DataMuruProvider):
         workspace = workspace_config.raw.get("workspace", {})
         workspace_name = workspace.get("name", "workspace")
         group_names = self._safe_list_groups(include_system=include_system)
+        users, group_details, service_principals = self._safe_discover_identities(
+            include_system=include_system,
+            enabled=include_identities,
+        )
         catalogs: list[ImportCatalogResource] = []
+        grants: list[ImportGrantResource] = []
         for catalog_name in self._safe_list_catalogs(include_system=include_system):
             schema_resources = [
                 ImportSchemaResource(name=schema_name)
                 for schema_name in self._safe_list_schemas(catalog_name, include_system=include_system)
             ]
             catalogs.append(ImportCatalogResource(name=catalog_name, schemas=schema_resources))
+            if include_grants:
+                grants.extend(self._safe_show_grants("catalog", catalog_name))
+                for schema_resource in schema_resources:
+                    grants.extend(self._safe_show_grants("schema", f"{catalog_name}.{schema_resource.name}"))
 
         return ImportDiscoveryReport(
             provider="databricks",
@@ -377,6 +430,18 @@ class DatabricksProvider(DataMuruProvider):
                 region=workspace.get("region", "unknown"),
                 catalogs=sorted(catalogs, key=lambda item: item.name),
                 groups=sorted(group_names),
+                users=sorted(users, key=lambda item: item.email),
+                group_details=sorted(group_details, key=lambda item: item.name),
+                service_principals=sorted(service_principals, key=lambda item: item.name),
+                grants=sorted(
+                    grants,
+                    key=lambda item: (
+                        item.securable_type,
+                        item.securable_name,
+                        item.principal,
+                        item.privilege,
+                    ),
+                ),
             ),
         )
 
@@ -1069,3 +1134,99 @@ class DatabricksProvider(DataMuruProvider):
         if include_system:
             return schemas
         return [schema for schema in schemas if schema.lower() not in self.SYSTEM_SCHEMA_NAMES]
+
+    def _safe_discover_identities(
+        self,
+        *,
+        include_system: bool,
+        enabled: bool,
+    ) -> tuple[list[ImportUserResource], list[ImportGroupResource], list[ImportServicePrincipalResource]]:
+        if not enabled:
+            return [], [], []
+        capability = self.client.probe_identity_management()
+        if not capability.supported:
+            return [], [], []
+        try:
+            raw_users = self.client.list_account_users()
+            raw_groups = self.client.list_account_groups()
+            raw_service_principals = self.client.list_account_service_principals()
+        except ProviderError:
+            return [], [], []
+
+        users_by_id: dict[str, str] = {}
+        groups_by_id: dict[str, str] = {}
+        service_principals_by_id: dict[str, str] = {}
+
+        users: list[ImportUserResource] = []
+        for user in raw_users:
+            email = user.get("userName")
+            if not email:
+                continue
+            users_by_id[str(user.get("id", ""))] = str(email)
+            users.append(
+                ImportUserResource(
+                    email=str(email),
+                    display_name=user.get("displayName"),
+                )
+            )
+
+        service_principals: list[ImportServicePrincipalResource] = []
+        for principal in raw_service_principals:
+            name = principal.get("displayName") or principal.get("applicationId")
+            if not name:
+                continue
+            service_principals_by_id[str(principal.get("id", ""))] = str(name)
+            service_principals.append(
+                ImportServicePrincipalResource(
+                    name=str(name),
+                    application_id=principal.get("applicationId"),
+                )
+            )
+
+        for group in raw_groups:
+            name = group.get("displayName")
+            if name:
+                groups_by_id[str(group.get("id", ""))] = str(name)
+
+        group_details: list[ImportGroupResource] = []
+        for group in raw_groups:
+            name = group.get("displayName")
+            if not name:
+                continue
+            if not include_system and str(name).lower() in self.SYSTEM_GROUP_NAMES:
+                continue
+            members: dict[str, list[str]] = {"users": [], "groups": [], "service_principals": []}
+            for member in group.get("members", []) or []:
+                member_id = str(member.get("value", ""))
+                if member_id in users_by_id:
+                    members["users"].append(users_by_id[member_id])
+                elif member_id in groups_by_id:
+                    members["groups"].append(groups_by_id[member_id])
+                elif member_id in service_principals_by_id:
+                    members["service_principals"].append(service_principals_by_id[member_id])
+            group_details.append(
+                ImportGroupResource(
+                    name=str(name),
+                    members={key: sorted(values) for key, values in members.items() if values},
+                )
+            )
+
+        return users, group_details, service_principals
+
+    def _safe_show_grants(self, securable_type: str, securable_name: str) -> list[ImportGrantResource]:
+        if not self.auth.resolve_sql_warehouse_id():
+            return []
+        try:
+            grants = self.client.show_grants(securable_type=securable_type, securable_name=securable_name)
+        except ProviderError:
+            return []
+        return [
+            ImportGrantResource(
+                principal=str(grant["principal"]),
+                privilege=str(grant["privilege"]).upper(),
+                securable_type=str(grant["securable_type"]).lower(),
+                securable_name=str(grant["securable_name"]),
+            )
+            for grant in grants
+            if grant.get("principal") and grant.get("privilege")
+        ]

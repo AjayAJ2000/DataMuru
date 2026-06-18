@@ -14,12 +14,38 @@ class ImportCatalogResource(DataMuruModel):
     schemas: list[ImportSchemaResource] = Field(default_factory=list)
 
 
+class ImportUserResource(DataMuruModel):
+    email: str
+    display_name: str | None = None
+
+
+class ImportGroupResource(DataMuruModel):
+    name: str
+    members: dict[str, list[str]] = Field(default_factory=dict)
+
+
+class ImportServicePrincipalResource(DataMuruModel):
+    name: str
+    application_id: str | None = None
+
+
+class ImportGrantResource(DataMuruModel):
+    principal: str
+    privilege: str
+    securable_type: str
+    securable_name: str
+
+
 class ImportWorkspaceResource(DataMuruModel):
     name: str
     cloud: str
     region: str
     catalogs: list[ImportCatalogResource] = Field(default_factory=list)
     groups: list[str] = Field(default_factory=list)
+    users: list[ImportUserResource] = Field(default_factory=list)
+    service_principals: list[ImportServicePrincipalResource] = Field(default_factory=list)
+    group_details: list[ImportGroupResource] = Field(default_factory=list)
+    grants: list[ImportGrantResource] = Field(default_factory=list)
 
 
 class ImportDiscoveryReport(DataMuruModel):
@@ -36,8 +62,15 @@ class ImportGenerationResult(DataMuruModel):
     provider: str
     environment: str
     workspace_file_text: str
+    rbac_file_text: str | None = None
+    taxonomy_file_text: str | None = None
+    masking_file_text: str | None = None
     selected_catalogs: list[str] = Field(default_factory=list)
     included_groups: list[str] = Field(default_factory=list)
+    included_users: list[str] = Field(default_factory=list)
+    included_service_principals: list[str] = Field(default_factory=list)
+    included_grants: int = 0
+    suite_files: dict[str, str] = Field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return self.model_dump(mode="python")

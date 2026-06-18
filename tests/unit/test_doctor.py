@@ -1,5 +1,6 @@
 from datamuru.core.config import load_project
 from datamuru.errors import ProviderError
+from datamuru.providers.databricks.auth import DatabricksAuthConfig
 from datamuru.providers.factory import load_provider
 
 
@@ -166,3 +167,32 @@ def test_live_readonly_apply_is_blocked(sample_project):
         assert "Switch execution_mode to live-apply" in exc.suggestion
     else:  # pragma: no cover
         raise AssertionError("Expected ProviderError for live-readonly mutation guard")
+
+
+def test_databricks_auth_resolves_cli_profile(tmp_path, monkeypatch):
+    cfg = tmp_path / ".databrickscfg"
+    cfg.write_text(
+        "\n".join(
+            [
+                "[enterprise]",
+                "host = https://dbc.example.cloud.databricks.com",
+                "token = profile-token",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DATABRICKS_CONFIG_FILE", str(cfg))
+
+    auth = DatabricksAuthConfig.model_validate(
+        {
+            "cloud": "azure",
+            "auth_type": "databricks-cli",
+            "profile": "enterprise",
+            "execution_mode": "live-readonly",
+        }
+    )
+
+    assert auth.host == "https://dbc.example.cloud.databricks.com"
+    assert auth.resolve_token() == "profile-token"
+    assert auth.workspace_headers()["Authorization"] == "Bearer profile-token"

@@ -1,9 +1,9 @@
 # Authenticate to Databricks
 
-DataMuru currently documents PAT authentication for local use. Provider
-configuration also recognizes `databricks-cli`, `oauth`, and
-`azure-managed-identity`, but live HTTP operations in the alpha are most
-thoroughly tested with PAT headers.
+DataMuru supports multiple Databricks authentication shapes. PAT auth is useful
+for local evaluation. Enterprise pilots should prefer Databricks CLI profiles,
+OAuth bearer tokens, or Enterprise credential extensions approved by the
+organization.
 
 ## Configure PAT authentication
 
@@ -43,6 +43,45 @@ datamuru doctor --config datamuru.yml
 
 Doctor checks whether the variable exists and probes the workspace identity
 endpoint in live modes.
+
+## Use a Databricks CLI profile
+
+If your enterprise laptop already uses the Databricks CLI, DataMuru can read
+`.databrickscfg` directly:
+
+```yaml
+provider:
+  cloud: azure
+  auth_type: databricks-cli
+  profile: enterprise-dev
+  execution_mode: live-readonly
+  sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID
+```
+
+Optional overrides:
+
+```powershell
+$env:DATABRICKS_CONFIG_FILE="<path-to-your-databrickscfg>"
+$env:DATABRICKS_CONFIG_PROFILE="enterprise-dev"
+```
+
+Run:
+
+```powershell
+databricks auth login --profile enterprise-dev
+datamuru doctor --config datamuru.yml
+```
+
+The OSS implementation reads host and bearer token values from the profile.
+Enterprise extensions can replace token loading with SSO, managed identity,
+OAuth M2M, or internal brokered credential flows.
+
+## Enterprise SSO and managed identity
+
+`auth_type: oauth` can use a bearer token supplied through `token_env`.
+`auth_type: azure-managed-identity` is reserved for the Enterprise provider
+extension because token minting, role assignment, and network policy differ by
+customer environment.
 
 ## Protect credentials
 

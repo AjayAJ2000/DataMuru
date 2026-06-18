@@ -28,8 +28,10 @@ Focus:
 
 ### v0.3
 
-- Brownfield discovery, generation, and targeted state adoption
-- Cloud state backend abstraction
+- Databricks CLI profile authentication and enterprise auth-extension boundary
+- Brownfield import suite generation for workspace, RBAC, taxonomy, and masking review
+- Identity and grant-aware import discovery where account SCIM and SQL warehouse access are available
+- Snowflake provider scaffold for state-only planning
 - Stronger provider contract coverage
 
 ### v1.0 target direction

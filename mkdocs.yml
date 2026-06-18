@@ -1,5 +1,5 @@
 site_name: DataMuru
-site_description: Declarative Databricks infrastructure and governance documentation
+site_description: Provider-agnostic data infrastructure, governance, and enterprise adoption documentation
 site_url: https://ajayaj2000.github.io/DataMuru/
 site_author: DataMuru contributors
 copyright: Copyright 2026 DataMuru contributors. Documentation licensed under Apache-2.0.
@@ -72,6 +72,7 @@ nav:
   - How-to guides:
       - Configure a project: guides/configure-project.md
       - Authenticate to Databricks: guides/authentication.md
+      - Move from OSS to Enterprise: guides/oss-to-enterprise.md
       - Choose an execution mode: guides/execution-modes.md
       - Validate and diagnose setup: guides/validate-and-doctor.md
       - Review and apply changes: guides/plan-and-apply.md
@@ -108,6 +109,8 @@ nav:
       - Root configuration: reference/root-config.md
       - Workspace configuration: reference/workspace-config.md
       - Databricks provider: reference/databricks-provider.md
+      - Snowflake provider: reference/snowflake-provider.md
+      - AI discovery: reference/ai-discovery.md
       - Governance configuration: reference/governance-config.md
       - Environment variables: reference/environment-variables.md
       - Resource types and addresses: reference/resources.md

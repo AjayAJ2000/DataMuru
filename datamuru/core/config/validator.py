@@ -16,7 +16,7 @@ class SchemaValidator:
     ROOT_REQUIRED = {"project", "environments", "default_environment", "features", "state", "provider"}
     EDITIONS = {"open-source", "enterprise"}
     BACKENDS = {"local", "s3", "azure_blob", "gcs"}
-    CLOUDS = {"azure", "aws", "gcp"}
+    CLOUDS = {"azure", "aws", "gcp", "snowflake"}
 
     def validate_root(self, raw: dict[str, Any]) -> list[ValidationIssue]:
         issues: list[ValidationIssue] = []

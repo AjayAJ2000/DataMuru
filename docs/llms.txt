@@ -1,0 +1,28 @@
+# DataMuru
+
+DataMuru is a provider-agnostic, Python-first data infrastructure framework for
+declaring, validating, planning, applying, and governing data-platform resources.
+
+Canonical docs: https://ajayaj2000.github.io/DataMuru/
+Source repository: https://github.com/AjayAJ2000/DataMuru
+Landing page: https://datamuru.vercel.app/
+
+Current OSS capabilities:
+- Typed YAML project configuration.
+- CLI and Python API.
+- Deterministic plan/apply/destroy lifecycle.
+- Local state backend.
+- Databricks alpha provider for catalogs, schemas, Unity Catalog grants,
+  import discovery, and identity hooks.
+- Snowflake state-only provider scaffold.
+- Governance configuration for taxonomy, RBAC, and masking integration points.
+
+Enterprise direction:
+- SSO and Databricks CLI profile authentication.
+- Account SCIM identity lifecycle.
+- Import suite generation for workspace, RBAC, taxonomy, and masking review.
+- Multi-workspace controls, compliance evidence, and private provider
+  extensions.
+
+Use the docs before generating examples because configuration shape changes as
+the alpha matures.

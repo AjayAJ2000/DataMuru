@@ -1,4 +1,4 @@
 from .api import DataMuru
 
 __all__ = ["DataMuru"]
-__version__ = "0.2.0a0"
+__version__ = "0.3.0a0"

@@ -52,13 +52,17 @@ class DatabricksWorkspaceClient:
                 context={"dependency": "databricks-sdk"},
                 suggestion="Install the package with `pip install 'datamuru[databricks]'`.",
             )
-        if self.auth.auth_type == "pat":
+        if self.auth.auth_type in {"pat", "databricks-cli", "oauth"}:
             token = self.auth.resolve_token()
             if not token:
                 raise ProviderError(
-                    description="PAT authentication was requested but the token environment variable is not set.",
-                    context={"token_env": self.auth.token_env},
-                    suggestion="Set the Databricks PAT in the configured environment variable and retry.",
+                    description="Databricks bearer authentication was requested but no token was found.",
+                    context={
+                        "auth_type": self.auth.auth_type,
+                        "token_env": self.auth.token_env,
+                        "profile": self.auth.profile,
+                    },
+                    suggestion="Set the token environment variable or configure a Databricks CLI profile.",
                 )
             return WorkspaceClient(host=self.auth.host, token=token)
         return WorkspaceClient(host=self.auth.host)
@@ -73,12 +77,12 @@ class DatabricksWorkspaceClient:
                 details={"auth_type": self.auth.auth_type, "execution_mode": self.auth.execution_mode},
             )
 
-        if self.auth.auth_type != "pat":
+        if self.auth.auth_type not in {"pat", "databricks-cli", "oauth"}:
             return ConnectivityProbeResult(
                 ok=False,
                 level="warning",
                 code="provider.connectivity",
-                message="Live connectivity probe is currently implemented for PAT auth in the alpha slice.",
+                message="Live connectivity probe needs a bearer-token auth path in the current alpha slice.",
                 details={"auth_type": self.auth.auth_type},
             )
 
@@ -476,10 +480,11 @@ class DatabricksWorkspaceClient:
         params: dict[str, Any] | None = None,
         timeout_seconds: int | None = None,
     ) -> dict[str, Any]:
-        if self.auth.auth_type != "pat":
+        if self.auth.auth_type not in {"pat", "databricks-cli", "oauth"}:
             raise ProviderError(
-                description="Raw Databricks HTTPS calls are currently implemented only for PAT auth.",
+                description="Raw Databricks HTTPS calls require a bearer token in the current provider implementation.",
                 context={"auth_type": self.auth.auth_type, "path": path},
+                suggestion="Use PAT, Databricks CLI profile token auth, OAuth token auth, or an Enterprise auth extension.",
             )
         url = f"{self.auth.host.rstrip('/')}{path}"
         try:
@@ -670,10 +675,11 @@ class DatabricksWorkspaceClient:
         return self._extract_statement_rows(response)
 
     def _post_json(self, path: str, *, payload: dict[str, Any]) -> dict[str, Any]:
-        if self.auth.auth_type != "pat":
+        if self.auth.auth_type not in {"pat", "databricks-cli", "oauth"}:
             raise ProviderError(
-                description="Raw Databricks HTTPS calls are currently implemented only for PAT auth.",
+                description="Raw Databricks HTTPS calls require a bearer token in the current provider implementation.",
                 context={"auth_type": self.auth.auth_type, "path": path},
+                suggestion="Use PAT, Databricks CLI profile token auth, OAuth token auth, or an Enterprise auth extension.",
             )
         url = f"{self.auth.host.rstrip('/')}{path}"
         try:
@@ -734,10 +740,11 @@ class DatabricksWorkspaceClient:
         return {}
 
     def _delete(self, path: str, *, params: dict[str, Any] | None = None) -> None:
-        if self.auth.auth_type != "pat":
+        if self.auth.auth_type not in {"pat", "databricks-cli", "oauth"}:
             raise ProviderError(
-                description="Raw Databricks HTTPS calls are currently implemented only for PAT auth.",
+                description="Raw Databricks HTTPS calls require a bearer token in the current provider implementation.",
                 context={"auth_type": self.auth.auth_type, "path": path},
+                suggestion="Use PAT, Databricks CLI profile token auth, OAuth token auth, or an Enterprise auth extension.",
             )
         url = f"{self.auth.host.rstrip('/')}{path}"
         try:

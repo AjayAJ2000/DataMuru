@@ -27,7 +27,7 @@ clearer evidence and safer cleanup.
 | Area | Required decision |
 | --- | --- |
 | Python | Use Python 3.10 through 3.13. |
-| Package | Install a pinned alpha version such as `datamuru==0.2.0a0`. |
+| Package | Install a pinned alpha version such as `datamuru==0.3.0a0`. |
 | Workspace | Use a sandbox Databricks workspace or a throwaway catalog. |
 | Credentials | Use environment variables, not committed YAML. |
 | State | Start with local state until the workflow is understood. |

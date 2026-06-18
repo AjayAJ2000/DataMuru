@@ -33,18 +33,36 @@ class ImportEngine:
         provider = load_provider(project)
         return project, environment, provider
 
-    def discover(self, *, include_system: bool = False) -> ImportDiscoveryReport:
+    def discover(
+        self,
+        *,
+        include_system: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
+    ) -> ImportDiscoveryReport:
         project, environment, provider = self._load()
-        return provider.discover_importable_resources(project, environment, include_system=include_system)
+        return provider.discover_importable_resources(
+            project,
+            environment,
+            include_system=include_system,
+            include_identities=include_identities,
+            include_grants=include_grants,
+        )
 
     def generate(
         self,
         *,
         catalogs: list[str] | None = None,
         include_groups: bool = False,
+        include_identities: bool = False,
+        include_grants: bool = False,
         include_system: bool = False,
     ) -> ImportGenerationResult:
-        report = self.discover(include_system=include_system)
+        report = self.discover(
+            include_system=include_system,
+            include_identities=include_identities or include_groups,
+            include_grants=include_grants,
+        )
         selected_catalogs = sorted(catalogs or [catalog.name for catalog in report.workspace.catalogs])
         available_catalogs = {catalog.name: catalog for catalog in report.workspace.catalogs}
         missing_catalogs = [catalog for catalog in selected_catalogs if catalog not in available_catalogs]
@@ -76,14 +94,172 @@ class ImportEngine:
         if include_groups and report.workspace.groups:
             included_groups = report.workspace.groups
             workspace_payload["workspace"]["principals"] = {"groups": included_groups}
+        if include_identities:
+            principals = workspace_payload["workspace"].setdefault("principals", {})
+            if report.workspace.users:
+                principals["users"] = [
+                    {
+                        "email": user.email,
+                        **({"display_name": user.display_name} if user.display_name else {}),
+                        "lifecycle": "existing",
+                    }
+                    for user in report.workspace.users
+                ]
+            if report.workspace.group_details:
+                principals["groups"] = [
+                    {
+                        "name": group.name,
+                        "lifecycle": "existing",
+                        **({"members": group.members} if group.members else {}),
+                    }
+                    for group in report.workspace.group_details
+                ]
+                included_groups = [group.name for group in report.workspace.group_details]
+            elif report.workspace.groups:
+                principals["groups"] = [{"name": group, "lifecycle": "existing"} for group in report.workspace.groups]
+                included_groups = report.workspace.groups
+            if report.workspace.service_principals:
+                principals["service_principals"] = [
+                    {
+                        "name": principal.name,
+                        **({"application_id": principal.application_id} if principal.application_id else {}),
+                        "lifecycle": "existing",
+                    }
+                    for principal in report.workspace.service_principals
+                ]
 
         yaml_text = yaml.safe_dump(workspace_payload, sort_keys=False)
+        rbac_text = self._generate_rbac_text(report.workspace.grants, selected_catalogs) if include_grants else None
+        taxonomy_text = self._generate_taxonomy_text() if include_grants or include_identities else None
+        masking_text = self._generate_masking_text() if include_grants or include_identities else None
         return ImportGenerationResult(
             provider=report.provider,
             environment=report.environment,
             workspace_file_text=yaml_text,
+            rbac_file_text=rbac_text,
+            taxonomy_file_text=taxonomy_text,
+            masking_file_text=masking_text,
             selected_catalogs=selected_catalogs,
             included_groups=included_groups,
+            included_users=[user.email for user in report.workspace.users] if include_identities else [],
+            included_service_principals=[principal.name for principal in report.workspace.service_principals]
+            if include_identities
+            else [],
+            included_grants=len(report.workspace.grants) if include_grants else 0,
+        )
+
+    def write_suite(
+        self,
+        *,
+        output_dir: str | Path,
+        catalogs: list[str] | None = None,
+        include_system: bool = False,
+    ) -> ImportGenerationResult:
+        result = self.generate(
+            catalogs=catalogs,
+            include_identities=True,
+            include_grants=True,
+            include_system=include_system,
+        )
+        root = Path(output_dir).resolve()
+        workspace_dir = root / "workspaces"
+        governance_dir = root / "governance"
+        workspace_dir.mkdir(parents=True, exist_ok=True)
+        governance_dir.mkdir(parents=True, exist_ok=True)
+        files = {
+            "workspace": workspace_dir / f"imported-{result.environment}.yml",
+            "rbac": governance_dir / "rbac.imported.yml",
+            "taxonomy": governance_dir / "taxonomy.imported.yml",
+            "masking": governance_dir / "masking.imported.yml",
+        }
+        files["workspace"].write_text(result.workspace_file_text, encoding="utf-8")
+        if result.rbac_file_text:
+            files["rbac"].write_text(result.rbac_file_text, encoding="utf-8")
+        if result.taxonomy_file_text:
+            files["taxonomy"].write_text(result.taxonomy_file_text, encoding="utf-8")
+        if result.masking_file_text:
+            files["masking"].write_text(result.masking_file_text, encoding="utf-8")
+        return result.model_copy(update={"suite_files": {key: str(path) for key, path in files.items() if path.exists()}})
+
+    @staticmethod
+    def _generate_rbac_text(grants, selected_catalogs: list[str]) -> str:
+        role_ids: dict[tuple[str, str], str] = {}
+        roles: list[dict] = []
+        assignments: dict[str, set[str]] = {}
+        for grant in grants:
+            if grant.securable_type == "catalog":
+                resource = grant.securable_name
+                domains = [grant.securable_name]
+            elif grant.securable_type == "schema":
+                catalog, _, schema = grant.securable_name.partition(".")
+                resource = schema or grant.securable_name
+                domains = [catalog] if catalog else selected_catalogs
+            else:
+                continue
+            key = (grant.securable_type, grant.privilege)
+            role_id = role_ids.get(key)
+            if role_id is None:
+                role_id = f"imported_{grant.securable_type}_{grant.privilege.lower()}"
+                role_ids[key] = role_id
+                roles.append(
+                    {
+                        "id": role_id,
+                        "permissions": [
+                            {
+                                "action": grant.privilege,
+                                "resource_type": grant.securable_type,
+                                "resource": resource,
+                            }
+                        ],
+                    }
+                )
+            assignments.setdefault(grant.principal, set()).add(role_id)
+        payload = {
+            "rbac": {
+                "roles": roles,
+                "assignments": [
+                    {
+                        "principal": principal,
+                        "type": "group" if "@" not in principal else "user",
+                        "roles": sorted(role_ids_for_principal),
+                        "domains": selected_catalogs,
+                    }
+                    for principal, role_ids_for_principal in sorted(assignments.items())
+                ],
+            }
+        }
+        return yaml.safe_dump(payload, sort_keys=False)
+
+    @staticmethod
+    def _generate_taxonomy_text() -> str:
+        return yaml.safe_dump(
+            {
+                "taxonomy": {
+                    "name": "imported_workspace_taxonomy",
+                    "version": "0.1",
+                    "categories": [
+                        {"id": "imported", "label": "Imported", "description": "Imported for review before curation."}
+                    ],
+                }
+            },
+            sort_keys=False,
+        )
+
+    @staticmethod
+    def _generate_masking_text() -> str:
+        return yaml.safe_dump(
+            {
+                "masking": {
+                    "builtins": [
+                        {
+                            "id": "imported_review_required",
+                            "strategy": "none",
+                            "description": "Placeholder generated during brownfield import review.",
+                        }
+                    ]
+                }
+            },
+            sort_keys=False,
         )
 
     def adopt(self, *, targets: list[str], commit: bool = False) -> ImportAdoptionResult:

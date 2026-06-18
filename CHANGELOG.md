@@ -7,6 +7,21 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.0a0] - 2026-06-18
+
+### Added
+- Databricks CLI profile authentication using `.databrickscfg`, `DATABRICKS_CONFIG_FILE`, and `DATABRICKS_CONFIG_PROFILE`.
+- Enterprise import suite generation for workspace, RBAC, taxonomy, and masking review files.
+- Import discovery options for identity context and Unity Catalog grants.
+- Snowflake provider scaffold for state-only planning of database/schema resources.
+- OSS-to-Enterprise migration guide, Snowflake provider reference, AI discovery page, and `llms.txt`.
+- Landing page AI SEO metadata, structured software schema, and `llms.txt` route.
+
+### Changed
+- Databricks raw HTTP operations now accept bearer tokens from PAT, CLI profile, or OAuth token sources.
+- Enterprise testing docs now cover CLI profile auth, import suite review, and staged enterprise validation.
+- Landing copy now describes Databricks as live alpha and Snowflake as a state-only scaffold.
+
 ## [0.2.0a0] - 2026-06-17
 
 ### Added

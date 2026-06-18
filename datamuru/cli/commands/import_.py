@@ -19,11 +19,23 @@ def import_group() -> None:
 @import_group.command("discover")
 @click.option("--config", "config_path", default="datamuru.yml", show_default=True)
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
+@click.option("--include-identities", is_flag=True, default=False, help="Include users, groups, memberships, and service principals when account SCIM is available.")
+@click.option("--include-grants", is_flag=True, default=False, help="Include Unity Catalog grants when a SQL warehouse is configured.")
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
-def import_discover_command(config_path: str, include_system: bool, output_format: str) -> None:
+def import_discover_command(
+    config_path: str,
+    include_system: bool,
+    include_identities: bool,
+    include_grants: bool,
+    output_format: str,
+) -> None:
     dm = DataMuru(config_path=config_path)
-    report = dm.import_discover(include_system=include_system)
+    report = dm.import_discover(
+        include_system=include_system,
+        include_identities=include_identities,
+        include_grants=include_grants,
+    )
     if output_format == "json":
         console.print_json(json.dumps(report.to_dict(), indent=2))
         return
@@ -37,6 +49,16 @@ def import_discover_command(config_path: str, include_system: bool, output_forma
         console.print("[primary]Groups[/primary]:")
         for group_name in report.workspace.groups:
             console.print(f"  - [code]{group_name}[/code]")
+    if report.workspace.users:
+        console.print("[primary]Users[/primary]:")
+        for user in report.workspace.users:
+            console.print(f"  - [code]{user.email}[/code]")
+    if report.workspace.service_principals:
+        console.print("[primary]Service principals[/primary]:")
+        for principal in report.workspace.service_principals:
+            console.print(f"  - [code]{principal.name}[/code]")
+    if report.workspace.grants:
+        console.print(f"[primary]Grants[/primary]: [code]{len(report.workspace.grants)}[/code] discovered")
     if report.workspace.catalogs:
         console.print("[primary]Catalogs[/primary]:")
         for catalog in report.workspace.catalogs:
@@ -49,24 +71,39 @@ def import_discover_command(config_path: str, include_system: bool, output_forma
 @click.option("--config", "config_path", default="datamuru.yml", show_default=True)
 @click.option("--catalog", "catalogs", multiple=True, help="Catalog name to include. Repeat to select multiple.")
 @click.option("--include-groups", is_flag=True, default=False, help="Include discovered groups in principals.")
+@click.option("--include-identities", is_flag=True, default=False, help="Include discovered users, group memberships, and service principals in principals.")
+@click.option("--include-grants", is_flag=True, default=False, help="Generate starter RBAC assignments from live Unity Catalog grants.")
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
 @click.option("--out", "out_path", default=None, help="Write generated workspace YAML to a file.")
+@click.option("--suite-out", "suite_out", default=None, help="Write workspace, RBAC, taxonomy, and masking review files under this directory.")
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
 def import_generate_command(
     config_path: str,
     catalogs: tuple[str, ...],
     include_groups: bool,
+    include_identities: bool,
+    include_grants: bool,
     include_system: bool,
     out_path: str | None,
+    suite_out: str | None,
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
-    result = dm.import_generate(
-        catalogs=list(catalogs) or None,
-        include_groups=include_groups,
-        include_system=include_system,
-    )
+    if suite_out:
+        result = dm.import_suite(
+            output_dir=suite_out,
+            catalogs=list(catalogs) or None,
+            include_system=include_system,
+        )
+    else:
+        result = dm.import_generate(
+            catalogs=list(catalogs) or None,
+            include_groups=include_groups,
+            include_identities=include_identities,
+            include_grants=include_grants,
+            include_system=include_system,
+        )
     if out_path:
         resolved = Path(out_path).resolve()
         resolved.write_text(result.workspace_file_text, encoding="utf-8")
@@ -74,13 +111,23 @@ def import_generate_command(
         payload = result.to_dict()
         if out_path:
             payload["written_to"] = str(Path(out_path).resolve())
+        if suite_out:
+            payload["suite_out"] = str(Path(suite_out).resolve())
         console.print_json(json.dumps(payload, indent=2))
         return
 
     console.print(f"[primary]Import Generate[/primary] - environment: [code]{result.environment}[/code]")
+    if suite_out:
+        console.print(f"[success]Wrote[/success] import review suite under [code]{Path(suite_out).resolve()}[/code]")
+        for label, path in result.suite_files.items():
+            console.print(f"  - {label}: [code]{path}[/code]")
+        return
     if out_path:
         console.print(f"[success]Wrote[/success] starter workspace YAML to [code]{Path(out_path).resolve()}[/code]")
     console.print(result.workspace_file_text)
+    if result.rbac_file_text:
+        console.print("[primary]Generated RBAC preview[/primary]:")
+        console.print(result.rbac_file_text)
 
 
 @import_group.command("adopt")

@@ -10,6 +10,16 @@ from datamuru.core.plan import fingerprint, matches_target
 from datamuru.core.state import resolve_state_backend
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
 from datamuru.errors import ImportAdoptionError
+from datamuru.core.importer.models import (
+    ImportCatalogResource,
+    ImportDiscoveryReport,
+    ImportGrantResource,
+    ImportGroupResource,
+    ImportSchemaResource,
+    ImportServicePrincipalResource,
+    ImportUserResource,
+    ImportWorkspaceResource,
+)
 from datamuru.providers.databricks.provider import DatabricksProvider
 from datamuru.providers.factory import load_provider
 from datamuru.types import ResourceDescriptor
@@ -103,3 +113,88 @@ def test_import_adopt_cli_requires_approval_to_write_state(sample_project, monke
     )
     assert applied.exit_code == 0
     assert "Adopted" in applied.output
+
+
+def test_import_generate_suite_writes_workspace_and_governance_files(sample_project, tmp_path, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="alpha-dev",
+            cloud="azure",
+            region="eastus",
+            catalogs=[
+                ImportCatalogResource(
+                    name="dm_imported",
+                    schemas=[ImportSchemaResource(name="raw")],
+                )
+            ],
+            users=[ImportUserResource(email="analyst@company.com", display_name="Analyst")],
+            group_details=[
+                ImportGroupResource(
+                    name="dm-analysts",
+                    members={"users": ["analyst@company.com"]},
+                )
+            ],
+            service_principals=[
+                ImportServicePrincipalResource(name="dm-loader", application_id="app-123")
+            ],
+            grants=[
+                ImportGrantResource(
+                    principal="dm-analysts",
+                    privilege="USE_CATALOG",
+                    securable_type="catalog",
+                    securable_name="dm_imported",
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        DatabricksProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = DataMuru(sample_project / "datamuru.yml").import_suite(output_dir=tmp_path)
+
+    assert "workspace" in result.suite_files
+    assert "rbac" in result.suite_files
+    workspace_text = (tmp_path / "workspaces" / "imported-dev.yml").read_text(encoding="utf-8")
+    rbac_text = (tmp_path / "governance" / "rbac.imported.yml").read_text(encoding="utf-8")
+    assert "analyst@company.com" in workspace_text
+    assert "dm-analysts" in workspace_text
+    assert "imported_catalog_use_catalog" in rbac_text
+
+
+def test_import_generate_cli_suite_outputs_written_files(sample_project, tmp_path, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="alpha-dev",
+            cloud="azure",
+            region="eastus",
+            catalogs=[ImportCatalogResource(name="dm_imported", schemas=[])],
+        ),
+    )
+    monkeypatch.setattr(
+        DatabricksProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "import",
+            "generate",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--suite-out",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "import review suite" in result.output
+    assert (tmp_path / "workspaces" / "imported-dev.yml").exists()
