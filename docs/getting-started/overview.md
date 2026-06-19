@@ -7,7 +7,7 @@ Databricks access to evaluate configuration, planning, state, or the CLI.
 
 You need:
 
-- Python 3.10 through 3.13;
+- Python 3.11 through 3.13;
 - a terminal with permission to create a virtual environment;
 - Git only if you plan to contribute or use repository examples.
 

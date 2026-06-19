@@ -13,7 +13,7 @@ workspace or account. It assumes you are testing non-production resources.
 
 You need:
 
-- Python 3.10 or newer;
+- Python 3.11 or newer;
 - a Databricks workspace URL;
 - a personal access token or supported enterprise authentication path;
 - a SQL warehouse ID for default-storage catalog creation and grant inspection;
@@ -30,13 +30,13 @@ approved Enterprise credential extension.
 Install the released package:
 
 ```powershell
-python -m pip install --upgrade datamuru==0.3.4a0
+python -m pip install --upgrade datamuru==0.3.5a0
 ```
 
 For Databricks SDK experiments, install the optional extra:
 
 ```powershell
-python -m pip install --upgrade "datamuru[databricks]==0.3.4a0"
+python -m pip install --upgrade "datamuru[databricks]==0.3.5a0"
 ```
 
 ## 3. Create a project

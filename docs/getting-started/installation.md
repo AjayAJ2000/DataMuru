@@ -8,7 +8,7 @@ This repository supports three installation stories:
 
 ## Runtime assumptions
 
-- Python `3.10+`
+- Python `3.11+`
 - Git
 - A shell environment capable of running Python CLI commands
 

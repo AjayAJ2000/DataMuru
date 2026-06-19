@@ -7,8 +7,11 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.5a0] - 2026-06-19
+
 ### Changed
 - Slimmed the test extra to dependencies used by the current test suite to reduce Python-version plugin drift in CI.
+- DataMuru now declares Python 3.11 through 3.13 support while Python 3.10 compatibility is investigated.
 
 ## [0.3.4a0] - 2026-06-19
 

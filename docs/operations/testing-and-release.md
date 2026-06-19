@@ -7,7 +7,7 @@ The alpha repository already includes a baseline test suite and validation workf
 - unit tests under `tests/unit/`
 - end-to-end bootstrap coverage under `tests/e2e/`
 - CLI validation through `datamuru validate`
-- Python 3.10, 3.11, 3.12, and 3.13 compatibility in GitHub Actions
+- Python 3.11, 3.12, and 3.13 compatibility in GitHub Actions
 - Ruff static checks
 - strict MkDocs builds
 - wheel and source-distribution metadata checks

@@ -17,7 +17,7 @@ The alpha already includes:
 - package metadata in `pyproject.toml`
 - a console script entrypoint for `datamuru`
 - optional extras for provider, test, development, and docs tooling
-- Python 3.10 through 3.13 CI
+- Python 3.11 through 3.13 CI
 - wheel and source-distribution validation
 - GitHub Pages documentation deployment
 - OIDC-based PyPI Trusted Publishing
