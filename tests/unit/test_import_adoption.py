@@ -4,6 +4,7 @@ import pytest
 from click.testing import CliRunner
 
 from datamuru.api import DataMuru
+from datamuru.cli.commands.ui import _build_summary, _render_page
 from datamuru.cli.main import cli
 from datamuru.core.config import load_project
 from datamuru.core.plan import fingerprint, matches_target
@@ -213,3 +214,24 @@ def test_ui_help_is_registered():
 
     assert result.exit_code == 0
     assert "local DataMuru project dashboard" in result.output
+
+
+def test_ui_summary_exposes_enterprise_posture(sample_project):
+    summary = _build_summary(sample_project / "datamuru.yml")
+
+    assert summary["validation"]["readiness"] in {
+        "Ready for review",
+        "Review warnings",
+        "Action required",
+    }
+    assert "features" in summary
+    assert "workspace_names" in summary
+    assert "provider_cloud" in summary
+
+
+def test_ui_page_uses_product_console_language():
+    html = _render_page()
+
+    assert "Governed data infrastructure" in html
+    assert "Enterprise rollout path" in html
+    assert "Local enterprise console" in html

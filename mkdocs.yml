@@ -71,8 +71,10 @@ nav:
       - Import an existing workspace: tutorials/import-existing-workspace.md
   - How-to guides:
       - Configure a project: guides/configure-project.md
+      - Structure an enterprise project: guides/enterprise-project-structure.md
       - Authenticate to Databricks: guides/authentication.md
       - Move from OSS to Enterprise: guides/oss-to-enterprise.md
+      - Plan Databricks to Snowflake adoption: guides/databricks-to-snowflake.md
       - Choose an execution mode: guides/execution-modes.md
       - Validate and diagnose setup: guides/validate-and-doctor.md
       - Review and apply changes: guides/plan-and-apply.md
@@ -139,6 +141,7 @@ nav:
       - Enterprise testing runbook: product/enterprise-testing.md
       - Packaging and distribution: product/packaging-and-distribution.md
       - Agile planning with GitHub Projects: product/agile-github-projects.md
+      - Recommended GitHub Project board: product/github-project-board.md
       - Roadmap: product/roadmap.md
   - Contribute:
       - Contributing: contributing/index.md

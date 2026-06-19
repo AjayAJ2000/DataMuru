@@ -5,6 +5,10 @@ GitHub Projects already provides table, board, and roadmap views, custom
 fields, charts, status updates, built-in automation, and API automation. That
 makes it a strong free/low-friction agile layer for teams already using GitHub.
 
+The product principle is simple: GitHub Projects tracks delivery work;
+DataMuru produces platform evidence. Do not make DataMuru a project management
+system. Make it useful to the project management system.
+
 ## Product fit
 
 Use GitHub Projects for:
@@ -27,6 +31,26 @@ Use DataMuru for:
 The integration boundary is simple: DataMuru produces structured work items and
 evidence; GitHub Projects tracks ownership, priority, sprint/iteration, status,
 and delivery.
+
+## Enterprise operating model
+
+Use one private user-level or organization-level project for DataMuru product
+execution. Use public OSS issues only for community-facing bugs, enhancements,
+and docs feedback.
+
+Recommended split:
+
+| Work type | Location |
+| --- | --- |
+| OSS bug reports | Public GitHub issues |
+| OSS feature requests | Public GitHub issues |
+| Enterprise roadmap | Private GitHub Project |
+| Customer feedback | Private GitHub Project |
+| Security-sensitive findings | Private security advisory or private issue |
+| Release tracking | Private GitHub Project plus public release notes |
+
+This keeps community collaboration open while protecting commercial roadmap,
+customer details, and enterprise testing context.
 
 ## Recommended fields
 
@@ -62,3 +86,23 @@ datamuru agile export --format github-issues --out .\github-issue-drafts
 This avoids token and organization-permission complexity while still letting
 teams review the generated agile backlog. After that, Enterprise can add
 authenticated sync using a GitHub App or fine-grained token.
+
+## Recommended board
+
+Use the board design in [Recommended GitHub Project board](github-project-board.md)
+as the starting point for the private product roadmap.
+
+## Why this works
+
+GitHub Projects is already close to how engineering teams work: issues,
+pull requests, milestones, boards, roadmaps, and automation live together. The
+DataMuru value is not duplicating that surface. The value is generating better
+work items from real platform state:
+
+- import discovered too many unmanaged catalogs;
+- RBAC grants differ between environments;
+- a provider is missing SSO or warehouse configuration;
+- a plan has pending destructive changes;
+- a release needs docs, tests, and PyPI validation.
+
+Those findings should become trackable work with evidence links.

@@ -7,6 +7,17 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.6a0] - 2026-06-19
+
+### Added
+- Reworked `datamuru ui` into a more enterprise-oriented local console with project posture, workspace visibility, feature posture, validation readiness, and rollout guidance.
+- Added enterprise project structure guidance with naming conventions for providers, environments, workspaces, imports, governance, and migrations.
+- Added Databricks-to-Snowflake adoption guidance for staged inventory, review-suite generation, and Snowflake trial planning.
+- Added a recommended private GitHub Project board model for DataMuru roadmap execution.
+
+### Changed
+- Expanded Snowflake provider docs from scaffold-only reference to a practical evaluation path with clear live-execution limits.
+
 ## [0.3.5a0] - 2026-06-19
 
 ### Changed
