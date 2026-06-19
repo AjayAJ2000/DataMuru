@@ -32,6 +32,14 @@ DataMuru is currently in the `v0.3 alpha` stage.
 
 The package and CLI execute supported live Databricks operations when `execution_mode: live-apply` is configured. Alpha support currently covers catalogs, schemas, Unity Catalog ACLs, import discovery/config generation, and capability-aware account SCIM identity operations.
 
+## Delivery status
+
+Product execution is tracked in the private
+[DataMuru Product Roadmap](https://github.com/users/AjayAJ2000/projects/1)
+GitHub Project. The repository snapshot is maintained in
+[PROJECT_STATUS.md](PROJECT_STATUS.md), including readiness, risks, milestones,
+completed work, blocked work, and next recommended actions.
+
 ## Open-core model
 
 - **DataMuru OSS:** this public Apache-2.0 repository and PyPI package.
