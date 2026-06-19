@@ -71,12 +71,9 @@ docs = [
   "mkdocstrings[python]>=0.25,<1",
 ]
 test = [
-  "moto>=5,<6",
   "pytest>=8.0,<9",
-  "pytest-asyncio>=0.23,<1",
   "pytest-cov>=4.1,<6",
   "pytest-mock>=3.12,<4",
-  "respx>=0.21,<1",
 ]
 
 [project.scripts]

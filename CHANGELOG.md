@@ -7,6 +7,9 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Slimmed the test extra to dependencies used by the current test suite to reduce Python-version plugin drift in CI.
+
 ## [0.3.4a0] - 2026-06-19
 
 ### Added
