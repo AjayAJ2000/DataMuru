@@ -30,13 +30,13 @@ approved Enterprise credential extension.
 Install the released package:
 
 ```powershell
-python -m pip install --upgrade datamuru==0.3.3a0
+python -m pip install --upgrade datamuru==0.3.4a0
 ```
 
 For Databricks SDK experiments, install the optional extra:
 
 ```powershell
-python -m pip install --upgrade "datamuru[databricks]==0.3.3a0"
+python -m pip install --upgrade "datamuru[databricks]==0.3.4a0"
 ```
 
 ## 3. Create a project
@@ -234,7 +234,8 @@ Keep `live-readonly` for import review:
 ```powershell
 datamuru import discover --config datamuru.yml --output json
 datamuru import discover --config datamuru.yml --catalog dm_enterprise_smoke_01
-datamuru import discover --config datamuru.yml --catalog dm_enterprise_smoke_01 --include-identities --include-grants
+datamuru import discover --config datamuru.yml --catalog dm_enterprise_smoke_01 --include-identities --include-grants --grant-scope catalog
+datamuru import discover --config datamuru.yml --catalog dm_enterprise_smoke_01 --include-grants --grant-scope all --max-grant-objects 100
 datamuru import generate --config datamuru.yml --catalog dm_enterprise_smoke_01 --suite-out .\import-review
 datamuru import adopt --config datamuru.yml --target catalog:dm_enterprise_smoke_01
 datamuru import adopt --config datamuru.yml --target catalog:dm_enterprise_smoke_01 --auto-approve
@@ -242,8 +243,20 @@ datamuru import adopt --config datamuru.yml --target catalog:dm_enterprise_smoke
 
 Adoption writes local state only. It does not mutate Databricks.
 Use scoped import discovery for the first enterprise test. Unscoped
-`--include-grants` scans every visible catalog and schema and can take longer
-when the SQL warehouse is cold.
+`--include-grants --grant-scope all` can scan every visible catalog and schema
+and can take longer when the SQL warehouse is cold.
+
+## 10a. Open the local UI
+
+Use the local UI during stakeholder review:
+
+```powershell
+datamuru ui --config datamuru.yml --port 8765
+```
+
+The UI currently shows local configuration health and declared resource
+inventory. It intentionally avoids live Databricks scans so it can be opened
+without consuming warehouse time.
 
 ## 11. Save and apply a reviewed plan
 

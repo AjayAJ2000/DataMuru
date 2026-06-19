@@ -23,6 +23,20 @@ def import_group() -> None:
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
 @click.option("--include-identities", is_flag=True, default=False, help="Include users, groups, memberships, and service principals when account SCIM is available.")
 @click.option("--include-grants", is_flag=True, default=False, help="Include Unity Catalog grants when a SQL warehouse is configured.")
+@click.option(
+    "--grant-scope",
+    default="catalog",
+    show_default=True,
+    type=click.Choice(["catalog", "schema", "all"]),
+    help="Grant object level to scan when --include-grants is set.",
+)
+@click.option(
+    "--max-grant-objects",
+    default=500,
+    show_default=True,
+    type=int,
+    help="Stop before grant discovery if more grant objects are in scope. Use 0 for no cap.",
+)
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
 def import_discover_command(
@@ -31,15 +45,20 @@ def import_discover_command(
     include_system: bool,
     include_identities: bool,
     include_grants: bool,
+    grant_scope: str,
+    max_grant_objects: int,
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
+    grant_cap = None if max_grant_objects == 0 else max_grant_objects
     if output_format == "json":
         report = dm.import_discover(
             include_system=include_system,
             include_identities=include_identities,
             include_grants=include_grants,
             catalogs=list(catalogs) or None,
+            grant_scope=grant_scope,
+            max_grant_objects=grant_cap,
         )
     else:
         with _import_progress("Import discovery") as progress_callback:
@@ -48,6 +67,8 @@ def import_discover_command(
                 include_identities=include_identities,
                 include_grants=include_grants,
                 catalogs=list(catalogs) or None,
+                grant_scope=grant_scope,
+                max_grant_objects=grant_cap,
                 progress=progress_callback,
             )
     if output_format == "json":
@@ -87,6 +108,20 @@ def import_discover_command(
 @click.option("--include-groups", is_flag=True, default=False, help="Include discovered groups in principals.")
 @click.option("--include-identities", is_flag=True, default=False, help="Include discovered users, group memberships, and service principals in principals.")
 @click.option("--include-grants", is_flag=True, default=False, help="Generate starter RBAC assignments from live Unity Catalog grants.")
+@click.option(
+    "--grant-scope",
+    default="catalog",
+    show_default=True,
+    type=click.Choice(["catalog", "schema", "all"]),
+    help="Grant object level to scan when --include-grants or --suite-out is set.",
+)
+@click.option(
+    "--max-grant-objects",
+    default=500,
+    show_default=True,
+    type=int,
+    help="Stop before grant discovery if more grant objects are in scope. Use 0 for no cap.",
+)
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
 @click.option("--out", "out_path", default=None, help="Write generated workspace YAML to a file.")
 @click.option("--suite-out", "suite_out", default=None, help="Write workspace, RBAC, taxonomy, and masking review files under this directory.")
@@ -98,12 +133,15 @@ def import_generate_command(
     include_groups: bool,
     include_identities: bool,
     include_grants: bool,
+    grant_scope: str,
+    max_grant_objects: int,
     include_system: bool,
     out_path: str | None,
     suite_out: str | None,
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
+    grant_cap = None if max_grant_objects == 0 else max_grant_objects
     progress_callback = None
     progress_context = None
     if output_format != "json":
@@ -115,6 +153,8 @@ def import_generate_command(
                 output_dir=suite_out,
                 catalogs=list(catalogs) or None,
                 include_system=include_system,
+                grant_scope=grant_scope,
+                max_grant_objects=grant_cap,
                 progress=progress_callback,
             )
         else:
@@ -124,6 +164,8 @@ def import_generate_command(
                 include_identities=include_identities,
                 include_grants=include_grants,
                 include_system=include_system,
+                grant_scope=grant_scope,
+                max_grant_objects=grant_cap,
                 progress=progress_callback,
             )
     finally:

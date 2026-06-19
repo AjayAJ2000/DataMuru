@@ -23,13 +23,40 @@ datamuru import discover `
   --config datamuru.yml `
   --catalog analytics `
   --include-identities `
-  --include-grants
+  --include-grants `
+  --grant-scope catalog
 ```
 
-Grant discovery can take longer than catalog/schema discovery because DataMuru
-uses the SQL warehouse to inspect grants for every catalog and schema in scope.
-If the warehouse is cold or the workspace has many schemas, scope the run with
-`--catalog` first.
+Grant discovery can take much longer than catalog/schema discovery because
+DataMuru uses the SQL warehouse to inspect grants. The safe enterprise flow is:
+
+1. Discover inventory without grants.
+2. Scope to one catalog.
+3. Scan catalog-level grants.
+4. Scan schema-level or all grants only for the selected catalog.
+
+```powershell
+datamuru import discover `
+  --config datamuru.yml `
+  --catalog analytics `
+  --include-grants `
+  --grant-scope all `
+  --max-grant-objects 100
+```
+
+If the estimate exceeds `--max-grant-objects`, DataMuru stops before launching
+the expensive SQL grant scan.
+
+## Open the local project UI
+
+Use the local UI when reviewing a project with platform owners:
+
+```powershell
+datamuru ui --config datamuru.yml --port 8765
+```
+
+Open `http://127.0.0.1:8765/`. The dashboard reads local configuration and
+declared resources only, so it is safe to use before live import discovery.
 
 ## Generate selected configuration
 

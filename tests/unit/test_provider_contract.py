@@ -149,6 +149,89 @@ def test_provider_observes_live_permission_bindings(sample_project, monkeypatch)
     ]
 
 
+def test_import_discovery_defaults_to_catalog_grants(sample_project, monkeypatch):
+    provider_path = sample_project / "providers" / "databricks.yml"
+    provider_path.write_text(
+        "\n".join(
+            [
+                "provider:",
+                "  cloud: azure",
+                "  connect_timeout_seconds: 1",
+                "  credential_mode: personal-access-token",
+                "  execution_mode: live-readonly",
+                "  auth_type: pat",
+                "  token_env: DATABRICKS_TOKEN",
+                "  host: https://adb-test.azuredatabricks.net",
+                "  sql_warehouse_id: warehouse-123",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DATABRICKS_TOKEN", "token-value")
+    project = load_project(sample_project / "datamuru.yml")
+    provider = load_provider(project)
+    calls: list[tuple[str, str]] = []
+    monkeypatch.setattr(provider.client, "probe_workspace", lambda: type("Probe", (), {"ok": True})())
+    monkeypatch.setattr(provider.client, "list_groups", lambda: [])
+    monkeypatch.setattr(provider.client, "probe_identity_management", lambda: type("Capability", (), {"supported": False})())
+    monkeypatch.setattr(provider.client, "list_catalogs", lambda: ["dm_alpha_marketing"])
+    monkeypatch.setattr(provider.client, "list_schemas", lambda catalog_name: ["raw", "gold"])
+
+    def fake_show_grants(*, securable_type, securable_name):
+        calls.append((securable_type, securable_name))
+        return []
+
+    monkeypatch.setattr(provider.client, "show_grants", fake_show_grants)
+
+    provider.discover_importable_resources(project, "dev", include_grants=True)
+
+    assert calls == [("catalog", "dm_alpha_marketing")]
+
+
+def test_import_discovery_stops_expensive_grant_scan(sample_project, monkeypatch):
+    provider_path = sample_project / "providers" / "databricks.yml"
+    provider_path.write_text(
+        "\n".join(
+            [
+                "provider:",
+                "  cloud: azure",
+                "  connect_timeout_seconds: 1",
+                "  credential_mode: personal-access-token",
+                "  execution_mode: live-readonly",
+                "  auth_type: pat",
+                "  token_env: DATABRICKS_TOKEN",
+                "  host: https://adb-test.azuredatabricks.net",
+                "  sql_warehouse_id: warehouse-123",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DATABRICKS_TOKEN", "token-value")
+    project = load_project(sample_project / "datamuru.yml")
+    provider = load_provider(project)
+    monkeypatch.setattr(provider.client, "probe_workspace", lambda: type("Probe", (), {"ok": True})())
+    monkeypatch.setattr(provider.client, "list_groups", lambda: [])
+    monkeypatch.setattr(provider.client, "probe_identity_management", lambda: type("Capability", (), {"supported": False})())
+    monkeypatch.setattr(provider.client, "list_catalogs", lambda: ["dm_alpha_marketing"])
+    monkeypatch.setattr(provider.client, "list_schemas", lambda catalog_name: ["raw", "bronze", "silver", "gold"])
+
+    try:
+        provider.discover_importable_resources(
+            project,
+            "dev",
+            include_grants=True,
+            grant_scope="all",
+            max_grant_objects=2,
+        )
+    except ProviderError as exc:
+        assert "stopped before launching" in exc.description
+        assert exc.context["grant_objects_in_scope"] == 5
+    else:  # pragma: no cover
+        raise AssertionError("Expected expensive grant scan guard to stop discovery")
+
+
 def test_provider_live_apply_creates_catalog_and_schema(sample_project, monkeypatch):
     provider_path = sample_project / "providers" / "databricks.yml"
     provider_path.write_text(

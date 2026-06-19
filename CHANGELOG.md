@@ -7,6 +7,18 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.4a0] - 2026-06-19
+
+### Added
+- `datamuru import discover` and `datamuru import generate` now support `--grant-scope catalog|schema|all`.
+- Import grant discovery now has `--max-grant-objects` to stop expensive scans before SQL warehouse work starts.
+- Added `datamuru ui`, a local web dashboard for configuration health and declared resource inventory without live provider scans.
+- Added GitHub Projects agile planning guidance for roadmap, feedback, release, and enterprise onboarding workflows.
+
+### Changed
+- Grant discovery defaults to catalog-level scanning for safer enterprise imports.
+- Enterprise import docs now recommend inventory-first, scoped catalog scans before full schema grant discovery.
+
 ## [0.3.3a0] - 2026-06-18
 
 ### Added

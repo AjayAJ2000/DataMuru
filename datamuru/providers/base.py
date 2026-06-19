@@ -39,5 +39,7 @@ class DataMuruProvider(ABC):
         include_identities: bool = False,
         include_grants: bool = False,
         catalogs: list[str] | None = None,
+        grant_scope: str = "catalog",
+        max_grant_objects: int | None = 500,
         progress: ImportProgressCallback | None = None,
     ): ...

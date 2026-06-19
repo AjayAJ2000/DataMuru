@@ -85,6 +85,8 @@ datamuru import discover
   [--include-system]
   [--include-identities]
   [--include-grants]
+  [--grant-scope catalog|schema|all]
+  [--max-grant-objects INTEGER]
   [--output text|json]
 ```
 
@@ -93,9 +95,11 @@ a progress bar with the current provider stage. JSON output suppresses progress
 so automation can parse stdout safely.
 
 Repeat `--catalog` to restrict catalog, schema, and grant discovery to selected
-catalogs. Use this in enterprise workspaces before enabling `--include-grants`,
-because grant discovery executes SQL grant inspection for every catalog and
-schema in scope.
+catalogs. `--include-grants` defaults to `--grant-scope catalog` so broad
+enterprise imports do not accidentally scan every schema grant. Use
+`--grant-scope all` only after scoping catalogs and estimating warehouse cost.
+`--max-grant-objects` stops the run before expensive grant discovery starts
+when too many catalog/schema objects are in scope.
 
 ## `import generate`
 
@@ -106,6 +110,8 @@ datamuru import generate
   [--include-groups]
   [--include-identities]
   [--include-grants]
+  [--grant-scope catalog|schema|all]
+  [--max-grant-objects INTEGER]
   [--include-system]
   [--out TEXT]
   [--suite-out TEXT]
@@ -113,6 +119,19 @@ datamuru import generate
 ```
 
 Repeat `--catalog` to select more than one catalog.
+
+## `ui`
+
+```text
+datamuru ui
+  [--config TEXT]
+  [--host TEXT]
+  [--port INTEGER]
+```
+
+Starts a local web dashboard. The first version reads local configuration,
+validation results, and declared resource inventory only. It does not run live
+provider scans.
 
 ## `import adopt`
 

@@ -138,6 +138,7 @@ nav:
       - Editions and commercial model: product/editions.md
       - Enterprise testing runbook: product/enterprise-testing.md
       - Packaging and distribution: product/packaging-and-distribution.md
+      - Agile planning with GitHub Projects: product/agile-github-projects.md
       - Roadmap: product/roadmap.md
   - Contribute:
       - Contributing: contributing/index.md

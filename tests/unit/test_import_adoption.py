@@ -198,3 +198,18 @@ def test_import_generate_cli_suite_outputs_written_files(sample_project, tmp_pat
     assert result.exit_code == 0
     assert "import review suite" in result.output
     assert (tmp_path / "workspaces" / "imported-dev.yml").exists()
+
+
+def test_import_discover_help_exposes_enterprise_scan_guards():
+    result = CliRunner().invoke(cli, ["import", "discover", "--help"])
+
+    assert result.exit_code == 0
+    assert "--grant-scope" in result.output
+    assert "--max-grant-objects" in result.output
+
+
+def test_ui_help_is_registered():
+    result = CliRunner().invoke(cli, ["ui", "--help"])
+
+    assert result.exit_code == 0
+    assert "local DataMuru project dashboard" in result.output

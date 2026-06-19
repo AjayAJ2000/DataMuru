@@ -25,7 +25,7 @@ datamuru plan --config datamuru.yml
 ```
 
 !!! warning "Alpha software"
-    DataMuru `0.3.3a0` is an alpha release. It supports real Databricks
+    DataMuru `0.3.4a0` is an alpha release. It supports real Databricks
     operations for the resource types listed in the
     [capability reference](reference/capabilities.md), but it is not yet a
     complete production platform. Test with non-production resources first.

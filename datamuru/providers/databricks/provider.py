@@ -382,8 +382,17 @@ class DatabricksProvider(DataMuruProvider):
         include_identities: bool = False,
         include_grants: bool = False,
         catalogs: list[str] | None = None,
+        grant_scope: str = "catalog",
+        max_grant_objects: int | None = 500,
         progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
+        normalized_grant_scope = grant_scope.lower()
+        if normalized_grant_scope not in {"catalog", "schema", "all"}:
+            raise ProviderError(
+                description="Import grant discovery received an unsupported grant scope.",
+                context={"grant_scope": grant_scope, "supported_scopes": ["catalog", "schema", "all"]},
+                suggestion="Use grant_scope catalog, schema, or all.",
+            )
         self._emit_import_progress(progress, "Checking Databricks import prerequisites.", total=6, completed=1)
         if not self.auth.should_probe_connectivity():
             raise ProviderError(
@@ -447,31 +456,50 @@ class DatabricksProvider(DataMuruProvider):
             ]
             catalog_schema_pairs.append((catalog_name, schema_resources))
             import_catalogs.append(ImportCatalogResource(name=catalog_name, schemas=schema_resources))
-            grant_scan_total += 1 + len(schema_resources)
+            grant_scan_total += self._grant_target_count(
+                schema_count=len(schema_resources),
+                grant_scope=normalized_grant_scope,
+            )
         if include_grants:
+            if max_grant_objects is not None and grant_scan_total > max_grant_objects:
+                raise ProviderError(
+                    description="Import grant discovery was stopped before launching an expensive scan.",
+                    context={
+                        "grant_scope": normalized_grant_scope,
+                        "grant_objects_in_scope": grant_scan_total,
+                        "max_grant_objects": max_grant_objects,
+                        "catalogs_in_scope": len(discovered_catalog_names),
+                    },
+                    suggestion=(
+                        "Use --catalog to scope the import, keep --grant-scope catalog for inventory review, "
+                        "or raise --max-grant-objects after estimating warehouse cost."
+                    ),
+                )
             progress_base = 6 + len(discovered_catalog_names)
             self._emit_import_progress(
                 progress,
-                f"Scanning Unity Catalog grants across {grant_scan_total} object(s).",
+                f"Scanning Unity Catalog {normalized_grant_scope} grants across {grant_scan_total} object(s).",
                 total=progress_base + max(grant_scan_total, 1),
                 completed=progress_base,
             )
             for catalog_name, schema_resources in catalog_schema_pairs:
-                grants.extend(self._safe_show_grants("catalog", catalog_name))
-                grant_scan_completed += 1
-                self._emit_import_progress(
-                    progress,
-                    f"Scanned grants for catalog {catalog_name}.",
-                    completed=progress_base + grant_scan_completed,
-                )
-                for schema_resource in schema_resources:
-                    grants.extend(self._safe_show_grants("schema", f"{catalog_name}.{schema_resource.name}"))
+                if normalized_grant_scope in {"catalog", "all"}:
+                    grants.extend(self._safe_show_grants("catalog", catalog_name))
                     grant_scan_completed += 1
                     self._emit_import_progress(
                         progress,
-                        f"Scanned grants for schema {catalog_name}.{schema_resource.name}.",
+                        f"Scanned grants for catalog {catalog_name}.",
                         completed=progress_base + grant_scan_completed,
                     )
+                if normalized_grant_scope in {"schema", "all"}:
+                    for schema_resource in schema_resources:
+                        grants.extend(self._safe_show_grants("schema", f"{catalog_name}.{schema_resource.name}"))
+                        grant_scan_completed += 1
+                        self._emit_import_progress(
+                            progress,
+                            f"Scanned grants for schema {catalog_name}.{schema_resource.name}.",
+                            completed=progress_base + grant_scan_completed,
+                        )
 
         self._emit_import_progress(progress, "Import discovery complete.")
 
@@ -499,6 +527,14 @@ class DatabricksProvider(DataMuruProvider):
                 ),
             ),
         )
+
+    @staticmethod
+    def _grant_target_count(*, schema_count: int, grant_scope: str) -> int:
+        if grant_scope == "catalog":
+            return 1
+        if grant_scope == "schema":
+            return schema_count
+        return 1 + schema_count
 
     @staticmethod
     def _emit_import_progress(

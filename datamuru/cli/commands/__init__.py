@@ -5,6 +5,7 @@ from .edition import edition_group
 from .init import init_command
 from .import_ import import_group
 from .plan import plan_command
+from .ui import ui_command
 from .validate import validate_command
 
 COMMANDS = [
@@ -16,4 +17,5 @@ COMMANDS = [
     doctor_command,
     import_group,
     edition_group,
+    ui_command,
 ]
