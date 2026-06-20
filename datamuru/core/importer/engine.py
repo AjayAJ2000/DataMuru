@@ -16,6 +16,7 @@ from datamuru.governance.taxonomy import compile_taxonomy_resources
 from datamuru.providers.factory import load_provider
 
 from .models import (
+    DatabricksToSnowflakeMappingResult,
     ImportAdoptionConflict,
     ImportAdoptionResult,
     ImportDiscoveryReport,
@@ -229,6 +230,95 @@ class ImportEngine:
             files["masking"].write_text(result.masking_file_text, encoding="utf-8")
         return result.model_copy(update={"suite_files": {key: str(path) for key, path in files.items() if path.exists()}})
 
+    def databricks_to_snowflake_mapping(
+        self,
+        *,
+        catalogs: list[str] | None = None,
+        target_account: str = "snowflake-account",
+        target_workspace: str = "snowflake-target",
+        database_prefix: str | None = None,
+        schema_case: str = "upper",
+        progress: ImportProgressCallback | None = None,
+    ) -> DatabricksToSnowflakeMappingResult:
+        if schema_case not in {"upper", "lower", "preserve"}:
+            raise ValidationError(
+                description="Unsupported Snowflake schema naming mode.",
+                context={"schema_case": schema_case, "supported_modes": ["upper", "lower", "preserve"]},
+                suggestion="Use schema_case upper, lower, or preserve.",
+            )
+        report = self.discover(catalogs=catalogs, progress=progress)
+        if report.provider != "databricks":
+            raise ValidationError(
+                description="Databricks-to-Snowflake mapping requires a Databricks source provider.",
+                context={"provider": report.provider},
+                suggestion="Run this command from a DataMuru project configured with the Databricks provider.",
+            )
+        selected_catalogs = sorted(catalogs or [catalog.name for catalog in report.workspace.catalogs])
+        available_catalogs = {catalog.name: catalog for catalog in report.workspace.catalogs}
+        missing_catalogs = [catalog for catalog in selected_catalogs if catalog not in available_catalogs]
+        if missing_catalogs:
+            raise ValidationError(
+                description="Requested mapping catalogs were not found in the Databricks discovery result.",
+                context={
+                    "requested_catalogs": selected_catalogs,
+                    "missing_catalogs": missing_catalogs,
+                    "available_catalogs": sorted(available_catalogs),
+                },
+            )
+
+        catalog_mappings: dict[str, dict] = {}
+        mapped_databases: list[str] = []
+        for catalog_name in selected_catalogs:
+            database_name = self._snowflake_identifier(
+                f"{database_prefix}_{catalog_name}" if database_prefix else catalog_name,
+                schema_case,
+            )
+            mapped_databases.append(database_name)
+            catalog_mappings[catalog_name] = {
+                "database": database_name,
+                "schemas": {
+                    schema.name: self._snowflake_identifier(schema.name, schema_case)
+                    for schema in available_catalogs[catalog_name].schemas
+                },
+            }
+
+        payload = {
+            "migration": {
+                "name": f"{self._slug(report.workspace.name)}-to-{self._slug(target_workspace)}",
+                "source": {
+                    "provider": "databricks",
+                    "workspace": report.workspace.name,
+                    "environment": report.environment,
+                },
+                "target": {
+                    "provider": "snowflake",
+                    "account": target_account,
+                    "workspace": target_workspace,
+                },
+                "naming": {
+                    "database_prefix": database_prefix,
+                    "schema_case": schema_case,
+                },
+                "mappings": {"catalogs": catalog_mappings},
+                "review": {
+                    "status": "draft",
+                    "notes": [
+                        "Review database names, schema names, RBAC differences, and data-movement scope before implementation.",
+                        "This draft does not move data or apply Snowflake changes.",
+                    ],
+                },
+            }
+        }
+        return DatabricksToSnowflakeMappingResult(
+            provider=report.provider,
+            environment=report.environment,
+            source_workspace=report.workspace.name,
+            target_account=target_account,
+            mapping_file_text=yaml.safe_dump(payload, sort_keys=False),
+            selected_catalogs=selected_catalogs,
+            mapped_databases=mapped_databases,
+        )
+
     @classmethod
     def _suite_paths(
         cls,
@@ -274,6 +364,16 @@ class ImportEngine:
     def _slug(value: str) -> str:
         slug = re.sub(r"[^A-Za-z0-9]+", "-", value.strip().lower()).strip("-")
         return slug or "unnamed"
+
+    @staticmethod
+    def _snowflake_identifier(value: str, mode: str) -> str:
+        normalized = re.sub(r"[^A-Za-z0-9_]+", "_", value.strip()).strip("_")
+        normalized = normalized or "UNNAMED"
+        if mode == "lower":
+            return normalized.lower()
+        if mode == "preserve":
+            return normalized
+        return normalized.upper()
 
     @staticmethod
     def _emit_progress(

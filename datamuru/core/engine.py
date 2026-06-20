@@ -190,6 +190,25 @@ class DataMuruEngine:
             progress=progress,
         )
 
+    def import_databricks_to_snowflake_mapping(
+        self,
+        *,
+        catalogs: list[str] | None = None,
+        target_account: str = "snowflake-account",
+        target_workspace: str = "snowflake-target",
+        database_prefix: str | None = None,
+        schema_case: str = "upper",
+        progress: ImportProgressCallback | None = None,
+    ):
+        return ImportEngine(config_path=self.config_path, environment=self.environment).databricks_to_snowflake_mapping(
+            catalogs=catalogs,
+            target_account=target_account,
+            target_workspace=target_workspace,
+            database_prefix=database_prefix,
+            schema_case=schema_case,
+            progress=progress,
+        )
+
     def import_adopt(self, *, targets: list[str], commit: bool = False):
         return ImportEngine(config_path=self.config_path, environment=self.environment).adopt(
             targets=targets,

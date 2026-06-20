@@ -294,6 +294,101 @@ def test_import_generate_cli_accepts_enterprise_suite_layout(sample_project, tmp
     assert (tmp_path / "workspaces" / "databricks.dev.alpha-dev.dm-imported.workspace.yml").exists()
 
 
+def test_import_map_snowflake_generates_mapping_draft(sample_project, tmp_path, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="us-poc-dev",
+            cloud="azure",
+            region="eastus",
+            catalogs=[
+                ImportCatalogResource(
+                    name="finance_raw",
+                    schemas=[ImportSchemaResource(name="raw"), ImportSchemaResource(name="gold")],
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        DatabricksProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+    output_path = tmp_path / "finance.mapping.yml"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "import",
+            "map-snowflake",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--catalog",
+            "finance_raw",
+            "--target-account",
+            "analytics-dev",
+            "--target-workspace",
+            "snowflake-dev",
+            "--database-prefix",
+            "DM",
+            "--out",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    mapping_text = output_path.read_text(encoding="utf-8")
+    assert "provider: databricks" in mapping_text
+    assert "account: analytics-dev" in mapping_text
+    assert "finance_raw:" in mapping_text
+    assert "database: DM_FINANCE_RAW" in mapping_text
+    assert "raw: RAW" in mapping_text
+    assert "gold: GOLD" in mapping_text
+
+
+def test_import_map_snowflake_json_output(sample_project, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="alpha-dev",
+            cloud="azure",
+            region="eastus",
+            catalogs=[
+                ImportCatalogResource(
+                    name="Marketing-Curated",
+                    schemas=[ImportSchemaResource(name="Silver Layer")],
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        DatabricksProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "import",
+            "map-snowflake",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--schema-case",
+            "lower",
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mapped_databases"] == ["marketing_curated"]
+    assert "Silver Layer: silver_layer" in payload["mapping_file_text"]
+
+
 def test_import_discover_help_exposes_enterprise_scan_guards():
     result = CliRunner().invoke(cli, ["import", "discover", "--help"])
 
@@ -305,6 +400,15 @@ def test_import_discover_help_exposes_enterprise_scan_guards():
     assert "--progress-checkpoint" in result.output
     assert "--job-checkpoint" in result.output
     assert "--resume-from" in result.output
+
+
+def test_import_map_snowflake_help_exposes_mapping_options():
+    result = CliRunner().invoke(cli, ["import", "map-snowflake", "--help"])
+
+    assert result.exit_code == 0
+    assert "--target-account" in result.output
+    assert "--database-prefix" in result.output
+    assert "--schema-case" in result.output
 
 
 def test_import_discover_writes_progress_checkpoint_for_json_output(sample_project, tmp_path, monkeypatch):

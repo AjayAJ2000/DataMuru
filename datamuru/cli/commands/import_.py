@@ -331,6 +331,71 @@ def import_generate_command(
         console.print(result.rbac_file_text)
 
 
+@import_group.command("map-snowflake")
+@click.option("--config", "config_path", default="datamuru.yml", show_default=True)
+@click.option("--catalog", "catalogs", multiple=True, help="Databricks catalog name to map. Repeat to select multiple.")
+@click.option("--target-account", default="snowflake-account", show_default=True, help="Snowflake account label for the draft.")
+@click.option("--target-workspace", default="snowflake-target", show_default=True, help="Snowflake workspace label for the draft.")
+@click.option("--database-prefix", default=None, help="Optional prefix for generated Snowflake database names.")
+@click.option(
+    "--schema-case",
+    default="upper",
+    show_default=True,
+    type=click.Choice(["upper", "lower", "preserve"]),
+    help="Case strategy for generated Snowflake database and schema identifiers.",
+)
+@click.option("--out", "out_path", default=None, help="Write generated mapping YAML to a file.")
+@click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
+@with_cli_errors
+def import_map_snowflake_command(
+    config_path: str,
+    catalogs: tuple[str, ...],
+    target_account: str,
+    target_workspace: str,
+    database_prefix: str | None,
+    schema_case: str,
+    out_path: str | None,
+    output_format: str,
+) -> None:
+    dm = DataMuru(config_path=config_path)
+    if output_format == "json":
+        result = dm.import_databricks_to_snowflake_mapping(
+            catalogs=list(catalogs) or None,
+            target_account=target_account,
+            target_workspace=target_workspace,
+            database_prefix=database_prefix,
+            schema_case=schema_case,
+        )
+    else:
+        with _import_progress("Databricks to Snowflake mapping") as progress_callback:
+            result = dm.import_databricks_to_snowflake_mapping(
+                catalogs=list(catalogs) or None,
+                target_account=target_account,
+                target_workspace=target_workspace,
+                database_prefix=database_prefix,
+                schema_case=schema_case,
+                progress=progress_callback,
+            )
+    if out_path:
+        resolved = Path(out_path).resolve()
+        resolved.parent.mkdir(parents=True, exist_ok=True)
+        resolved.write_text(result.mapping_file_text, encoding="utf-8")
+    if output_format == "json":
+        payload = result.to_dict()
+        if out_path:
+            payload["written_to"] = str(Path(out_path).resolve())
+        console.print_json(json.dumps(payload, indent=2))
+        return
+
+    console.print(
+        "[primary]Databricks to Snowflake Mapping[/primary] - "
+        f"source: [code]{result.source_workspace}[/code], target: [code]{result.target_account}[/code]"
+    )
+    if out_path:
+        console.print(f"[success]Wrote[/success] mapping draft to [code]{Path(out_path).resolve()}[/code]")
+    console.print(result.mapping_file_text)
+
+
 @import_group.command("adopt")
 @click.option("--config", "config_path", default="datamuru.yml", show_default=True)
 @click.option(

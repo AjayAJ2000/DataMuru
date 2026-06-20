@@ -100,6 +100,27 @@ Generate a review suite:
 datamuru import generate --config datamuru.yml --catalog finance_raw --include-identities --include-grants --grant-scope catalog --suite-out imports/databricks
 ```
 
+Draft the Snowflake mapping contract from the same bounded Databricks scope:
+
+```powershell
+datamuru import map-snowflake `
+  --config datamuru.yml `
+  --catalog finance_raw `
+  --target-account analytics-dev `
+  --target-workspace snowflake-dev `
+  --database-prefix DM `
+  --out migrations/databricks-to-snowflake/finance-raw.mapping.yml
+```
+
+The mapping draft is intentionally review-first. It does not move data, create
+Snowflake databases, or apply grants. Review:
+
+- catalog-to-database names;
+- schema casing and reserved-word risk;
+- RBAC and role-model differences;
+- data movement ownership;
+- whether each source catalog should become one Snowflake database or be split.
+
 Create a Snowflake target project or switch the provider config:
 
 ```powershell
@@ -133,7 +154,7 @@ The Enterprise version should add:
 
 - database and schema apply;
 - role, user, and grant import;
-- Databricks-to-Snowflake mapping generation;
+- assisted Databricks-to-Snowflake mapping review and approval workflows;
 - migration review experience after CLI-first workflows are stable;
 - resumable import jobs for large accounts;
 - evidence export for security and change review.

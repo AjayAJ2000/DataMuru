@@ -151,6 +151,28 @@ must include provider, environment, workspace, and catalog scope in their file
 names. Use `--suite-prefix` only when your organization has a stricter naming
 standard.
 
+## `import map-snowflake`
+
+```text
+datamuru import map-snowflake
+  [--config TEXT]
+  [--catalog TEXT]...
+  [--target-account TEXT]
+  [--target-workspace TEXT]
+  [--database-prefix TEXT]
+  [--schema-case upper|lower|preserve]
+  [--out TEXT]
+  [--output text|json]
+```
+
+Generates a draft Databricks-to-Snowflake migration mapping from live Databricks
+catalog/schema discovery. The command does not move data and does not mutate
+Snowflake. It writes a reviewable YAML contract that maps Databricks catalogs to
+Snowflake databases and Databricks schemas to Snowflake schemas.
+
+Use `--catalog` to keep the draft bounded. Use `--database-prefix` and
+`--schema-case` to match enterprise Snowflake naming standards.
+
 ## `import adopt`
 
 ```text

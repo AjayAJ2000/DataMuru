@@ -14,6 +14,7 @@ and this project aims to follow Semantic Versioning.
 - Added structured import progress events and `--progress-checkpoint` for long-running discovery and generation workflows.
 - Added resumable import grant-scan checkpoints with `--job-checkpoint` and `--resume-from`.
 - Added Snowflake live-readonly database and schema discovery with the `datamuru[snowflake]` extra.
+- Added `datamuru import map-snowflake` for draft Databricks-to-Snowflake catalog/schema mapping contracts.
 
 ### Changed
 - Increased DataMuru logo presence in the README and documentation site.
