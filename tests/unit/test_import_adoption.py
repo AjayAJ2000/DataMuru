@@ -1,5 +1,7 @@
 ﻿from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 from click.testing import CliRunner
 
@@ -9,7 +11,7 @@ from datamuru.core.config import load_project
 from datamuru.core.plan import fingerprint, matches_target
 from datamuru.core.state import resolve_state_backend
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
-from datamuru.errors import ImportAdoptionError
+from datamuru.errors import ImportAdoptionError, ProviderError
 from datamuru.core.importer.models import (
     ImportCatalogResource,
     ImportDiscoveryReport,
@@ -20,6 +22,7 @@ from datamuru.core.importer.models import (
     ImportUserResource,
     ImportWorkspaceResource,
 )
+from datamuru.providers.databricks.client import ConnectivityProbeResult
 from datamuru.providers.databricks.provider import DatabricksProvider
 from datamuru.providers.factory import load_provider
 from datamuru.types import ResourceDescriptor
@@ -296,6 +299,64 @@ def test_import_discover_help_exposes_enterprise_scan_guards():
     assert result.exit_code == 0
     assert "--grant-scope" in result.output
     assert "--max-grant-objects" in result.output
+    assert "--max-catalog-grant-objects" in result.output
+    assert "--max-schema-grant-objects" in result.output
+
+
+def test_databricks_import_stops_before_schema_grant_scan_when_type_budget_exceeded(monkeypatch):
+    provider = DatabricksProvider(
+        {
+            "provider": {
+                "cloud": "azure",
+                "execution_mode": "live-readonly",
+                "host": "https://example.cloud.databricks.com",
+                "token_env": "DATABRICKS_TOKEN",
+                "sql_warehouse_id": "warehouse-1",
+            }
+        }
+    )
+    project = SimpleNamespace(
+        workspaces=[
+            SimpleNamespace(
+                raw={
+                    "workspace": {
+                        "name": "enterprise-dev",
+                        "cloud": "azure",
+                        "region": "eastus",
+                    }
+                }
+            )
+        ]
+    )
+    grant_calls: list[str] = []
+    monkeypatch.setattr(
+        provider.client,
+        "probe_workspace",
+        lambda: ConnectivityProbeResult(ok=True, code="provider.connectivity", message="ok"),
+    )
+    monkeypatch.setattr(provider, "_safe_list_groups", lambda include_system: [])
+    monkeypatch.setattr(provider, "_safe_discover_identities", lambda include_system, enabled: ([], [], []))
+    monkeypatch.setattr(provider, "_safe_list_catalogs", lambda include_system: ["finance"])
+    monkeypatch.setattr(provider, "_safe_list_schemas", lambda catalog_name, include_system: ["raw", "silver"])
+    monkeypatch.setattr(
+        provider,
+        "_safe_show_grants",
+        lambda securable_type, securable_name: grant_calls.append(securable_name) or [],
+    )
+
+    with pytest.raises(ProviderError) as exc_info:
+        provider.discover_importable_resources(
+            project,
+            "dev",
+            include_grants=True,
+            grant_scope="all",
+            grant_object_budgets={"schema": 1},
+        )
+
+    assert exc_info.value.description == "Import grant discovery was stopped by an object-type scan budget."
+    assert exc_info.value.context["object_type"] == "schema"
+    assert exc_info.value.context["objects_in_scope"] == 2
+    assert grant_calls == []
 
 
 def test_local_web_ui_is_not_public_cli_surface():

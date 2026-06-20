@@ -44,6 +44,7 @@ class ImportEngine:
         catalogs: list[str] | None = None,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
         self._emit_progress(progress, "Loading DataMuru configuration.", total=6, completed=0)
@@ -58,6 +59,7 @@ class ImportEngine:
             catalogs=catalogs,
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
+            grant_object_budgets=grant_object_budgets,
             progress=progress,
         )
 
@@ -71,6 +73,7 @@ class ImportEngine:
         include_system: bool = False,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportGenerationResult:
         report = self.discover(
@@ -80,6 +83,7 @@ class ImportEngine:
             catalogs=catalogs,
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
+            grant_object_budgets=grant_object_budgets,
             progress=progress,
         )
         selected_catalogs = sorted(catalogs or [catalog.name for catalog in report.workspace.catalogs])
@@ -176,6 +180,7 @@ class ImportEngine:
         include_system: bool = False,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         suite_layout: str = "standard",
         suite_prefix: str | None = None,
         progress: ImportProgressCallback | None = None,
@@ -193,6 +198,7 @@ class ImportEngine:
             include_system=include_system,
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
+            grant_object_budgets=grant_object_budgets,
             progress=progress,
         )
         root = Path(output_dir).resolve()

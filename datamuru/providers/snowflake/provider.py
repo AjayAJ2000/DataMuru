@@ -123,6 +123,7 @@ class SnowflakeProvider(DataMuruProvider):
         catalogs: list[str] | None = None,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
         raise ProviderError(

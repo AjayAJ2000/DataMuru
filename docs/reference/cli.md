@@ -94,6 +94,8 @@ datamuru import discover
   [--include-grants]
   [--grant-scope catalog|schema|all]
   [--max-grant-objects INTEGER]
+  [--max-catalog-grant-objects INTEGER]
+  [--max-schema-grant-objects INTEGER]
   [--output text|json]
 ```
 
@@ -106,7 +108,10 @@ catalogs. `--include-grants` defaults to `--grant-scope catalog` so broad
 enterprise imports do not accidentally scan every schema grant. Use
 `--grant-scope all` only after scoping catalogs and estimating warehouse cost.
 `--max-grant-objects` stops the run before expensive grant discovery starts
-when too many catalog/schema objects are in scope.
+when too many catalog/schema objects are in scope. Use
+`--max-catalog-grant-objects` and `--max-schema-grant-objects` to set separate
+caps for each object type. This keeps a workspace with few catalogs but many
+schemas from launching an unexpectedly large SQL grant scan.
 
 ## `import generate`
 
@@ -119,6 +124,8 @@ datamuru import generate
   [--include-grants]
   [--grant-scope catalog|schema|all]
   [--max-grant-objects INTEGER]
+  [--max-catalog-grant-objects INTEGER]
+  [--max-schema-grant-objects INTEGER]
   [--include-system]
   [--out TEXT]
   [--suite-out TEXT]

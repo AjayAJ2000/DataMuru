@@ -42,6 +42,7 @@ class DataMuru:
         catalogs: list[str] | None = None,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         progress: ImportProgressCallback | None = None,
     ):
         return self.engine.import_discover(
@@ -51,6 +52,7 @@ class DataMuru:
             catalogs=catalogs,
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
+            grant_object_budgets=grant_object_budgets,
             progress=progress,
         )
 
@@ -64,6 +66,7 @@ class DataMuru:
         include_system: bool = False,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         progress: ImportProgressCallback | None = None,
     ):
         return self.engine.import_generate(
@@ -74,6 +77,7 @@ class DataMuru:
             include_system=include_system,
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
+            grant_object_budgets=grant_object_budgets,
             progress=progress,
         )
 
@@ -85,6 +89,7 @@ class DataMuru:
         include_system: bool = False,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         suite_layout: str = "standard",
         suite_prefix: str | None = None,
         progress: ImportProgressCallback | None = None,
@@ -95,6 +100,7 @@ class DataMuru:
             include_system=include_system,
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
+            grant_object_budgets=grant_object_budgets,
             suite_layout=suite_layout,
             suite_prefix=suite_prefix,
             progress=progress,

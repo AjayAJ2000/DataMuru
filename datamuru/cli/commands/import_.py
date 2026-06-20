@@ -37,6 +37,18 @@ def import_group() -> None:
     type=int,
     help="Stop before grant discovery if more grant objects are in scope. Use 0 for no cap.",
 )
+@click.option(
+    "--max-catalog-grant-objects",
+    default=None,
+    type=int,
+    help="Stop before grant discovery if catalog objects in scope exceed this cap. Use 0 for no cap.",
+)
+@click.option(
+    "--max-schema-grant-objects",
+    default=None,
+    type=int,
+    help="Stop before grant discovery if schema objects in scope exceed this cap. Use 0 for no cap.",
+)
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
 def import_discover_command(
@@ -47,10 +59,16 @@ def import_discover_command(
     include_grants: bool,
     grant_scope: str,
     max_grant_objects: int,
+    max_catalog_grant_objects: int | None,
+    max_schema_grant_objects: int | None,
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
     grant_cap = None if max_grant_objects == 0 else max_grant_objects
+    grant_object_budgets = _grant_object_budgets(
+        catalog=max_catalog_grant_objects,
+        schema=max_schema_grant_objects,
+    )
     if output_format == "json":
         report = dm.import_discover(
             include_system=include_system,
@@ -59,6 +77,7 @@ def import_discover_command(
             catalogs=list(catalogs) or None,
             grant_scope=grant_scope,
             max_grant_objects=grant_cap,
+            grant_object_budgets=grant_object_budgets,
         )
     else:
         with _import_progress("Import discovery") as progress_callback:
@@ -69,6 +88,7 @@ def import_discover_command(
                 catalogs=list(catalogs) or None,
                 grant_scope=grant_scope,
                 max_grant_objects=grant_cap,
+                grant_object_budgets=grant_object_budgets,
                 progress=progress_callback,
             )
     if output_format == "json":
@@ -122,6 +142,18 @@ def import_discover_command(
     type=int,
     help="Stop before grant discovery if more grant objects are in scope. Use 0 for no cap.",
 )
+@click.option(
+    "--max-catalog-grant-objects",
+    default=None,
+    type=int,
+    help="Stop before grant discovery if catalog objects in scope exceed this cap. Use 0 for no cap.",
+)
+@click.option(
+    "--max-schema-grant-objects",
+    default=None,
+    type=int,
+    help="Stop before grant discovery if schema objects in scope exceed this cap. Use 0 for no cap.",
+)
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
 @click.option("--out", "out_path", default=None, help="Write generated workspace YAML to a file.")
 @click.option("--suite-out", "suite_out", default=None, help="Write workspace, RBAC, taxonomy, and masking review files under this directory.")
@@ -147,6 +179,8 @@ def import_generate_command(
     include_grants: bool,
     grant_scope: str,
     max_grant_objects: int,
+    max_catalog_grant_objects: int | None,
+    max_schema_grant_objects: int | None,
     include_system: bool,
     out_path: str | None,
     suite_out: str | None,
@@ -156,6 +190,10 @@ def import_generate_command(
 ) -> None:
     dm = DataMuru(config_path=config_path)
     grant_cap = None if max_grant_objects == 0 else max_grant_objects
+    grant_object_budgets = _grant_object_budgets(
+        catalog=max_catalog_grant_objects,
+        schema=max_schema_grant_objects,
+    )
     progress_callback = None
     progress_context = None
     if output_format != "json":
@@ -169,6 +207,7 @@ def import_generate_command(
                 include_system=include_system,
                 grant_scope=grant_scope,
                 max_grant_objects=grant_cap,
+                grant_object_budgets=grant_object_budgets,
                 suite_layout=suite_layout,
                 suite_prefix=suite_prefix,
                 progress=progress_callback,
@@ -182,6 +221,7 @@ def import_generate_command(
                 include_system=include_system,
                 grant_scope=grant_scope,
                 max_grant_objects=grant_cap,
+                grant_object_budgets=grant_object_budgets,
                 progress=progress_callback,
             )
     finally:
@@ -303,3 +343,12 @@ class _import_progress:
         if event.get("advance") is not None:
             update_args["advance"] = int(event["advance"])
         self.progress.update(self.task_id, **update_args)
+
+
+def _grant_object_budgets(*, catalog: int | None, schema: int | None) -> dict[str, int] | None:
+    budgets: dict[str, int] = {}
+    if catalog is not None and catalog > 0:
+        budgets["catalog"] = catalog
+    if schema is not None and schema > 0:
+        budgets["schema"] = schema
+    return budgets or None

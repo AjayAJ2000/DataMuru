@@ -384,6 +384,7 @@ class DatabricksProvider(DataMuruProvider):
         catalogs: list[str] | None = None,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        grant_object_budgets: dict[str, int] | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
         normalized_grant_scope = grant_scope.lower()
@@ -441,7 +442,7 @@ class DatabricksProvider(DataMuruProvider):
             total=max(6 + len(discovered_catalog_names), 6),
             completed=6,
         )
-        grant_scan_total = 0
+        grant_scan_counts = {"catalog": 0, "schema": 0}
         grant_scan_completed = 0
         catalog_schema_pairs: list[tuple[str, list[ImportSchemaResource]]] = []
         for catalog_name in discovered_catalog_names:
@@ -456,11 +457,14 @@ class DatabricksProvider(DataMuruProvider):
             ]
             catalog_schema_pairs.append((catalog_name, schema_resources))
             import_catalogs.append(ImportCatalogResource(name=catalog_name, schemas=schema_resources))
-            grant_scan_total += self._grant_target_count(
+            catalog_count, schema_count = self._grant_target_counts(
                 schema_count=len(schema_resources),
                 grant_scope=normalized_grant_scope,
             )
+            grant_scan_counts["catalog"] += catalog_count
+            grant_scan_counts["schema"] += schema_count
         if include_grants:
+            grant_scan_total = sum(grant_scan_counts.values())
             if max_grant_objects is not None and grant_scan_total > max_grant_objects:
                 raise ProviderError(
                     description="Import grant discovery was stopped before launching an expensive scan.",
@@ -469,12 +473,19 @@ class DatabricksProvider(DataMuruProvider):
                         "grant_objects_in_scope": grant_scan_total,
                         "max_grant_objects": max_grant_objects,
                         "catalogs_in_scope": len(discovered_catalog_names),
+                        "grant_objects_by_type": grant_scan_counts,
                     },
                     suggestion=(
                         "Use --catalog to scope the import, keep --grant-scope catalog for inventory review, "
                         "or raise --max-grant-objects after estimating warehouse cost."
                     ),
                 )
+            self._validate_grant_object_budgets(
+                grant_scan_counts=grant_scan_counts,
+                grant_object_budgets=grant_object_budgets,
+                grant_scope=normalized_grant_scope,
+                catalog_count=len(discovered_catalog_names),
+            )
             progress_base = 6 + len(discovered_catalog_names)
             self._emit_import_progress(
                 progress,
@@ -529,12 +540,52 @@ class DatabricksProvider(DataMuruProvider):
         )
 
     @staticmethod
-    def _grant_target_count(*, schema_count: int, grant_scope: str) -> int:
+    def _grant_target_counts(*, schema_count: int, grant_scope: str) -> tuple[int, int]:
         if grant_scope == "catalog":
-            return 1
+            return 1, 0
         if grant_scope == "schema":
-            return schema_count
-        return 1 + schema_count
+            return 0, schema_count
+        return 1, schema_count
+
+    @staticmethod
+    def _validate_grant_object_budgets(
+        *,
+        grant_scan_counts: dict[str, int],
+        grant_object_budgets: dict[str, int] | None,
+        grant_scope: str,
+        catalog_count: int,
+    ) -> None:
+        if not grant_object_budgets:
+            return
+        supported_budget_types = {"catalog", "schema", "table", "view", "volume"}
+        unsupported = sorted(set(grant_object_budgets) - supported_budget_types)
+        if unsupported:
+            raise ProviderError(
+                description="Import grant discovery received unsupported grant object budget types.",
+                context={
+                    "unsupported_budget_types": unsupported,
+                    "supported_budget_types": sorted(supported_budget_types),
+                },
+                suggestion="Use catalog/schema budgets today; table, view, and volume budgets are reserved for the next discovery surface.",
+            )
+        for object_type, scanned_count in grant_scan_counts.items():
+            budget = grant_object_budgets.get(object_type)
+            if budget is not None and scanned_count > budget:
+                raise ProviderError(
+                    description="Import grant discovery was stopped by an object-type scan budget.",
+                    context={
+                        "grant_scope": grant_scope,
+                        "object_type": object_type,
+                        "objects_in_scope": scanned_count,
+                        "max_objects_for_type": budget,
+                        "catalogs_in_scope": catalog_count,
+                        "grant_objects_by_type": grant_scan_counts,
+                    },
+                    suggestion=(
+                        f"Use --catalog to reduce {object_type} grant scope, lower --grant-scope, "
+                        f"or raise --max-{object_type}-grant-objects after reviewing warehouse cost."
+                    ),
+                )
 
     @staticmethod
     def _emit_import_progress(

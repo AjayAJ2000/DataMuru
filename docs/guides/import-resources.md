@@ -41,11 +41,16 @@ datamuru import discover `
   --catalog analytics `
   --include-grants `
   --grant-scope all `
-  --max-grant-objects 100
+  --max-grant-objects 100 `
+  --max-catalog-grant-objects 5 `
+  --max-schema-grant-objects 50
 ```
 
 If the estimate exceeds `--max-grant-objects`, DataMuru stops before launching
-the expensive SQL grant scan.
+the expensive SQL grant scan. Use the object-type caps when a workspace has a
+small number of catalogs but hundreds or thousands of schemas. The current
+Databricks alpha enforces `catalog` and `schema` grant budgets. `table`, `view`,
+and `volume` budgets are reserved for the next discovery surface.
 
 ## Generate selected configuration
 
@@ -65,6 +70,7 @@ datamuru import generate `
   --include-identities `
   --include-grants `
   --grant-scope catalog `
+  --max-catalog-grant-objects 20 `
   --suite-out .\imports `
   --suite-layout enterprise
 ```
