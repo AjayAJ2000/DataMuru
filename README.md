@@ -34,9 +34,8 @@ The package and CLI execute supported live Databricks operations when `execution
 
 ## Delivery status
 
-Product execution is tracked in the private
-[DataMuru Product Roadmap](https://github.com/users/AjayAJ2000/projects/1)
-GitHub Project. The repository snapshot is maintained in
+Product execution is tracked in a private DataMuru Product Roadmap GitHub
+Project. The repository snapshot is maintained in
 [PROJECT_STATUS.md](PROJECT_STATUS.md), including readiness, risks, milestones,
 completed work, blocked work, and next recommended actions.
 
