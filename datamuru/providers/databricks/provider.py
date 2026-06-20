@@ -8,6 +8,7 @@ from datamuru.core.importer.models import (
     ImportGrantResource,
     ImportGroupResource,
     ImportProgressCallback,
+    ImportProgressEvent,
     ImportSchemaResource,
     ImportServicePrincipalResource,
     ImportUserResource,
@@ -501,6 +502,9 @@ class DatabricksProvider(DataMuruProvider):
                         progress,
                         f"Scanned grants for catalog {catalog_name}.",
                         completed=progress_base + grant_scan_completed,
+                        stage="grant_scan",
+                        object_type="catalog",
+                        object_name=catalog_name,
                     )
                 if normalized_grant_scope in {"schema", "all"}:
                     for schema_resource in schema_resources:
@@ -510,6 +514,9 @@ class DatabricksProvider(DataMuruProvider):
                             progress,
                             f"Scanned grants for schema {catalog_name}.{schema_resource.name}.",
                             completed=progress_base + grant_scan_completed,
+                            stage="grant_scan",
+                            object_type="schema",
+                            object_name=f"{catalog_name}.{schema_resource.name}",
                         )
 
         self._emit_import_progress(progress, "Import discovery complete.")
@@ -592,20 +599,28 @@ class DatabricksProvider(DataMuruProvider):
         progress: ImportProgressCallback | None,
         message: str,
         *,
+        stage: str | None = None,
         total: int | None = None,
         completed: int | None = None,
         advance: int | None = None,
+        object_type: str | None = None,
+        object_name: str | None = None,
+        checkpoint_path: str | None = None,
     ) -> None:
         if progress is None:
             return
-        event: dict = {"message": message}
-        if total is not None:
-            event["total"] = total
-        if completed is not None:
-            event["completed"] = completed
-        if advance is not None:
-            event["advance"] = advance
-        progress(event)
+        progress(
+            ImportProgressEvent(
+                message=message,
+                stage=stage,
+                total=total,
+                completed=completed,
+                advance=advance,
+                object_type=object_type,
+                object_name=object_name,
+                checkpoint_path=checkpoint_path,
+            ).model_dump(mode="python", exclude_none=True)
+        )
 
     def build_desired_resources(self, project) -> list[ResourceDescriptor]:
         resources: list[ResourceDescriptor] = []

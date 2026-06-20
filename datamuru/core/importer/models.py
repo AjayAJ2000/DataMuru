@@ -10,6 +10,17 @@ from datamuru.modeling import DataMuruModel
 ImportProgressCallback = Callable[[dict[str, Any]], None]
 
 
+class ImportProgressEvent(DataMuruModel):
+    message: str
+    stage: str | None = None
+    total: int | None = None
+    completed: int | None = None
+    advance: int | None = None
+    object_type: str | None = None
+    object_name: str | None = None
+    checkpoint_path: str | None = None
+
+
 class ImportSchemaResource(DataMuruModel):
     name: str
 

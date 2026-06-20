@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import json
 from pathlib import Path
 
 import click
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 from datamuru.api import DataMuru
 
@@ -49,6 +58,11 @@ def import_group() -> None:
     type=int,
     help="Stop before grant discovery if schema objects in scope exceed this cap. Use 0 for no cap.",
 )
+@click.option(
+    "--progress-checkpoint",
+    default=None,
+    help="Write the latest import progress event to this JSON file.",
+)
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
 def import_discover_command(
@@ -61,6 +75,7 @@ def import_discover_command(
     max_grant_objects: int,
     max_catalog_grant_objects: int | None,
     max_schema_grant_objects: int | None,
+    progress_checkpoint: str | None,
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
@@ -78,9 +93,10 @@ def import_discover_command(
             grant_scope=grant_scope,
             max_grant_objects=grant_cap,
             grant_object_budgets=grant_object_budgets,
+            progress=_checkpoint_progress(progress_checkpoint).update if progress_checkpoint else None,
         )
     else:
-        with _import_progress("Import discovery") as progress_callback:
+        with _import_progress("Import discovery", checkpoint_path=progress_checkpoint) as progress_callback:
             report = dm.import_discover(
                 include_system=include_system,
                 include_identities=include_identities,
@@ -154,6 +170,11 @@ def import_discover_command(
     type=int,
     help="Stop before grant discovery if schema objects in scope exceed this cap. Use 0 for no cap.",
 )
+@click.option(
+    "--progress-checkpoint",
+    default=None,
+    help="Write the latest import progress event to this JSON file.",
+)
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
 @click.option("--out", "out_path", default=None, help="Write generated workspace YAML to a file.")
 @click.option("--suite-out", "suite_out", default=None, help="Write workspace, RBAC, taxonomy, and masking review files under this directory.")
@@ -181,6 +202,7 @@ def import_generate_command(
     max_grant_objects: int,
     max_catalog_grant_objects: int | None,
     max_schema_grant_objects: int | None,
+    progress_checkpoint: str | None,
     include_system: bool,
     out_path: str | None,
     suite_out: str | None,
@@ -196,8 +218,10 @@ def import_generate_command(
     )
     progress_callback = None
     progress_context = None
-    if output_format != "json":
-        progress_context = _import_progress("Import generation")
+    if output_format == "json" and progress_checkpoint:
+        progress_callback = _checkpoint_progress(progress_checkpoint).update
+    elif output_format != "json":
+        progress_context = _import_progress("Import generation", checkpoint_path=progress_checkpoint)
         progress_callback = progress_context.__enter__()
     try:
         if suite_out:
@@ -304,14 +328,17 @@ def import_adopt_command(
 
 
 class _import_progress:
-    def __init__(self, label: str) -> None:
+    def __init__(self, label: str, *, checkpoint_path: str | None = None) -> None:
         self.label = label
+        self.checkpoint = _checkpoint_progress(checkpoint_path) if checkpoint_path else None
         self.progress = Progress(
             SpinnerColumn(style="primary"),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(bar_width=None),
+            MofNCompleteColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
+            TimeRemainingColumn(),
             console=console,
             transient=False,
         )
@@ -334,8 +361,10 @@ class _import_progress:
             return
         update_args = {}
         message = event.get("message")
+        stage = event.get("stage")
         if message:
-            update_args["description"] = f"{self.label}: {message}"
+            prefix = f"{self.label}: {stage}: " if stage else f"{self.label}: "
+            update_args["description"] = f"{prefix}{message}"
         if event.get("total") is not None:
             update_args["total"] = max(int(event["total"]), 1)
         if event.get("completed") is not None:
@@ -343,6 +372,8 @@ class _import_progress:
         if event.get("advance") is not None:
             update_args["advance"] = int(event["advance"])
         self.progress.update(self.task_id, **update_args)
+        if self.checkpoint:
+            self.checkpoint.update(event)
 
 
 def _grant_object_budgets(*, catalog: int | None, schema: int | None) -> dict[str, int] | None:
@@ -352,3 +383,18 @@ def _grant_object_budgets(*, catalog: int | None, schema: int | None) -> dict[st
     if schema is not None and schema > 0:
         budgets["schema"] = schema
     return budgets or None
+
+
+class _checkpoint_progress:
+    def __init__(self, checkpoint_path: str | None) -> None:
+        self.path = Path(checkpoint_path).resolve() if checkpoint_path else None
+
+    def update(self, event: dict) -> None:
+        if not self.path:
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "updated_at": datetime.now(UTC).isoformat(),
+            "event": event,
+        }
+        self.path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

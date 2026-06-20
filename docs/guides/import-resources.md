@@ -16,6 +16,23 @@ provider stage:
 datamuru import discover --config datamuru.yml
 ```
 
+For long enterprise scans, write a progress checkpoint file. This file is safe
+to tail, collect as CI evidence, or attach to an operations ticket:
+
+```powershell
+datamuru import discover `
+  --config datamuru.yml `
+  --catalog analytics `
+  --include-grants `
+  --grant-scope all `
+  --progress-checkpoint .\.datamuru\import-progress.json
+```
+
+The checkpoint stores the latest structured progress event, including stage,
+object type, object name, completed count, and total count when available. It is
+not a resumable job file yet; resumable import checkpoints are the next milestone
+item.
+
 In enterprise workspaces, start with one catalog before requesting grants:
 
 ```powershell

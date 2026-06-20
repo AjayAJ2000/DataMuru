@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -301,6 +302,55 @@ def test_import_discover_help_exposes_enterprise_scan_guards():
     assert "--max-grant-objects" in result.output
     assert "--max-catalog-grant-objects" in result.output
     assert "--max-schema-grant-objects" in result.output
+    assert "--progress-checkpoint" in result.output
+
+
+def test_import_discover_writes_progress_checkpoint_for_json_output(sample_project, tmp_path, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="alpha-dev",
+            cloud="azure",
+            region="eastus",
+            catalogs=[ImportCatalogResource(name="dm_imported", schemas=[])],
+        ),
+    )
+
+    def fake_discover(self, project, environment, **kwargs):
+        progress = kwargs.get("progress")
+        if progress:
+            progress(
+                {
+                    "stage": "catalog_inventory",
+                    "message": "Discovered 1 catalog.",
+                    "total": 2,
+                    "completed": 1,
+                }
+            )
+        return report
+
+    monkeypatch.setattr(DatabricksProvider, "discover_importable_resources", fake_discover)
+    checkpoint = tmp_path / "import-progress.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "import",
+            "discover",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--output",
+            "json",
+            "--progress-checkpoint",
+            str(checkpoint),
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert payload["event"]["stage"] == "catalog_inventory"
+    assert payload["event"]["completed"] == 1
 
 
 def test_databricks_import_stops_before_schema_grant_scan_when_type_budget_exceeded(monkeypatch):

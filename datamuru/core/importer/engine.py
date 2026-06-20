@@ -20,6 +20,7 @@ from .models import (
     ImportAdoptionResult,
     ImportDiscoveryReport,
     ImportGenerationResult,
+    ImportProgressEvent,
     ImportProgressCallback,
 )
 
@@ -273,20 +274,24 @@ class ImportEngine:
         progress: ImportProgressCallback | None,
         message: str,
         *,
+        stage: str | None = None,
         total: int | None = None,
         completed: int | None = None,
         advance: int | None = None,
+        checkpoint_path: str | None = None,
     ) -> None:
         if progress is None:
             return
-        event: dict = {"message": message}
-        if total is not None:
-            event["total"] = total
-        if completed is not None:
-            event["completed"] = completed
-        if advance is not None:
-            event["advance"] = advance
-        progress(event)
+        progress(
+            ImportProgressEvent(
+                message=message,
+                stage=stage,
+                total=total,
+                completed=completed,
+                advance=advance,
+                checkpoint_path=checkpoint_path,
+            ).model_dump(mode="python", exclude_none=True)
+        )
 
     @staticmethod
     def _generate_rbac_text(grants, selected_catalogs: list[str]) -> str:

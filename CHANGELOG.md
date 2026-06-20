@@ -11,6 +11,7 @@ and this project aims to follow Semantic Versioning.
 - Added enterprise import suite file naming with `--suite-layout enterprise` and `--suite-prefix`.
 - Added validation warnings for enterprise file naming conventions.
 - Added per-object grant scan budgets for Databricks import discovery with `--max-catalog-grant-objects` and `--max-schema-grant-objects`.
+- Added structured import progress events and `--progress-checkpoint` for long-running discovery and generation workflows.
 
 ### Changed
 - Increased DataMuru logo presence in the README and documentation site.

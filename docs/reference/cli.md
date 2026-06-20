@@ -96,6 +96,7 @@ datamuru import discover
   [--max-grant-objects INTEGER]
   [--max-catalog-grant-objects INTEGER]
   [--max-schema-grant-objects INTEGER]
+  [--progress-checkpoint TEXT]
   [--output text|json]
 ```
 
@@ -112,6 +113,8 @@ when too many catalog/schema objects are in scope. Use
 `--max-catalog-grant-objects` and `--max-schema-grant-objects` to set separate
 caps for each object type. This keeps a workspace with few catalogs but many
 schemas from launching an unexpectedly large SQL grant scan.
+`--progress-checkpoint` writes the latest structured progress event to JSON so
+long-running imports can be observed from another terminal or CI step.
 
 ## `import generate`
 
@@ -126,6 +129,7 @@ datamuru import generate
   [--max-grant-objects INTEGER]
   [--max-catalog-grant-objects INTEGER]
   [--max-schema-grant-objects INTEGER]
+  [--progress-checkpoint TEXT]
   [--include-system]
   [--out TEXT]
   [--suite-out TEXT]
