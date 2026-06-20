@@ -47,17 +47,6 @@ datamuru import discover `
 If the estimate exceeds `--max-grant-objects`, DataMuru stops before launching
 the expensive SQL grant scan.
 
-## Open the local project UI
-
-Use the local UI when reviewing a project with platform owners:
-
-```powershell
-datamuru ui --config datamuru.yml --port 8765
-```
-
-Open `http://127.0.0.1:8765/`. The dashboard reads local configuration and
-declared resources only, so it is safe to use before live import discovery.
-
 ## Generate selected configuration
 
 ```powershell

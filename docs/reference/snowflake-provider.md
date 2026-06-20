@@ -52,7 +52,7 @@ provider-neutral planning.
 2. Capture the account identifier, warehouse, role, and user.
 3. Configure the Snowflake provider in `state-only` mode.
 4. Declare target databases and schemas using DataMuru catalog/schema resources.
-5. Run `validate`, `plan`, and `ui`.
+5. Run `validate` and `plan`.
 
 ```powershell
 $env:SNOWFLAKE_ACCOUNT="your-account"
@@ -60,7 +60,6 @@ $env:SNOWFLAKE_USER="your-user"
 
 datamuru validate --config datamuru.yml --strict
 datamuru plan --config datamuru.yml
-datamuru ui --config datamuru.yml --port 8765
 ```
 
 ## Databricks to Snowflake

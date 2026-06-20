@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from rich.panel import Panel
 from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
 from rich.theme import Theme
 from rich.traceback import install
 
@@ -28,6 +29,29 @@ DATAMURU_THEME = Theme(
 
 console = Console(theme=DATAMURU_THEME)
 install(show_locals=False)
+
+
+def render_cli_banner(command: str | None = None) -> None:
+    """Render the branded CLI shell header for interactive command usage."""
+
+    title = Text("DataMuru", style="primary")
+    subtitle = Text("Provider-agnostic data infrastructure, governed by design.", style="secondary")
+    tagline = Text("Declare. Review. Apply. Evidence.", style="accent")
+    mark = Text()
+    mark.append("   /\\\n", style="primary")
+    mark.append("  /DM\\\n", style="accent")
+    mark.append("  \\__/\n", style="primary")
+    if command:
+        tagline.append(f"  command: {command}", style="muted")
+
+    body = Text()
+    body.append_text(mark)
+    body.append_text(title)
+    body.append("\n")
+    body.append_text(subtitle)
+    body.append("\n")
+    body.append_text(tagline)
+    console.print(Panel.fit(body, border_style="primary", title="DataMuru CLI"))
 
 
 def render_plan_symbol(action: str) -> str:

@@ -30,13 +30,13 @@ approved Enterprise credential extension.
 Install the released package:
 
 ```powershell
-python -m pip install --upgrade datamuru==0.3.6a0
+python -m pip install --upgrade datamuru==0.3.7a0
 ```
 
 For Databricks SDK experiments, install the optional extra:
 
 ```powershell
-python -m pip install --upgrade "datamuru[databricks]==0.3.6a0"
+python -m pip install --upgrade "datamuru[databricks]==0.3.7a0"
 ```
 
 ## 3. Create a project
@@ -246,17 +246,20 @@ Use scoped import discovery for the first enterprise test. Unscoped
 `--include-grants --grant-scope all` can scan every visible catalog and schema
 and can take longer when the SQL warehouse is cold.
 
-## 10a. Open the local UI
+## 10a. Review through the CLI shell
 
-Use the local UI during stakeholder review:
+Use the branded CLI shell during stakeholder review:
 
 ```powershell
-datamuru ui --config datamuru.yml --port 8765
+datamuru validate --config datamuru.yml --strict
+datamuru doctor --config datamuru.yml
+datamuru plan --config datamuru.yml --target catalog:dm_enterprise_smoke_01
 ```
 
-The UI currently shows local configuration health and declared resource
-inventory. It intentionally avoids live Databricks scans so it can be opened
-without consuming warehouse time.
+The previous local web console is no longer part of the public alpha surface.
+Enterprise UI work is tracked as a later redesign item after import
+checkpointing, provider parity, security, and CLI-first review workflows are
+stable.
 
 ## 11. Save and apply a reviewed plan
 

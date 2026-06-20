@@ -6,6 +6,40 @@ from datamuru.cli.main import cli
 from datamuru.core.config import validate_project
 
 
+def test_cli_prints_branded_banner_for_human_commands(sample_project):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["validate", "--config", str(sample_project / "datamuru.yml")])
+
+    assert result.exit_code == 0
+    assert "DataMuru CLI" in result.output
+    assert "Provider-agnostic data infrastructure" in result.output
+    assert "Configuration is valid." in result.output
+
+
+def test_cli_banner_can_be_suppressed_for_automation(sample_project):
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--no-banner", "validate", "--config", str(sample_project / "datamuru.yml")],
+    )
+
+    assert result.exit_code == 0
+    assert "DataMuru CLI" not in result.output
+    assert "Configuration is valid." in result.output
+
+
+def test_cli_banner_is_suppressed_for_json_output(sample_project):
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["edition", "show", "--config", str(sample_project / "datamuru.yml"), "--output", "json"],
+    )
+
+    assert result.exit_code == 0
+    assert "DataMuru CLI" not in result.output
+    assert json.loads(result.output)["edition"] == "open-source"
+
+
 def test_validate_command(sample_project):
     runner = CliRunner()
     result = runner.invoke(cli, ["validate", "--config", str(sample_project / "datamuru.yml")])

@@ -7,6 +7,16 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.7a0] - 2026-06-20
+
+### Added
+- Added a branded CLI shell header for interactive DataMuru commands.
+- Added `--no-banner` for automation that needs clean command output.
+
+### Changed
+- Removed the experimental local web UI from the public CLI surface until it can be redesigned as an enterprise-grade experience.
+- Updated enterprise testing and import documentation to use CLI-first review flows.
+
 ## [0.3.6a0] - 2026-06-19
 
 ### Added

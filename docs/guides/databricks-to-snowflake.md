@@ -110,7 +110,6 @@ Review the target plan:
 ```powershell
 datamuru validate --config .\snowflake-trial\datamuru.yml --strict
 datamuru plan --config .\snowflake-trial\datamuru.yml
-datamuru ui --config .\snowflake-trial\datamuru.yml --port 8765
 ```
 
 ## Current limitation
@@ -128,6 +127,6 @@ The Enterprise version should add:
 - database and schema apply;
 - role, user, and grant import;
 - Databricks-to-Snowflake mapping generation;
-- migration review UI;
+- migration review experience after CLI-first workflows are stable;
 - resumable import jobs for large accounts;
 - evidence export for security and change review.

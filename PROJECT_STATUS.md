@@ -78,7 +78,7 @@ functional boundaries, such as security testing or governance documentation.
 | M0 - Project Foundation | Product docs exist; personas, KPIs, decision log, and risk register need formalization. |
 | M1 - Core Architecture | Architecture docs exist; hosted control plane and cross-provider mapping need design decisions. |
 | M2 - Backend and API Layer | Core CLI/API exists; resumable import, remote state, and multi-workspace planner are next. |
-| M3 - Frontend and User Experience | Local UI exists; import review UI and hosted UI architecture remain. |
+| M3 - Frontend and User Experience | CLI-first UX is the active surface; the previous local web UI is de-scoped pending a later enterprise-grade redesign. |
 | M4 - Data Engineering and Governance | Databricks and basic governance exist; metadata model, audit reporting, and Snowflake mapping remain. |
 | M5 - Security, Access Control, and Compliance | Auth and RBAC basics exist; license, audit logging, SCIM hardening, and permission tests remain. |
 | M6 - Testing, QA, and Stabilization | Unit/e2e tests and CI exist; live integration, performance, coverage, and manual enterprise QA remain. |
@@ -92,13 +92,13 @@ functional boundaries, such as security testing or governance documentation.
 - Scoped import controls and grant guardrails.
 - PyPI alpha release pipeline.
 - GitHub Pages documentation pipeline.
-- Local enterprise console command.
+- Branded CLI shell with script-friendly suppression.
 - Governance taxonomy, RBAC, and masking compilers.
 - CI, documentation, and package verification workflows.
 
 ## In-progress work summary
 
-- Frontend/local UI productization.
+- CLI-first product experience and enterprise workflow polish.
 - Core backend/API hardening.
 - Governance engine expansion.
 - Security and RBAC hardening.
@@ -128,7 +128,7 @@ functional boundaries, such as security testing or governance documentation.
 1. Implement resumable import job checkpoint model.
 2. Add import ETA, progress, and scan budget telemetry.
 3. Add Databricks grant scan budgets by object type.
-4. Build local UI import review workspace.
+4. Keep enterprise web UI redesign in backlog until CLI-first workflows, import performance, provider parity, and security are stable.
 5. Add remote state backend abstraction.
 6. Implement metadata asset model.
 7. Harden Databricks account SCIM identity support.

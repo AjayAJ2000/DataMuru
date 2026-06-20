@@ -4,6 +4,13 @@
 datamuru [OPTIONS] COMMAND [ARGS]...
 ```
 
+By default, interactive commands print the DataMuru branded CLI header. Use
+`--no-banner` before the command name when scripting:
+
+```powershell
+datamuru --no-banner validate --config datamuru.yml
+```
+
 ## `init`
 
 Create a starter project.
@@ -119,19 +126,6 @@ datamuru import generate
 ```
 
 Repeat `--catalog` to select more than one catalog.
-
-## `ui`
-
-```text
-datamuru ui
-  [--config TEXT]
-  [--host TEXT]
-  [--port INTEGER]
-```
-
-Starts a local web dashboard. The first version reads local configuration,
-validation results, and declared resource inventory only. It does not run live
-provider scans.
 
 ## `import adopt`
 

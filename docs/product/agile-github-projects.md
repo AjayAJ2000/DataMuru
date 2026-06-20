@@ -72,8 +72,8 @@ Create these GitHub Project fields:
 2. Sync issue drafts to GitHub Issues with labels and milestone hints.
 3. Add created issues to a GitHub Project through the GraphQL API.
 4. Update custom fields such as Area, Provider, Risk, and Release target.
-5. Pull project status back into the local UI so DataMuru shows delivery
-   posture beside technical posture.
+5. Pull project status into CLI evidence reports first, then revisit a
+   dedicated enterprise UI after the core workflows are stable.
 
 ## First implementation target
 
