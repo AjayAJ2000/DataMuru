@@ -196,6 +196,17 @@ datamuru edition show [--config TEXT] [--output text|json]
 
 Reports the configured edition and enabled or restricted features.
 
+## `enterprise activation check`
+
+```text
+datamuru enterprise activation check [--config TEXT] [--output text|json]
+```
+
+Checks whether an Enterprise project has the hosted control plane feature,
+activation metadata, and configured license key environment variable needed for
+onboarding. JSON output includes a redacted activation payload and never prints
+the license key value.
+
 ## `agile export`
 
 ```text

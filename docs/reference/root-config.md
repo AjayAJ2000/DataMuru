@@ -49,3 +49,22 @@ Contains `name`, `cloud`, and `config`. Supported cloud identifiers are
 
 Optional mapping reserved for AI-related product integrations. Current values
 do not change the core execution loop.
+
+## `enterprise`
+
+Optional mapping for Enterprise extension contracts. OSS currently supports an
+activation preflight shape:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `activation.organization` | yes | Customer or organization name for onboarding |
+| `activation.contact_email` | yes | Activation and support contact |
+| `activation.control_plane_url` | yes | Expected Enterprise control plane URL |
+| `activation.tenant_id` | yes | Tenant identifier requested for activation |
+| `activation.deployment_region` | yes | Preferred control plane region |
+| `activation.license_key_env` | yes | Environment variable that stores the license key |
+| `activation.purchase_reference` | no | Purchase order, subscription, or contract reference |
+| `activation.support_plan` | no | Commercial support plan label |
+
+Use `datamuru enterprise activation check` to validate the shape before handing
+the project to an Enterprise onboarding workflow.

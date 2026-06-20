@@ -65,7 +65,27 @@
       },
       "additionalProperties": false
     },
-    "ai": {"type": "object"}
+    "ai": {"type": "object"},
+    "enterprise": {
+      "type": "object",
+      "properties": {
+        "activation": {
+          "type": "object",
+          "properties": {
+            "organization": {"type": "string", "minLength": 1},
+            "contact_email": {"type": "string", "minLength": 1},
+            "control_plane_url": {"type": "string", "minLength": 1},
+            "tenant_id": {"type": "string", "minLength": 1},
+            "deployment_region": {"type": "string", "minLength": 1},
+            "license_key_env": {"type": "string", "minLength": 1},
+            "purchase_reference": {"type": "string"},
+            "support_plan": {"type": "string"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

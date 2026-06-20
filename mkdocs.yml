@@ -74,6 +74,7 @@ nav:
       - Structure an enterprise project: guides/enterprise-project-structure.md
       - Authenticate to Databricks: guides/authentication.md
       - Move from OSS to Enterprise: guides/oss-to-enterprise.md
+      - Prepare Enterprise activation: guides/enterprise-activation.md
       - Plan Databricks to Snowflake adoption: guides/databricks-to-snowflake.md
       - Choose an execution mode: guides/execution-modes.md
       - Validate and diagnose setup: guides/validate-and-doctor.md

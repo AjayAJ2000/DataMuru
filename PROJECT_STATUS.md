@@ -1,6 +1,6 @@
 # DataMuru Project Status
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 Project board: [DataMuru Product Roadmap](https://github.com/users/AjayAJ2000/projects/1)
 
@@ -108,8 +108,8 @@ functional boundaries, such as security testing or governance documentation.
 
 ## Blocked work summary
 
-- Hosted control plane architecture: blocked on Enterprise deployment and packaging decisions.
-- Enterprise license activation model: blocked on commercial purchase/licensing model.
+- Hosted control plane architecture: initial OSS activation-readiness contract is now in progress.
+- Enterprise license activation model: local preflight exists; commercial purchase and tenant provisioning remain blocked on Enterprise backend decisions.
 - Databricks live integration tests: blocked on a dedicated test workspace.
 - Snowflake trial integration tests: blocked on Snowflake trial credentials.
 - Snowflake grants import and RBAC mapping: blocked on Snowflake live discovery and account access.
@@ -134,7 +134,7 @@ functional boundaries, such as security testing or governance documentation.
 7. Harden Databricks account SCIM identity support.
 8. Create Databricks live integration test environment.
 9. Create Snowflake trial validation environment.
-10. Draft hosted control plane architecture and enterprise licensing model.
+10. Expand the Enterprise activation preflight into hosted control plane architecture and licensing handoff docs.
 
 ## Readiness
 

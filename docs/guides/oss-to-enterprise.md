@@ -13,7 +13,9 @@ multi-workspace operating controls, support, and commercial entitlement.
    owners.
 5. Enable Enterprise features only after the target account and identity
    permissions are confirmed.
-6. Move to `live-apply` only for targeted, reviewed resources.
+6. Run `datamuru enterprise activation check` before connecting the project to a
+   hosted control plane.
+7. Move to `live-apply` only for targeted, reviewed resources.
 
 ## Enterprise auth options
 
@@ -67,6 +69,8 @@ teams can copy into the main project after cleanup.
 ## Enterprise validation checklist
 
 - `datamuru doctor` succeeds with the approved auth method.
+- `datamuru enterprise activation check` succeeds before hosted control plane
+  onboarding.
 - Account SCIM is available before testing managed users, groups, service
   principals, or group memberships.
 - A SQL warehouse is configured before grant import or live ACL apply.

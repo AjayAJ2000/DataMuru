@@ -3,6 +3,7 @@ from .apply import apply_command
 from .destroy import destroy_command
 from .doctor import doctor_command
 from .edition import edition_group
+from .enterprise import enterprise_group
 from .init import init_command
 from .import_ import import_group
 from .plan import plan_command
@@ -17,5 +18,6 @@ COMMANDS = [
     doctor_command,
     import_group,
     edition_group,
+    enterprise_group,
     agile_group,
 ]

@@ -60,6 +60,7 @@ Create these items first:
 | GitHub Projects issue export command | Core | Provider-agnostic | Both | Developer experience | Low | 0.4.0a0 |
 | Hosted control plane product architecture | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.0a0 |
 | Enterprise purchase and license activation flow | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.0a0 |
+| Enterprise activation readiness preflight | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 
 ## Labels
 
@@ -77,6 +78,7 @@ Use these GitHub issue labels:
 - `provider/snowflake`
 - `risk/high`
 - `release/0.4.0a0`
+- `release/0.5.0a0`
 
 ## Automation
 

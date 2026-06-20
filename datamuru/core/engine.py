@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from datamuru.core.apply import apply_plan
@@ -106,6 +107,12 @@ class DataMuruEngine:
             enabled_features=sorted(enabled_features),
             restricted_features=restricted_features,
         )
+
+    def enterprise_activation_report(self):
+        project, _, _, _ = self._load()
+        from datamuru.enterprise import build_activation_report
+
+        return build_activation_report(project, environ=os.environ)
 
     def doctor(self):
         project, environment, provider, _ = self._load()

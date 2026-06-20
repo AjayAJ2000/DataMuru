@@ -52,6 +52,7 @@ class RootConfig(DataMuruModel):
     state: StateConfig
     provider: ProviderConfig
     ai: dict[str, Any] = Field(default_factory=dict)
+    enterprise: dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkspaceConfig(DataMuruModel):

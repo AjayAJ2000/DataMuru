@@ -16,7 +16,7 @@ Focus:
 - CLI bootstrap
 - Product-grade documentation baseline
 
-## Next likely milestones
+## Recently completed milestones
 
 ### v0.2
 
@@ -33,6 +33,26 @@ Focus:
 - Identity and grant-aware import discovery where account SCIM and SQL warehouse access are available
 - Snowflake provider scaffold for state-only planning
 - Stronger provider contract coverage
+
+### v0.4
+
+- Import progress checkpoints
+- Resumable enterprise import jobs
+- Databricks grant scan budgets by object type
+- Enterprise import suite naming
+- Snowflake live-readonly database and schema discovery
+- Databricks-to-Snowflake mapping drafts
+- GitHub issue draft export for planning workflows
+
+## Next likely milestone
+
+### v0.5
+
+- Enterprise activation readiness preflight for hosted control plane onboarding
+- Hosted control plane product architecture and OSS extension contracts
+- Enterprise purchase and license activation flow
+- Remote-state planning boundary for multi-user hosted workflows
+- Audit evidence and activation handoff documentation
 
 ### v1.0 target direction
 

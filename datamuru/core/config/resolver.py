@@ -46,6 +46,7 @@ def load_project(config_path: str | Path) -> LoadedProject:
         state=StateConfig.model_validate(root_raw["state"]),
         provider=ProviderConfig.model_validate(root_raw["provider"]),
         ai=root_raw.get("ai", {}),
+        enterprise=root_raw.get("enterprise", {}),
     )
 
     project_root = resolved.parent
