@@ -7,6 +7,8 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.4.0a0] - 2026-06-20
+
 ### Added
 - Added enterprise import suite file naming with `--suite-layout enterprise` and `--suite-prefix`.
 - Added validation warnings for enterprise file naming conventions.
