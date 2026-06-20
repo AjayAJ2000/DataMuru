@@ -166,6 +166,50 @@ def test_import_generate_suite_writes_workspace_and_governance_files(sample_proj
     assert "imported_catalog_use_catalog" in rbac_text
 
 
+def test_import_generate_enterprise_suite_uses_provider_workspace_scope_names(sample_project, tmp_path, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="us-poc-dev",
+            cloud="azure",
+            region="eastus",
+            catalogs=[
+                ImportCatalogResource(
+                    name="finance_raw",
+                    schemas=[ImportSchemaResource(name="raw")],
+                )
+            ],
+            grants=[
+                ImportGrantResource(
+                    principal="finance-readers",
+                    privilege="USE_CATALOG",
+                    securable_type="catalog",
+                    securable_name="finance_raw",
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        DatabricksProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = DataMuru(sample_project / "datamuru.yml").import_suite(
+        output_dir=tmp_path,
+        catalogs=["finance_raw"],
+        suite_layout="enterprise",
+    )
+
+    workspace_path = tmp_path / "workspaces" / "databricks.dev.us-poc-dev.finance-raw.workspace.yml"
+    rbac_path = tmp_path / "governance" / "databricks.dev.us-poc-dev.finance-raw.rbac.yml"
+    assert workspace_path.exists()
+    assert rbac_path.exists()
+    assert result.suite_files["workspace"] == str(workspace_path)
+    assert result.workspace_name == "us-poc-dev"
+
+
 def test_import_generate_cli_suite_outputs_written_files(sample_project, tmp_path, monkeypatch):
     report = ImportDiscoveryReport(
         provider="databricks",
@@ -198,6 +242,52 @@ def test_import_generate_cli_suite_outputs_written_files(sample_project, tmp_pat
     assert result.exit_code == 0
     assert "import review suite" in result.output
     assert (tmp_path / "workspaces" / "imported-dev.yml").exists()
+
+
+def test_import_generate_cli_accepts_enterprise_suite_layout(sample_project, tmp_path, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="alpha-dev",
+            cloud="azure",
+            region="eastus",
+            catalogs=[ImportCatalogResource(name="dm_imported", schemas=[])],
+            grants=[
+                ImportGrantResource(
+                    principal="analysts",
+                    privilege="USE_CATALOG",
+                    securable_type="catalog",
+                    securable_name="dm_imported",
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        DatabricksProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "import",
+            "generate",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--catalog",
+            "dm_imported",
+            "--suite-out",
+            str(tmp_path),
+            "--suite-layout",
+            "enterprise",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "enterprise" in result.output
+    assert (tmp_path / "workspaces" / "databricks.dev.alpha-dev.dm-imported.workspace.yml").exists()
 
 
 def test_import_discover_help_exposes_enterprise_scan_guards():

@@ -125,7 +125,7 @@ Use a staged import:
 ```powershell
 datamuru import discover --config datamuru.yml --catalog finance_raw
 datamuru import discover --config datamuru.yml --catalog finance_raw --include-grants --grant-scope catalog
-datamuru import generate --config datamuru.yml --catalog finance_raw --include-identities --include-grants --grant-scope catalog --suite-out imports/databricks
+datamuru import generate --config datamuru.yml --catalog finance_raw --include-identities --include-grants --grant-scope catalog --suite-out imports/databricks --suite-layout enterprise
 ```
 
 Only use `--grant-scope all` after a reviewer chooses the catalog and object
@@ -137,6 +137,21 @@ datamuru import discover --config datamuru.yml --catalog finance_raw --include-g
 
 This is the enterprise-safe path: inventory first, catalog-level grants second,
 deep object grants last.
+
+## Validation guidance
+
+`datamuru validate` reports naming convention drift as warnings. Warnings do
+not block simple projects, but they are useful in enterprise repositories
+because file names become part of the review experience.
+
+The validator currently checks:
+
+- root config is named `datamuru.yml`;
+- environment refs use `environments/<environment>.yml`;
+- provider refs use `providers/<provider>.yml` or
+  `providers/<provider>.<scope>.yml`;
+- workspace file names include the workspace slug;
+- workspace file names use lowercase letters, numbers, dots, and hyphens.
 
 ## Review checklist
 

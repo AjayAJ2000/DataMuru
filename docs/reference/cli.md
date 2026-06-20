@@ -122,10 +122,16 @@ datamuru import generate
   [--include-system]
   [--out TEXT]
   [--suite-out TEXT]
+  [--suite-layout standard|enterprise]
+  [--suite-prefix TEXT]
   [--output text|json]
 ```
 
 Repeat `--catalog` to select more than one catalog.
+Use `--suite-layout enterprise` with `--suite-out` when generated review files
+must include provider, environment, workspace, and catalog scope in their file
+names. Use `--suite-prefix` only when your organization has a stricter naming
+standard.
 
 ## `import adopt`
 

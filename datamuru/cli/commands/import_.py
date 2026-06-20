@@ -125,6 +125,18 @@ def import_discover_command(
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
 @click.option("--out", "out_path", default=None, help="Write generated workspace YAML to a file.")
 @click.option("--suite-out", "suite_out", default=None, help="Write workspace, RBAC, taxonomy, and masking review files under this directory.")
+@click.option(
+    "--suite-layout",
+    default="standard",
+    show_default=True,
+    type=click.Choice(["standard", "enterprise"]),
+    help="File naming layout for --suite-out.",
+)
+@click.option(
+    "--suite-prefix",
+    default=None,
+    help="Override the generated enterprise suite filename prefix.",
+)
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
 def import_generate_command(
@@ -138,6 +150,8 @@ def import_generate_command(
     include_system: bool,
     out_path: str | None,
     suite_out: str | None,
+    suite_layout: str,
+    suite_prefix: str | None,
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
@@ -155,6 +169,8 @@ def import_generate_command(
                 include_system=include_system,
                 grant_scope=grant_scope,
                 max_grant_objects=grant_cap,
+                suite_layout=suite_layout,
+                suite_prefix=suite_prefix,
                 progress=progress_callback,
             )
         else:
@@ -180,12 +196,15 @@ def import_generate_command(
             payload["written_to"] = str(Path(out_path).resolve())
         if suite_out:
             payload["suite_out"] = str(Path(suite_out).resolve())
+            payload["suite_layout"] = suite_layout
         console.print_json(json.dumps(payload, indent=2))
         return
 
     console.print(f"[primary]Import Generate[/primary] - environment: [code]{result.environment}[/code]")
     if suite_out:
-        console.print(f"[success]Wrote[/success] import review suite under [code]{Path(suite_out).resolve()}[/code]")
+        console.print(
+            f"[success]Wrote[/success] [code]{suite_layout}[/code] import review suite under [code]{Path(suite_out).resolve()}[/code]"
+        )
         for label, path in result.suite_files.items():
             console.print(f"  - {label}: [code]{path}[/code]")
         return

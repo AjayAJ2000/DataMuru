@@ -66,6 +66,7 @@ class ImportDiscoveryReport(DataMuruModel):
 class ImportGenerationResult(DataMuruModel):
     provider: str
     environment: str
+    workspace_name: str
     workspace_file_text: str
     rbac_file_text: str | None = None
     taxonomy_file_text: str | None = None

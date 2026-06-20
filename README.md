@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/datamuru-mark-canva.png" alt="DataMuru logo" width="196" height="196">
+  <img src="docs/assets/datamuru-mark-canva.png" alt="DataMuru logo" width="240" height="240">
 </p>
 
 <h1 align="center">DataMuru</h1>

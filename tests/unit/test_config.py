@@ -137,6 +137,37 @@ def test_validate_project_rejects_workspace_cloud_mismatch(sample_project):
     )
 
 
+def test_validate_project_warns_on_nonstandard_enterprise_file_names(sample_project):
+    root_path = sample_project / "datamuru.yml"
+    environment_path = sample_project / "environments" / "development.yml"
+    environment_path.write_text("environment:\n  name: dev\n", encoding="utf-8")
+    root_path.write_text(
+        root_path.read_text(encoding="utf-8").replace(
+            "config: ./environments/dev.yml",
+            "config: ./environments/development.yml",
+        ),
+        encoding="utf-8",
+    )
+    workspace_path = sample_project / "workspaces" / "workspace.yml"
+    (sample_project / "workspaces" / "alpha-dev.yml").rename(workspace_path)
+
+    issues = validate_project(root_path)
+
+    assert any(
+        issue.level == "warning"
+        and issue.path == "environments.dev.config"
+        and "environments/dev.yml" in issue.message
+        for issue in issues
+    )
+    assert any(
+        issue.level == "warning"
+        and issue.path == "workspace.yml"
+        and "alpha-dev" in issue.message
+        for issue in issues
+    )
+    assert not [issue for issue in issues if issue.level == "error"]
+
+
 def test_validate_project_rejects_duplicate_catalog_and_schema(sample_project):
     workspace_path = sample_project / "workspaces" / "alpha-dev.yml"
     workspace_path.write_text(

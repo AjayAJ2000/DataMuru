@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any
 
 from pydantic import ValidationError as PydanticValidationError
@@ -17,6 +18,7 @@ class SchemaValidator:
     EDITIONS = {"open-source", "enterprise"}
     BACKENDS = {"local", "s3", "azure_blob", "gcs"}
     CLOUDS = {"azure", "aws", "gcp", "snowflake"}
+    ENTERPRISE_FILE_STEM = re.compile(r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$")
 
     def validate_root(self, raw: dict[str, Any]) -> list[ValidationIssue]:
         issues: list[ValidationIssue] = []
@@ -521,6 +523,92 @@ class SchemaValidator:
             return issues
         return []
 
+    def validate_file_conventions(
+        self,
+        *,
+        root_raw: dict[str, Any],
+        config_path: Path,
+        project_root: Path,
+    ) -> list[ValidationIssue]:
+        issues: list[ValidationIssue] = []
+        for environment in root_raw.get("environments", []):
+            name = environment.get("name")
+            config = environment.get("config")
+            if not name or not config:
+                continue
+            expected = Path("environments") / f"{name}.yml"
+            if self._normalized_relative(config) != expected.as_posix():
+                issues.append(
+                    ValidationIssue(
+                        level="warning",
+                        path=f"environments.{name}.config",
+                        message=f"Enterprise convention: environment '{name}' should use '{expected.as_posix()}'.",
+                    )
+                )
+
+        provider_name = root_raw.get("provider", {}).get("name")
+        provider_config = root_raw.get("provider", {}).get("config")
+        if provider_name and provider_config:
+            normalized = self._normalized_relative(provider_config)
+            provider_prefix = f"providers/{provider_name}"
+            if not (normalized == f"{provider_prefix}.yml" or normalized.startswith(f"{provider_prefix}.")):
+                issues.append(
+                    ValidationIssue(
+                        level="warning",
+                        path="provider.config",
+                        message=(
+                            f"Enterprise convention: provider '{provider_name}' should use "
+                            f"'providers/{provider_name}.yml' or 'providers/{provider_name}.<scope>.yml'."
+                        ),
+                    )
+                )
+
+        workspaces_dir = project_root / "workspaces"
+        for workspace_path in sorted(workspaces_dir.glob("*.yml")):
+            workspace_raw = load_yaml(workspace_path)
+            workspace = workspace_raw.get("workspace") or {}
+            workspace_name = workspace.get("name")
+            if workspace_name:
+                stem = workspace_path.stem.lower()
+                workspace_slug = self._slug(str(workspace_name))
+                if workspace_slug not in stem:
+                    issues.append(
+                        ValidationIssue(
+                            level="warning",
+                            path=workspace_path.name,
+                            message=(
+                                "Enterprise convention: workspace file names should include the workspace name "
+                                f"'{workspace_slug}' for reviewable multi-workspace repos."
+                            ),
+                        )
+                    )
+            if not self.ENTERPRISE_FILE_STEM.match(workspace_path.stem):
+                issues.append(
+                    ValidationIssue(
+                        level="warning",
+                        path=workspace_path.name,
+                        message="Enterprise convention: file names should use lowercase letters, numbers, dots, and hyphens.",
+                    )
+                )
+
+        if config_path.name != "datamuru.yml":
+            issues.append(
+                ValidationIssue(
+                    level="warning",
+                    path=config_path.name,
+                    message="Enterprise convention: root configuration should be named 'datamuru.yml'.",
+                )
+            )
+        return issues
+
+    @staticmethod
+    def _normalized_relative(path: str) -> str:
+        return Path(path).as_posix().lstrip("./")
+
+    @staticmethod
+    def _slug(value: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
 
 def validate_project(config_path: Path) -> list[ValidationIssue]:
     validator = SchemaValidator()
@@ -530,6 +618,13 @@ def validate_project(config_path: Path) -> list[ValidationIssue]:
         return issues
 
     project_root = config_path.parent
+    issues.extend(
+        validator.validate_file_conventions(
+            root_raw=root_raw,
+            config_path=config_path,
+            project_root=project_root,
+        )
+    )
     for environment in root_raw.get("environments", []):
         env_path = project_root / environment["config"]
         if not env_path.exists():

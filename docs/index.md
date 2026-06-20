@@ -1,7 +1,7 @@
 # DataMuru Documentation
 
 <div class="dm-docs-hero">
-  <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="144" height="144">
+  <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="196" height="196">
   <div>
     <p>Provider-agnostic data infrastructure, governed by design.</p>
   </div>

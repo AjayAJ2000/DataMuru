@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import yaml
 
@@ -153,6 +154,7 @@ class ImportEngine:
         return ImportGenerationResult(
             provider=report.provider,
             environment=report.environment,
+            workspace_name=report.workspace.name,
             workspace_file_text=yaml_text,
             rbac_file_text=rbac_text,
             taxonomy_file_text=taxonomy_text,
@@ -174,8 +176,16 @@ class ImportEngine:
         include_system: bool = False,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        suite_layout: str = "standard",
+        suite_prefix: str | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportGenerationResult:
+        if suite_layout not in {"standard", "enterprise"}:
+            raise ValidationError(
+                description="Unsupported import suite layout.",
+                context={"suite_layout": suite_layout, "supported_layouts": ["standard", "enterprise"]},
+                suggestion="Use suite_layout='standard' for compatibility or 'enterprise' for provider-aware file names.",
+            )
         result = self.generate(
             catalogs=catalogs,
             include_identities=True,
@@ -190,12 +200,13 @@ class ImportEngine:
         governance_dir = root / "governance"
         workspace_dir.mkdir(parents=True, exist_ok=True)
         governance_dir.mkdir(parents=True, exist_ok=True)
-        files = {
-            "workspace": workspace_dir / f"imported-{result.environment}.yml",
-            "rbac": governance_dir / "rbac.imported.yml",
-            "taxonomy": governance_dir / "taxonomy.imported.yml",
-            "masking": governance_dir / "masking.imported.yml",
-        }
+        files = self._suite_paths(
+            workspace_dir=workspace_dir,
+            governance_dir=governance_dir,
+            result=result,
+            suite_layout=suite_layout,
+            suite_prefix=suite_prefix,
+        )
         files["workspace"].write_text(result.workspace_file_text, encoding="utf-8")
         if result.rbac_file_text:
             files["rbac"].write_text(result.rbac_file_text, encoding="utf-8")
@@ -204,6 +215,52 @@ class ImportEngine:
         if result.masking_file_text:
             files["masking"].write_text(result.masking_file_text, encoding="utf-8")
         return result.model_copy(update={"suite_files": {key: str(path) for key, path in files.items() if path.exists()}})
+
+    @classmethod
+    def _suite_paths(
+        cls,
+        *,
+        workspace_dir: Path,
+        governance_dir: Path,
+        result: ImportGenerationResult,
+        suite_layout: str,
+        suite_prefix: str | None,
+    ) -> dict[str, Path]:
+        if suite_layout == "standard":
+            return {
+                "workspace": workspace_dir / f"imported-{result.environment}.yml",
+                "rbac": governance_dir / "rbac.imported.yml",
+                "taxonomy": governance_dir / "taxonomy.imported.yml",
+                "masking": governance_dir / "masking.imported.yml",
+            }
+
+        prefix = suite_prefix or ".".join(
+            [
+                cls._slug(result.provider),
+                cls._slug(result.environment),
+                cls._slug(result.workspace_name),
+                cls._scope_slug(result.selected_catalogs),
+            ]
+        )
+        return {
+            "workspace": workspace_dir / f"{prefix}.workspace.yml",
+            "rbac": governance_dir / f"{prefix}.rbac.yml",
+            "taxonomy": governance_dir / f"{prefix}.taxonomy.yml",
+            "masking": governance_dir / f"{prefix}.masking.yml",
+        }
+
+    @staticmethod
+    def _scope_slug(catalogs: list[str]) -> str:
+        if not catalogs:
+            return "all-catalogs"
+        if len(catalogs) == 1:
+            return ImportEngine._slug(catalogs[0])
+        return f"{ImportEngine._slug(catalogs[0])}-plus-{len(catalogs) - 1}"
+
+    @staticmethod
+    def _slug(value: str) -> str:
+        slug = re.sub(r"[^A-Za-z0-9]+", "-", value.strip().lower()).strip("-")
+        return slug or "unnamed"
 
     @staticmethod
     def _emit_progress(

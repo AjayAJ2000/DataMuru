@@ -7,6 +7,13 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Added enterprise import suite file naming with `--suite-layout enterprise` and `--suite-prefix`.
+- Added validation warnings for enterprise file naming conventions.
+
+### Changed
+- Increased DataMuru logo presence in the README and documentation site.
+
 ## [0.3.7a0] - 2026-06-20
 
 ### Added

@@ -163,6 +163,8 @@ class DataMuruEngine:
         include_system: bool = False,
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
+        suite_layout: str = "standard",
+        suite_prefix: str | None = None,
         progress: ImportProgressCallback | None = None,
     ):
         return ImportEngine(config_path=self.config_path, environment=self.environment).write_suite(
@@ -171,6 +173,8 @@ class DataMuruEngine:
             include_system=include_system,
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
+            suite_layout=suite_layout,
+            suite_prefix=suite_prefix,
             progress=progress,
         )
 

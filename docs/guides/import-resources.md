@@ -56,6 +56,29 @@ datamuru import generate `
   --out .\workspaces\analytics-import.yml
 ```
 
+For enterprise review suites, prefer provider-aware file names:
+
+```powershell
+datamuru import generate `
+  --config datamuru.yml `
+  --catalog analytics `
+  --include-identities `
+  --include-grants `
+  --grant-scope catalog `
+  --suite-out .\imports `
+  --suite-layout enterprise
+```
+
+This writes files such as:
+
+```text
+imports/
+  workspaces/databricks.dev.us-poc-dev.analytics.workspace.yml
+  governance/databricks.dev.us-poc-dev.analytics.rbac.yml
+  governance/databricks.dev.us-poc-dev.analytics.taxonomy.yml
+  governance/databricks.dev.us-poc-dev.analytics.masking.yml
+```
+
 ## Review ownership
 
 For each resource, decide whether it is:
