@@ -29,9 +29,40 @@ datamuru import discover `
 ```
 
 The checkpoint stores the latest structured progress event, including stage,
-object type, object name, completed count, and total count when available. It is
-not a resumable job file yet; resumable import checkpoints are the next milestone
-item.
+object type, object name, completed count, and total count when available.
+
+For resumable grant scans, also write a job checkpoint. The job checkpoint stores
+completed grant targets and discovered grants, so a later run can skip objects
+that were already scanned:
+
+```powershell
+datamuru import discover `
+  --config datamuru.yml `
+  --catalog analytics `
+  --include-grants `
+  --grant-scope all `
+  --progress-checkpoint .\.datamuru\imports\analytics.progress.json `
+  --job-checkpoint .\.datamuru\imports\analytics.job.json
+```
+
+If the run is interrupted or the warehouse times out, resume with the same scope
+and the previous job checkpoint:
+
+```powershell
+datamuru import discover `
+  --config datamuru.yml `
+  --catalog analytics `
+  --include-grants `
+  --grant-scope all `
+  --resume-from .\.datamuru\imports\analytics.job.json `
+  --job-checkpoint .\.datamuru\imports\analytics.job.json `
+  --progress-checkpoint .\.datamuru\imports\analytics.progress.json
+```
+
+Use the same `--catalog`, `--include-grants`, and `--grant-scope` values when
+resuming. DataMuru resumes the completed grant-scan objects in the checkpoint;
+it still refreshes catalog and schema inventory because that inventory is cheap
+and should reflect the current workspace.
 
 In enterprise workspaces, start with one catalog before requesting grants:
 

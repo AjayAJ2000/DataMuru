@@ -6,6 +6,7 @@ from datamuru.core.importer.models import (
     ImportCatalogResource,
     ImportDiscoveryReport,
     ImportGrantResource,
+    ImportJobCheckpoint,
     ImportGroupResource,
     ImportProgressCallback,
     ImportProgressEvent,
@@ -386,6 +387,7 @@ class DatabricksProvider(DataMuruProvider):
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
         grant_object_budgets: dict[str, int] | None = None,
+        resume_checkpoint: dict | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
         normalized_grant_scope = grant_scope.lower()
@@ -429,7 +431,9 @@ class DatabricksProvider(DataMuruProvider):
             enabled=include_identities,
         )
         import_catalogs: list[ImportCatalogResource] = []
-        grants: list[ImportGrantResource] = []
+        job_checkpoint = self._load_import_job_checkpoint(resume_checkpoint)
+        completed_grant_targets = self._completed_grant_targets(job_checkpoint)
+        grants: list[ImportGrantResource] = list(job_checkpoint.grants)
         catalog_filter = {catalog.casefold() for catalog in catalogs or []}
         self._emit_import_progress(progress, "Listing Unity Catalog catalogs.", completed=5)
         discovered_catalog_names = self._safe_list_catalogs(include_system=include_system)
@@ -496,27 +500,60 @@ class DatabricksProvider(DataMuruProvider):
             )
             for catalog_name, schema_resources in catalog_schema_pairs:
                 if normalized_grant_scope in {"catalog", "all"}:
-                    grants.extend(self._safe_show_grants("catalog", catalog_name))
-                    grant_scan_completed += 1
-                    self._emit_import_progress(
-                        progress,
-                        f"Scanned grants for catalog {catalog_name}.",
-                        completed=progress_base + grant_scan_completed,
-                        stage="grant_scan",
-                        object_type="catalog",
-                        object_name=catalog_name,
-                    )
-                if normalized_grant_scope in {"schema", "all"}:
-                    for schema_resource in schema_resources:
-                        grants.extend(self._safe_show_grants("schema", f"{catalog_name}.{schema_resource.name}"))
+                    target = {"object_type": "catalog", "object_name": catalog_name}
+                    target_key = self._grant_target_key(**target)
+                    if target_key in completed_grant_targets:
                         grant_scan_completed += 1
                         self._emit_import_progress(
                             progress,
-                            f"Scanned grants for schema {catalog_name}.{schema_resource.name}.",
+                            f"Skipped completed grant scan for catalog {catalog_name}.",
+                            completed=progress_base + grant_scan_completed,
+                            stage="grant_scan",
+                            object_type="catalog",
+                            object_name=catalog_name,
+                        )
+                    else:
+                        discovered_grants = self._safe_show_grants("catalog", catalog_name)
+                        grants.extend(discovered_grants)
+                        completed_grant_targets.add(target_key)
+                        grant_scan_completed += 1
+                        self._emit_import_progress(
+                            progress,
+                            f"Scanned grants for catalog {catalog_name}.",
+                            completed=progress_base + grant_scan_completed,
+                            stage="grant_scan",
+                            object_type="catalog",
+                            object_name=catalog_name,
+                            checkpoint_update=self._grant_checkpoint_update(target, discovered_grants),
+                        )
+                if normalized_grant_scope in {"schema", "all"}:
+                    for schema_resource in schema_resources:
+                        schema_name = f"{catalog_name}.{schema_resource.name}"
+                        target = {"object_type": "schema", "object_name": schema_name}
+                        target_key = self._grant_target_key(**target)
+                        if target_key in completed_grant_targets:
+                            grant_scan_completed += 1
+                            self._emit_import_progress(
+                                progress,
+                                f"Skipped completed grant scan for schema {schema_name}.",
+                                completed=progress_base + grant_scan_completed,
+                                stage="grant_scan",
+                                object_type="schema",
+                                object_name=schema_name,
+                            )
+                            continue
+                        discovered_grants = self._safe_show_grants("schema", schema_name)
+                        grants.extend(discovered_grants)
+                        completed_grant_targets.add(target_key)
+                        grant_scan_completed += 1
+                        self._emit_import_progress(
+                            progress,
+                            f"Scanned grants for schema {schema_name}.",
                             completed=progress_base + grant_scan_completed,
                             stage="grant_scan",
                             object_type="schema",
-                            object_name=f"{catalog_name}.{schema_resource.name}",
+                            object_name=schema_name,
+                            checkpoint_update=self._grant_checkpoint_update(target, discovered_grants),
                         )
 
         self._emit_import_progress(progress, "Import discovery complete.")
@@ -595,6 +632,33 @@ class DatabricksProvider(DataMuruProvider):
                 )
 
     @staticmethod
+    def _load_import_job_checkpoint(resume_checkpoint: dict | None) -> ImportJobCheckpoint:
+        if not resume_checkpoint:
+            return ImportJobCheckpoint(provider="databricks")
+        return ImportJobCheckpoint.model_validate(resume_checkpoint)
+
+    @staticmethod
+    def _completed_grant_targets(checkpoint: ImportJobCheckpoint) -> set[tuple[str, str]]:
+        return {
+            DatabricksProvider._grant_target_key(
+                object_type=target.object_type,
+                object_name=target.object_name,
+            )
+            for target in checkpoint.completed_grant_targets
+        }
+
+    @staticmethod
+    def _grant_target_key(*, object_type: str, object_name: str) -> tuple[str, str]:
+        return object_type.lower(), object_name.casefold()
+
+    @staticmethod
+    def _grant_checkpoint_update(target: dict[str, str], grants: list[ImportGrantResource]) -> dict:
+        return {
+            "completed_grant_target": target,
+            "grants": [grant.model_dump(mode="python") for grant in grants],
+        }
+
+    @staticmethod
     def _emit_import_progress(
         progress: ImportProgressCallback | None,
         message: str,
@@ -606,6 +670,7 @@ class DatabricksProvider(DataMuruProvider):
         object_type: str | None = None,
         object_name: str | None = None,
         checkpoint_path: str | None = None,
+        checkpoint_update: dict | None = None,
     ) -> None:
         if progress is None:
             return
@@ -619,6 +684,7 @@ class DatabricksProvider(DataMuruProvider):
                 object_type=object_type,
                 object_name=object_name,
                 checkpoint_path=checkpoint_path,
+                checkpoint_update=checkpoint_update,
             ).model_dump(mode="python", exclude_none=True)
         )
 

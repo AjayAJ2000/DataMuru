@@ -46,6 +46,7 @@ class ImportEngine:
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
         grant_object_budgets: dict[str, int] | None = None,
+        resume_checkpoint: dict | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
         self._emit_progress(progress, "Loading DataMuru configuration.", total=6, completed=0)
@@ -61,6 +62,7 @@ class ImportEngine:
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
             grant_object_budgets=grant_object_budgets,
+            resume_checkpoint=resume_checkpoint,
             progress=progress,
         )
 
@@ -75,6 +77,7 @@ class ImportEngine:
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
         grant_object_budgets: dict[str, int] | None = None,
+        resume_checkpoint: dict | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportGenerationResult:
         report = self.discover(
@@ -85,6 +88,7 @@ class ImportEngine:
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
             grant_object_budgets=grant_object_budgets,
+            resume_checkpoint=resume_checkpoint,
             progress=progress,
         )
         selected_catalogs = sorted(catalogs or [catalog.name for catalog in report.workspace.catalogs])
@@ -182,6 +186,7 @@ class ImportEngine:
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
         grant_object_budgets: dict[str, int] | None = None,
+        resume_checkpoint: dict | None = None,
         suite_layout: str = "standard",
         suite_prefix: str | None = None,
         progress: ImportProgressCallback | None = None,
@@ -200,6 +205,7 @@ class ImportEngine:
             grant_scope=grant_scope,
             max_grant_objects=max_grant_objects,
             grant_object_budgets=grant_object_budgets,
+            resume_checkpoint=resume_checkpoint,
             progress=progress,
         )
         root = Path(output_dir).resolve()
@@ -279,6 +285,7 @@ class ImportEngine:
         completed: int | None = None,
         advance: int | None = None,
         checkpoint_path: str | None = None,
+        checkpoint_update: dict | None = None,
     ) -> None:
         if progress is None:
             return
@@ -290,6 +297,7 @@ class ImportEngine:
                 completed=completed,
                 advance=advance,
                 checkpoint_path=checkpoint_path,
+                checkpoint_update=checkpoint_update,
             ).model_dump(mode="python", exclude_none=True)
         )
 

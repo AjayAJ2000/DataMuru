@@ -63,6 +63,16 @@ def import_group() -> None:
     default=None,
     help="Write the latest import progress event to this JSON file.",
 )
+@click.option(
+    "--job-checkpoint",
+    default=None,
+    help="Write resumable import job state to this JSON file.",
+)
+@click.option(
+    "--resume-from",
+    default=None,
+    help="Resume import grant discovery from a previous --job-checkpoint file.",
+)
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
 def import_discover_command(
@@ -76,15 +86,24 @@ def import_discover_command(
     max_catalog_grant_objects: int | None,
     max_schema_grant_objects: int | None,
     progress_checkpoint: str | None,
+    job_checkpoint: str | None,
+    resume_from: str | None,
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
+    resume_checkpoint = _load_job_checkpoint(resume_from)
     grant_cap = None if max_grant_objects == 0 else max_grant_objects
     grant_object_budgets = _grant_object_budgets(
         catalog=max_catalog_grant_objects,
         schema=max_schema_grant_objects,
     )
     if output_format == "json":
+        progress_callback = _compose_progress_callbacks(
+            _checkpoint_progress(progress_checkpoint).update if progress_checkpoint else None,
+            _job_checkpoint_progress(job_checkpoint, resume_checkpoint=resume_checkpoint).update
+            if job_checkpoint
+            else None,
+        )
         report = dm.import_discover(
             include_system=include_system,
             include_identities=include_identities,
@@ -93,10 +112,16 @@ def import_discover_command(
             grant_scope=grant_scope,
             max_grant_objects=grant_cap,
             grant_object_budgets=grant_object_budgets,
-            progress=_checkpoint_progress(progress_checkpoint).update if progress_checkpoint else None,
+            resume_checkpoint=resume_checkpoint,
+            progress=progress_callback,
         )
     else:
-        with _import_progress("Import discovery", checkpoint_path=progress_checkpoint) as progress_callback:
+        with _import_progress(
+            "Import discovery",
+            checkpoint_path=progress_checkpoint,
+            job_checkpoint_path=job_checkpoint,
+            resume_checkpoint=resume_checkpoint,
+        ) as progress_callback:
             report = dm.import_discover(
                 include_system=include_system,
                 include_identities=include_identities,
@@ -105,6 +130,7 @@ def import_discover_command(
                 grant_scope=grant_scope,
                 max_grant_objects=grant_cap,
                 grant_object_budgets=grant_object_budgets,
+                resume_checkpoint=resume_checkpoint,
                 progress=progress_callback,
             )
     if output_format == "json":
@@ -175,6 +201,16 @@ def import_discover_command(
     default=None,
     help="Write the latest import progress event to this JSON file.",
 )
+@click.option(
+    "--job-checkpoint",
+    default=None,
+    help="Write resumable import job state to this JSON file.",
+)
+@click.option(
+    "--resume-from",
+    default=None,
+    help="Resume import grant discovery from a previous --job-checkpoint file.",
+)
 @click.option("--include-system", is_flag=True, default=False, help="Include system catalogs, schemas, and groups.")
 @click.option("--out", "out_path", default=None, help="Write generated workspace YAML to a file.")
 @click.option("--suite-out", "suite_out", default=None, help="Write workspace, RBAC, taxonomy, and masking review files under this directory.")
@@ -203,6 +239,8 @@ def import_generate_command(
     max_catalog_grant_objects: int | None,
     max_schema_grant_objects: int | None,
     progress_checkpoint: str | None,
+    job_checkpoint: str | None,
+    resume_from: str | None,
     include_system: bool,
     out_path: str | None,
     suite_out: str | None,
@@ -211,6 +249,7 @@ def import_generate_command(
     output_format: str,
 ) -> None:
     dm = DataMuru(config_path=config_path)
+    resume_checkpoint = _load_job_checkpoint(resume_from)
     grant_cap = None if max_grant_objects == 0 else max_grant_objects
     grant_object_budgets = _grant_object_budgets(
         catalog=max_catalog_grant_objects,
@@ -218,10 +257,20 @@ def import_generate_command(
     )
     progress_callback = None
     progress_context = None
-    if output_format == "json" and progress_checkpoint:
-        progress_callback = _checkpoint_progress(progress_checkpoint).update
+    if output_format == "json" and (progress_checkpoint or job_checkpoint):
+        progress_callback = _compose_progress_callbacks(
+            _checkpoint_progress(progress_checkpoint).update if progress_checkpoint else None,
+            _job_checkpoint_progress(job_checkpoint, resume_checkpoint=resume_checkpoint).update
+            if job_checkpoint
+            else None,
+        )
     elif output_format != "json":
-        progress_context = _import_progress("Import generation", checkpoint_path=progress_checkpoint)
+        progress_context = _import_progress(
+            "Import generation",
+            checkpoint_path=progress_checkpoint,
+            job_checkpoint_path=job_checkpoint,
+            resume_checkpoint=resume_checkpoint,
+        )
         progress_callback = progress_context.__enter__()
     try:
         if suite_out:
@@ -232,6 +281,7 @@ def import_generate_command(
                 grant_scope=grant_scope,
                 max_grant_objects=grant_cap,
                 grant_object_budgets=grant_object_budgets,
+                resume_checkpoint=resume_checkpoint,
                 suite_layout=suite_layout,
                 suite_prefix=suite_prefix,
                 progress=progress_callback,
@@ -246,6 +296,7 @@ def import_generate_command(
                 grant_scope=grant_scope,
                 max_grant_objects=grant_cap,
                 grant_object_budgets=grant_object_budgets,
+                resume_checkpoint=resume_checkpoint,
                 progress=progress_callback,
             )
     finally:
@@ -328,9 +379,21 @@ def import_adopt_command(
 
 
 class _import_progress:
-    def __init__(self, label: str, *, checkpoint_path: str | None = None) -> None:
+    def __init__(
+        self,
+        label: str,
+        *,
+        checkpoint_path: str | None = None,
+        job_checkpoint_path: str | None = None,
+        resume_checkpoint: dict | None = None,
+    ) -> None:
         self.label = label
         self.checkpoint = _checkpoint_progress(checkpoint_path) if checkpoint_path else None
+        self.job_checkpoint = (
+            _job_checkpoint_progress(job_checkpoint_path, resume_checkpoint=resume_checkpoint)
+            if job_checkpoint_path
+            else None
+        )
         self.progress = Progress(
             SpinnerColumn(style="primary"),
             TextColumn("[progress.description]{task.description}"),
@@ -374,6 +437,8 @@ class _import_progress:
         self.progress.update(self.task_id, **update_args)
         if self.checkpoint:
             self.checkpoint.update(event)
+        if self.job_checkpoint:
+            self.job_checkpoint.update(event)
 
 
 def _grant_object_budgets(*, catalog: int | None, schema: int | None) -> dict[str, int] | None:
@@ -398,3 +463,64 @@ class _checkpoint_progress:
             "event": event,
         }
         self.path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+class _job_checkpoint_progress:
+    def __init__(self, checkpoint_path: str | None, *, resume_checkpoint: dict | None = None) -> None:
+        self.path = Path(checkpoint_path).resolve() if checkpoint_path else None
+        self.payload = resume_checkpoint or {
+            "version": 1,
+            "completed_grant_targets": [],
+            "grants": [],
+        }
+
+    def update(self, event: dict) -> None:
+        if not self.path:
+            return
+        update = event.get("checkpoint_update") or {}
+        target = update.get("completed_grant_target")
+        if target and target not in self.payload.setdefault("completed_grant_targets", []):
+            self.payload["completed_grant_targets"].append(target)
+        existing_grants = {
+            (
+                str(grant.get("principal", "")).casefold(),
+                str(grant.get("privilege", "")).upper(),
+                str(grant.get("securable_type", "")).lower(),
+                str(grant.get("securable_name", "")).casefold(),
+            )
+            for grant in self.payload.setdefault("grants", [])
+        }
+        for grant in update.get("grants", []):
+            key = (
+                str(grant.get("principal", "")).casefold(),
+                str(grant.get("privilege", "")).upper(),
+                str(grant.get("securable_type", "")).lower(),
+                str(grant.get("securable_name", "")).casefold(),
+            )
+            if key not in existing_grants:
+                self.payload["grants"].append(grant)
+                existing_grants.add(key)
+        self.payload["updated_at"] = datetime.now(UTC).isoformat()
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(self.payload, indent=2), encoding="utf-8")
+
+
+def _load_job_checkpoint(checkpoint_path: str | None) -> dict | None:
+    if not checkpoint_path:
+        return None
+    resolved = Path(checkpoint_path).resolve()
+    if not resolved.exists():
+        raise click.ClickException(f"Resume checkpoint file not found: {resolved}")
+    return json.loads(resolved.read_text(encoding="utf-8"))
+
+
+def _compose_progress_callbacks(*callbacks):
+    active_callbacks = [callback for callback in callbacks if callback is not None]
+    if not active_callbacks:
+        return None
+
+    def update(event: dict) -> None:
+        for callback in active_callbacks:
+            callback(event)
+
+    return update

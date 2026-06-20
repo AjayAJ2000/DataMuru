@@ -124,6 +124,7 @@ class SnowflakeProvider(DataMuruProvider):
         grant_scope: str = "catalog",
         max_grant_objects: int | None = 500,
         grant_object_budgets: dict[str, int] | None = None,
+        resume_checkpoint: dict | None = None,
         progress: ImportProgressCallback | None = None,
     ) -> ImportDiscoveryReport:
         raise ProviderError(
@@ -135,6 +136,8 @@ class SnowflakeProvider(DataMuruProvider):
                 "catalogs": catalogs,
                 "grant_scope": grant_scope,
                 "max_grant_objects": max_grant_objects,
+                "grant_object_budgets": grant_object_budgets,
+                "resume_checkpoint": bool(resume_checkpoint),
             },
             suggestion="Use the Snowflake state-only provider scaffold now; live discovery is the next provider milestone.",
         )

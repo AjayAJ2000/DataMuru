@@ -19,6 +19,7 @@ class ImportProgressEvent(DataMuruModel):
     object_type: str | None = None
     object_name: str | None = None
     checkpoint_path: str | None = None
+    checkpoint_update: dict[str, Any] | None = None
 
 
 class ImportSchemaResource(DataMuruModel):
@@ -50,6 +51,22 @@ class ImportGrantResource(DataMuruModel):
     privilege: str
     securable_type: str
     securable_name: str
+
+
+class ImportGrantTarget(DataMuruModel):
+    object_type: str
+    object_name: str
+
+
+class ImportJobCheckpoint(DataMuruModel):
+    version: int = 1
+    provider: str | None = None
+    environment: str | None = None
+    completed_grant_targets: list[ImportGrantTarget] = Field(default_factory=list)
+    grants: list[ImportGrantResource] = Field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return self.model_dump(mode="python")
 
 
 class ImportWorkspaceResource(DataMuruModel):

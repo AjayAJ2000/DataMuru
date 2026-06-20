@@ -97,6 +97,8 @@ datamuru import discover
   [--max-catalog-grant-objects INTEGER]
   [--max-schema-grant-objects INTEGER]
   [--progress-checkpoint TEXT]
+  [--job-checkpoint TEXT]
+  [--resume-from TEXT]
   [--output text|json]
 ```
 
@@ -115,6 +117,9 @@ caps for each object type. This keeps a workspace with few catalogs but many
 schemas from launching an unexpectedly large SQL grant scan.
 `--progress-checkpoint` writes the latest structured progress event to JSON so
 long-running imports can be observed from another terminal or CI step.
+`--job-checkpoint` writes resumable grant-scan state, including completed grant
+targets and discovered grants. `--resume-from` loads a previous job checkpoint
+and skips completed grant targets while refreshing catalog/schema inventory.
 
 ## `import generate`
 
@@ -130,6 +135,8 @@ datamuru import generate
   [--max-catalog-grant-objects INTEGER]
   [--max-schema-grant-objects INTEGER]
   [--progress-checkpoint TEXT]
+  [--job-checkpoint TEXT]
+  [--resume-from TEXT]
   [--include-system]
   [--out TEXT]
   [--suite-out TEXT]
