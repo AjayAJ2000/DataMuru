@@ -87,6 +87,26 @@ This avoids token and organization-permission complexity while still letting
 teams review the generated agile backlog. After that, Enterprise can add
 authenticated sync using a GitHub App or fine-grained token.
 
+The export writes:
+
+- one Markdown issue draft per backlog row;
+- front matter with title, labels, and release target;
+- planning fields for area, provider, edition, impact, and risk;
+- a `manifest.json` file that lists every generated draft.
+
+Scope one milestone at a time:
+
+```powershell
+datamuru agile export `
+  --format github-issues `
+  --release-target 0.4.0a0 `
+  --out .\github-issue-drafts\0.4.0a0
+```
+
+Review the generated Markdown before creating public issues. Enterprise-only,
+customer-specific, and security-sensitive items should stay in a private
+project or private repository.
+
 ## Recommended board
 
 Use the board design in [Recommended GitHub Project board](github-project-board.md)

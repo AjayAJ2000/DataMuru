@@ -196,6 +196,25 @@ datamuru edition show [--config TEXT] [--output text|json]
 
 Reports the configured edition and enabled or restricted features.
 
+## `agile export`
+
+```text
+datamuru agile export
+  [--format github-issues]
+  [--source TEXT]
+  --out TEXT
+  [--release-target TEXT]
+  [--output text|json]
+```
+
+Exports local GitHub issue draft files from the documented DataMuru roadmap
+table. The first supported format is `github-issues`. The command writes one
+Markdown issue draft per backlog row plus `manifest.json` for review and later
+automation.
+
+Use `--release-target` to export one milestone at a time. This command does not
+create GitHub issues and does not require GitHub credentials.
+
 ## Exit behavior
 
 Commands return a nonzero exit code for structured DataMuru errors. Do not parse

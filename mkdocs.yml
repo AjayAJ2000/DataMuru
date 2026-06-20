@@ -132,6 +132,7 @@ nav:
       - Upgrades and compatibility: operations/upgrades.md
       - Documentation maintenance: operations/documentation-maintenance.md
       - Testing and release: operations/testing-and-release.md
+      - Milestone 0.4 test runbook: operations/milestone-0-4-test-runbook.md
       - Package and docs publishing: operations/publishing.md
       - FAQ: operations/faq.md
   - Product:

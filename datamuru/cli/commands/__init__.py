@@ -1,3 +1,4 @@
+from .agile import agile_group
 from .apply import apply_command
 from .destroy import destroy_command
 from .doctor import doctor_command
@@ -16,4 +17,5 @@ COMMANDS = [
     doctor_command,
     import_group,
     edition_group,
+    agile_group,
 ]
