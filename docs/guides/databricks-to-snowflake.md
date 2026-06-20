@@ -1,9 +1,10 @@
 # Databricks to Snowflake adoption path
 
-DataMuru is provider-agnostic by design. Databricks is the first live provider,
-and Snowflake is currently available as a state-only provider scaffold. That
-means teams can model Snowflake targets today, test naming and governance
-contracts, and prepare for live Snowflake execution as the provider matures.
+DataMuru is provider-agnostic by design. Databricks is the first live apply
+provider, and Snowflake now supports live-readonly database/schema discovery.
+That means teams can model Snowflake targets, inspect Snowflake trial inventory,
+test naming and governance contracts, and prepare for live Snowflake execution
+as the provider matures.
 
 This guide explains the practical enterprise path for moving from Databricks
 inventory to Snowflake declarations.
@@ -46,11 +47,11 @@ provider:
   auth_type: externalbrowser
   warehouse: COMPUTE_WH
   role: SYSADMIN
-  execution_mode: state-only
+  execution_mode: live-readonly
 ```
 
-`state-only` is intentional for the current OSS release. It lets teams validate
-the target model without mutating Snowflake.
+`live-readonly` is intentional for the current OSS release. It lets teams inspect
+Snowflake databases and schemas without mutating Snowflake.
 
 ## Mapping model
 
@@ -105,6 +106,13 @@ Create a Snowflake target project or switch the provider config:
 datamuru init --name dm-snowflake-trial --edition enterprise --provider snowflake --execution-mode state-only --output-dir .\snowflake-trial
 ```
 
+Switch the Snowflake provider to `live-readonly` when you want to inspect an
+existing trial account:
+
+```powershell
+datamuru import discover --config .\snowflake-trial\datamuru.yml --catalog FINANCE
+```
+
 Review the target plan:
 
 ```powershell
@@ -114,16 +122,15 @@ datamuru plan --config .\snowflake-trial\datamuru.yml
 
 ## Current limitation
 
-Snowflake live discovery and live apply are not enabled in the current OSS
-release. That is deliberate. The provider needs tested SQL execution,
-authentication handling, idempotent grants, and destroy safety before it should
-mutate enterprise accounts.
+Snowflake live apply, destroy, identity import, and grant import are not enabled
+in the current OSS release. That is deliberate. The provider needs tested SQL
+mutation behavior, idempotent grants, and destroy safety before it should mutate
+enterprise accounts.
 
 ## Enterprise next step
 
 The Enterprise version should add:
 
-- live Snowflake inventory discovery;
 - database and schema apply;
 - role, user, and grant import;
 - Databricks-to-Snowflake mapping generation;

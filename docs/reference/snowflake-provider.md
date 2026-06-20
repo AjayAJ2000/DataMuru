@@ -1,12 +1,18 @@
 # Snowflake Provider
 
-The Snowflake provider is available as a state-only scaffold in the current
-alpha. It lets teams validate provider-neutral configuration, plan databases
-and schemas as DataMuru catalog/schema resources, and prepare for live provider
-parity.
+The Snowflake provider is available for provider-neutral planning and
+live-readonly database/schema discovery in the current alpha. It lets teams
+validate Snowflake target configuration, inspect existing databases and schemas,
+and prepare for broader provider parity.
 
-Use it today to prove the configuration and governance model. Do not use it
-yet for live Snowflake mutations.
+Use it today to prove the configuration and inventory model. Do not use it yet
+for live Snowflake mutations.
+
+Install the Snowflake extra before live discovery:
+
+```powershell
+pip install "datamuru[snowflake]"
+```
 
 ## Provider config
 
@@ -16,7 +22,9 @@ provider:
   account_env: SNOWFLAKE_ACCOUNT
   user_env: SNOWFLAKE_USER
   auth_type: externalbrowser
-  execution_mode: state-only
+  warehouse: COMPUTE_WH
+  role: SYSADMIN
+  execution_mode: live-readonly
 ```
 
 Supported auth fields:
@@ -25,9 +33,10 @@ Supported auth fields:
 | --- | --- |
 | `account` / `account_env` | Snowflake account identifier. |
 | `user` / `user_env` | User name when not resolved by SSO. |
-| `auth_type` | Planned values include `externalbrowser`, `oauth`, `keypair`, and `password`. |
-| `warehouse` | Default Snowflake warehouse for future live SQL execution. |
-| `role` | Role for future live SQL execution. |
+| `auth_type` | Snowflake connector authenticator, such as `externalbrowser`, `oauth`, `snowflake`, or key-pair-compatible modes. |
+| `password_env` | Optional environment variable for password auth when `auth_type: snowflake` is approved for a sandbox. |
+| `warehouse` | Default Snowflake warehouse for discovery sessions. |
+| `role` | Role for discovery sessions. |
 
 ## Current support
 
@@ -36,11 +45,11 @@ Supported auth fields:
 | Validation | Available |
 | State-only plan/apply/destroy | Available |
 | Database and schema desired resources | Available |
-| Live discovery | Planned |
+| Live database/schema discovery | Available in `live-readonly` |
 | Live SQL apply/destroy | Planned |
 | Grant import | Planned |
 
-The scaffold intentionally blocks live mutations until Snowflake SQL execution,
+The provider intentionally blocks live mutations until Snowflake SQL execution,
 credential handling, and safety checks are tested.
 
 ## Free trial validation
@@ -50,17 +59,24 @@ provider-neutral planning.
 
 1. Create a Snowflake trial account.
 2. Capture the account identifier, warehouse, role, and user.
-3. Configure the Snowflake provider in `state-only` mode.
-4. Declare target databases and schemas using DataMuru catalog/schema resources.
-5. Run `validate` and `plan`.
+3. Configure the Snowflake provider in `live-readonly` mode.
+4. Run `validate`, `doctor`, and bounded import discovery.
+5. Declare target databases and schemas using DataMuru catalog/schema resources.
+6. Run `plan`.
 
 ```powershell
 $env:SNOWFLAKE_ACCOUNT="your-account"
 $env:SNOWFLAKE_USER="your-user"
 
 datamuru validate --config datamuru.yml --strict
+datamuru doctor --config datamuru.yml
+datamuru import discover --config datamuru.yml --catalog FINANCE
 datamuru plan --config datamuru.yml
 ```
+
+Snowflake discovery maps Snowflake databases to DataMuru catalogs and Snowflake
+schemas to DataMuru schemas. It filters common Snowflake system databases and
+`INFORMATION_SCHEMA` unless `--include-system` is provided.
 
 ## Databricks to Snowflake
 
@@ -72,12 +88,11 @@ for the recommended staged workflow.
 
 ## Live provider readiness checklist
 
-Before Snowflake live execution is enabled, DataMuru needs:
+Before Snowflake live apply/destroy and RBAC import are enabled, DataMuru needs:
 
-- SQL API/session execution with explicit warehouse and role selection;
 - idempotent database and schema create/update behavior;
 - grant discovery and grant apply with privilege normalization;
 - destructive-change protection for databases and schemas;
 - integration tests against a Snowflake trial or sandbox account;
-- docs for SSO, key-pair, OAuth, and password-based authentication;
+- deeper docs for SSO, key-pair, OAuth, and password-based authentication;
 - parity tests against provider-neutral resource contracts.

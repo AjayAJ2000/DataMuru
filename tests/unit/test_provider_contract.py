@@ -1,6 +1,9 @@
+from types import SimpleNamespace
+
 from datamuru.core.config import load_project
 from datamuru.errors import ProviderError
 from datamuru.providers.factory import load_provider
+from datamuru.providers.snowflake.provider import SnowflakeProvider
 
 
 def test_provider_contract_surface(sample_project):
@@ -375,3 +378,118 @@ def test_provider_live_apply_blocks_unmanaged_group_mutation(sample_project, mon
         assert "enterprise identity management" in exc.description.lower()
     else:  # pragma: no cover
         raise AssertionError("Expected ProviderError for unmanaged live group mutation")
+
+
+def test_snowflake_import_discovery_lists_databases_and_schemas(monkeypatch):
+    provider = SnowflakeProvider(
+        {
+            "provider": {
+                "cloud": "snowflake",
+                "account": "demo-account",
+                "user": "analyst",
+                "execution_mode": "live-readonly",
+            }
+        }
+    )
+    project = SimpleNamespace(
+        workspaces=[
+            SimpleNamespace(
+                raw={
+                    "workspace": {
+                        "name": "snowflake-dev",
+                        "cloud": "snowflake",
+                        "region": "aws-us-east-1",
+                    }
+                }
+            )
+        ]
+    )
+    progress_events: list[dict] = []
+    monkeypatch.setattr(provider.client, "list_databases", lambda include_system=False: ["FINANCE", "SALES"])
+    monkeypatch.setattr(
+        provider.client,
+        "list_schemas",
+        lambda database_name, include_system=False: {
+            "FINANCE": ["RAW", "MART"],
+            "SALES": ["PUBLIC"],
+        }[database_name],
+    )
+
+    report = provider.discover_importable_resources(
+        project,
+        "dev",
+        catalogs=["FINANCE"],
+        progress=progress_events.append,
+    )
+
+    assert report.provider == "snowflake"
+    assert [catalog.name for catalog in report.workspace.catalogs] == ["FINANCE"]
+    assert [schema.name for schema in report.workspace.catalogs[0].schemas] == ["RAW", "MART"]
+    assert progress_events[-1]["message"] == "Snowflake import discovery complete."
+
+
+def test_snowflake_import_discovery_blocks_grants_until_rbac_import_exists():
+    provider = SnowflakeProvider(
+        {
+            "provider": {
+                "cloud": "snowflake",
+                "account": "demo-account",
+                "execution_mode": "live-readonly",
+            }
+        }
+    )
+    project = SimpleNamespace(workspaces=[SimpleNamespace(raw={"workspace": {"name": "snowflake-dev"}})])
+
+    try:
+        provider.discover_importable_resources(project, "dev", include_grants=True)
+    except ProviderError as exc:
+        assert "database and schema inventory only" in exc.description
+    else:  # pragma: no cover
+        raise AssertionError("Expected Snowflake grant import to be blocked")
+
+
+def test_snowflake_observes_declared_live_state(monkeypatch):
+    provider = SnowflakeProvider(
+        {
+            "provider": {
+                "cloud": "snowflake",
+                "account": "demo-account",
+                "execution_mode": "live-readonly",
+            }
+        }
+    )
+    project = SimpleNamespace(
+        workspaces=[
+            SimpleNamespace(
+                raw={
+                    "workspace": {
+                        "name": "snowflake-dev",
+                        "cloud": "snowflake",
+                        "catalogs": [
+                            {
+                                "name": "FINANCE",
+                                "schemas": ["RAW"],
+                            }
+                        ],
+                    }
+                }
+            )
+        ]
+    )
+    monkeypatch.setattr(provider.client, "list_databases", lambda include_system=False: ["FINANCE", "SALES"])
+    monkeypatch.setattr(
+        provider.client,
+        "list_schemas",
+        lambda database_name, include_system=False: {
+            "FINANCE": ["RAW", "MART"],
+            "SALES": ["PUBLIC"],
+        }[database_name],
+    )
+
+    observed = provider.observe_current_state(project, "dev")
+
+    assert "workspace:snowflake-dev" in observed.resources
+    assert "catalog:FINANCE" in observed.resources
+    assert "schema:FINANCE.RAW" in observed.resources
+    assert "schema:FINANCE.MART" not in observed.resources
+    assert "catalog:SALES" not in observed.resources

@@ -77,7 +77,15 @@ teams can copy into the main project after cleanup.
 
 ## Snowflake migration note
 
-Snowflake is now represented as a first-class provider scaffold for state-only
-planning. Live Snowflake discovery and SQL apply are the next provider
-milestone and should be tested in Enterprise with controlled credentials before
-production rollout.
+Snowflake is now represented as a first-class provider for state-only planning
+and live-readonly database/schema discovery. Use OSS to inspect bounded
+Snowflake trial or sandbox inventory:
+
+```powershell
+pip install "datamuru[snowflake]"
+datamuru import discover --config datamuru.yml --catalog FINANCE
+```
+
+Live Snowflake apply, destroy, identity import, and grant import remain
+Enterprise-hardening work and should be tested with controlled credentials
+before production rollout.

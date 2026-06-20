@@ -37,6 +37,11 @@ class SnowflakeAuthConfig(DataMuruModel):
             return os.getenv(self.user_env)
         return None
 
+    def resolve_password(self) -> str | None:
+        if self.password_env:
+            return os.getenv(self.password_env)
+        return None
+
     def allows_live_mutation(self) -> bool:
         return self.execution_mode == "live-apply"
 
