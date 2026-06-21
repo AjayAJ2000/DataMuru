@@ -9,6 +9,7 @@ This page describes DataMuru OSS `0.4.0a0`.
 - local state backend;
 - local and remote state backend readiness inspection;
 - hosted control plane handoff contract generation;
+- redacted activation audit evidence export;
 - deterministic plan, target, apply, destroy, and saved-plan workflows;
 - PAT-based live workspace connectivity;
 - live catalog and schema observation, creation, and deletion;

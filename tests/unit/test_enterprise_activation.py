@@ -5,7 +5,11 @@ from click.testing import CliRunner
 from datamuru.api import DataMuru
 from datamuru.cli.main import cli
 from datamuru.core.config import load_project
-from datamuru.enterprise import build_activation_bundle, build_activation_report
+from datamuru.enterprise import (
+    build_activation_bundle,
+    build_activation_evidence_report,
+    build_activation_report,
+)
 
 
 def _enable_enterprise_activation(sample_project):
@@ -210,3 +214,119 @@ def test_activation_export_can_write_blocked_diagnostic_bundle(sample_project):
     assert bundle["status"] == "blocked"
     assert bundle["report"]["ready"] is False
     assert bundle["report"]["checks"]
+
+
+def test_activation_evidence_report_wraps_redacted_handoff_artifacts(sample_project):
+    config_path = _enable_enterprise_activation(sample_project)
+    project = load_project(config_path)
+
+    report = build_activation_evidence_report(project, environ={"DATAMURU_LICENSE_KEY": "secret-value"})
+    payload = report.to_dict()
+
+    assert report.ready is True
+    assert payload["schema_version"] == "datamuru.enterprise_activation_evidence.v1"
+    assert payload["status"] == "ready"
+    assert payload["activation"]["ready"] is True
+    assert payload["control_plane"]["ready"] is True
+    assert payload["audit"]["offline"] is True
+    assert payload["audit"]["mutates_provider"] is False
+    assert payload["audit"]["secret_values_included"] is False
+    assert {artifact["name"] for artifact in payload["artifacts"]} >= {
+        "activation_readiness",
+        "hosted_control_plane_contract",
+        "secret_redaction",
+    }
+    assert "secret-value" not in json.dumps(payload)
+
+
+def test_activation_evidence_cli_writes_ready_report(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_path = sample_project / ".datamuru" / "activation" / "evidence.json"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "evidence",
+            "--config",
+            str(config_path),
+            "--out",
+            str(output_path),
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    cli_payload = json.loads(result.output)
+    evidence = json.loads(output_path.read_text(encoding="utf-8"))
+    assert cli_payload["ready"] is True
+    assert evidence["status"] == "ready"
+    assert evidence["control_plane"]["schema_version"] == "datamuru.hosted_control_plane_contract.v1"
+    assert "secret-value" not in json.dumps(evidence)
+
+
+def test_activation_evidence_writer_is_available_from_python_api(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_path = sample_project / ".datamuru" / "activation" / "api-evidence.json"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    report = DataMuru(config_path).enterprise_activation_evidence_report()
+    resolved = DataMuru(config_path).write_enterprise_activation_evidence(output_path)
+
+    evidence = json.loads(resolved.read_text(encoding="utf-8"))
+    assert report.ready is True
+    assert evidence["ready"] is True
+    assert evidence["audit"]["mutates_state"] is False
+    assert "secret-value" not in json.dumps(evidence)
+
+
+def test_activation_evidence_blocks_without_allow_blocked(sample_project):
+    output_path = sample_project / ".datamuru" / "activation" / "blocked-evidence.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "--no-banner",
+            "enterprise",
+            "activation",
+            "evidence",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Activation evidence not written" in result.output
+    assert not output_path.exists()
+
+
+def test_activation_evidence_can_write_blocked_diagnostic_report(sample_project):
+    output_path = sample_project / ".datamuru" / "activation" / "blocked-evidence.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "evidence",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_path),
+            "--allow-blocked",
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    evidence = json.loads(output_path.read_text(encoding="utf-8"))
+    assert evidence["status"] == "blocked"
+    assert evidence["activation"]["checks"]
+    assert evidence["audit"]["secret_values_included"] is False

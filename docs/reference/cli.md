@@ -234,6 +234,21 @@ command fails without writing a file when activation is blocked. Use
 `--allow-blocked` only when support asks for a diagnostic bundle that includes
 failed checks.
 
+## `enterprise activation evidence`
+
+```text
+datamuru enterprise activation evidence
+  [--config TEXT]
+  --out TEXT
+  [--allow-blocked]
+  [--output text|json]
+```
+
+Writes a redacted audit evidence report for Enterprise activation handoff. The
+report wraps activation readiness, the hosted control plane contract, audit
+metadata, and follow-up actions. The command fails without writing a file when
+activation is blocked unless `--allow-blocked` is set for support triage.
+
 ## `enterprise control-plane contract`
 
 ```text

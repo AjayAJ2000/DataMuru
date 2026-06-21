@@ -12,6 +12,7 @@ This runbook covers:
 - Enterprise activation readiness checks for hosted control plane onboarding;
 - text and JSON output from `datamuru enterprise activation check`;
 - redacted handoff bundle export from `datamuru enterprise activation export`;
+- redacted audit evidence export from `datamuru enterprise activation evidence`;
 - redacted hosted handoff contracts from `datamuru enterprise control-plane contract`;
 - local and remote backend readiness output from `datamuru state inspect`;
 - license key environment-variable detection without secret disclosure;
@@ -277,7 +278,69 @@ Expected result:
 - failed checks are present;
 - no secret value is present.
 
-## 8. Python API activation report
+## 8. Activation audit evidence export
+
+Run the evidence export command with a ready activation config:
+
+```powershell
+$env:DATAMURU_LICENSE_KEY="test-license-value"
+
+python -m datamuru.cli.main --no-banner enterprise activation evidence `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\activation-evidence.json `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- `.datamuru/activation/activation-evidence.json` exists;
+- JSON command output includes `ready: true`;
+- evidence `schema_version` is `datamuru.enterprise_activation_evidence.v1`;
+- evidence `status` is `ready`;
+- evidence embeds the redacted activation readiness report;
+- evidence embeds the hosted control plane contract;
+- evidence `audit.offline` is `true`;
+- evidence `audit.mutates_provider` is `false`;
+- evidence `audit.mutates_state` is `false`;
+- evidence `audit.secret_values_included` is `false`;
+- the literal license value is absent from stdout and the file.
+
+Blocked evidence check:
+
+```powershell
+Remove-Item Env:DATAMURU_LICENSE_KEY -ErrorAction SilentlyContinue
+
+python -m datamuru.cli.main --no-banner enterprise activation evidence `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked-evidence.json
+```
+
+Expected result:
+
+- command exits nonzero;
+- `blocked-evidence.json` is not written;
+- output explains which checks failed.
+
+Use this diagnostic path only when support requests blocked audit evidence:
+
+```powershell
+python -m datamuru.cli.main --no-banner enterprise activation evidence `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked-evidence.json `
+  --allow-blocked `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- evidence `status` is `blocked`;
+- failed activation checks are present;
+- audit metadata still says no provider mutation, no state mutation, and no
+  secret values included.
+
+## 9. Python API activation report
 
 Run this from the repository root or an environment where DataMuru is installed:
 
@@ -297,7 +360,7 @@ Bug evidence to capture:
 - command output;
 - whether the API behavior differs from CLI behavior.
 
-## 9. Hosted control plane handoff contract
+## 10. Hosted control plane handoff contract
 
 Run the contract command with a ready Enterprise activation config:
 
@@ -361,7 +424,7 @@ Bug evidence to capture:
 - confirmation that no tenant provisioning, license-server call, or cloud
   state access occurred.
 
-## 10. State backend readiness inspection
+## 11. State backend readiness inspection
 
 Run the local backend inspection from a sandbox project:
 
@@ -440,7 +503,7 @@ Bug evidence to capture:
 - redacted `state` block;
 - whether any provider credential prompt or cloud access occurred.
 
-## 11. Documentation and schema coverage
+## 12. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -465,7 +528,7 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 12. Local quality gate
+## 13. Local quality gate
 
 Run this before reporting the milestone as tested:
 
@@ -498,6 +561,7 @@ When a test fails, capture:
 - redacted `datamuru.yml` snippet;
 - whether `DATAMURU_LICENSE_KEY` was set;
 - whether the literal secret appeared in output;
+- whether any evidence file was written when the command was expected to block;
 - whether the failure is reproducible on a second run.
 
 Do not include provider tokens, license keys, private keys, customer data, or

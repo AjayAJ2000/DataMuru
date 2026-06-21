@@ -56,6 +56,7 @@ Focus:
 - Remote-state planning boundary for multi-user hosted workflows
 - State backend readiness inspection for local and remote backend contracts
 - Audit evidence and activation handoff documentation
+- Redacted activation audit evidence export
 
 ### v1.0 target direction
 

@@ -131,6 +131,18 @@ class DataMuruEngine:
         report = self.enterprise_activation_report()
         return write_activation_bundle(report, output_path)
 
+    def enterprise_activation_evidence_report(self):
+        project, _, _, _ = self._load()
+        from datamuru.enterprise import build_activation_evidence_report
+
+        return build_activation_evidence_report(project, environ=os.environ)
+
+    def write_enterprise_activation_evidence(self, output_path: str | Path):
+        from datamuru.enterprise import write_activation_evidence_report
+
+        report = self.enterprise_activation_evidence_report()
+        return write_activation_evidence_report(report, output_path)
+
     def write_enterprise_control_plane_contract(self, output_path: str | Path):
         from datamuru.enterprise import write_control_plane_contract
 

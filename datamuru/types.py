@@ -61,10 +61,12 @@ from datamuru.core.state.inspection import StateBackendCheck, StateBackendReport
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
 from datamuru.enterprise.activation import ActivationBundle, ActivationCheck, ActivationReport
 from datamuru.enterprise.control_plane import ControlPlaneCheck, ControlPlaneContract
+from datamuru.enterprise.evidence import ActivationEvidenceReport, EvidenceArtifact
 
 __all__ = [
     "ActivationBundle",
     "ActivationCheck",
+    "ActivationEvidenceReport",
     "ActivationReport",
     "ApplyFailure",
     "ApplyResult",
@@ -74,6 +76,7 @@ __all__ = [
     "ControlPlaneCheck",
     "ControlPlaneContract",
     "EditionSummary",
+    "EvidenceArtifact",
     "Plan",
     "PlanChange",
     "ResourceDescriptor",

@@ -73,6 +73,23 @@ The bundle does not contain the license key value. If activation is blocked,
 the command exits without writing a file. Use `--allow-blocked` only when a
 support engineer asks for a diagnostic bundle with failed checks.
 
+## Export audit evidence
+
+Generate a redacted evidence report for an onboarding, audit, or support ticket:
+
+```powershell
+datamuru enterprise activation evidence `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\activation-evidence.json `
+  --output json
+```
+
+The evidence report includes the activation readiness report, hosted control
+plane contract, artifact checklist, and audit metadata that says the command is
+offline, does not mutate provider resources, does not mutate state, and omits
+secret values. If activation is blocked, the command does not write an evidence
+file unless `--allow-blocked` is supplied for support triage.
+
 ## Build a control plane contract
 
 After activation readiness passes, build a hosted control plane contract:

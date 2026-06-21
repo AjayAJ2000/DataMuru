@@ -43,6 +43,12 @@ class DataMuru:
     def write_enterprise_activation_bundle(self, output_path: str | Path):
         return self.engine.write_enterprise_activation_bundle(output_path)
 
+    def enterprise_activation_evidence_report(self):
+        return self.engine.enterprise_activation_evidence_report()
+
+    def write_enterprise_activation_evidence(self, output_path: str | Path):
+        return self.engine.write_enterprise_activation_evidence(output_path)
+
     def write_enterprise_control_plane_contract(self, output_path: str | Path):
         return self.engine.write_enterprise_control_plane_contract(output_path)
 
