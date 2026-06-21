@@ -40,6 +40,12 @@ class DataMuru:
     def enterprise_control_plane_contract(self):
         return self.engine.enterprise_control_plane_contract()
 
+    def enterprise_control_plane_architecture(self):
+        return self.engine.enterprise_control_plane_architecture()
+
+    def write_enterprise_control_plane_architecture(self, output_path: str | Path):
+        return self.engine.write_enterprise_control_plane_architecture(output_path)
+
     def write_enterprise_activation_bundle(self, output_path: str | Path):
         return self.engine.write_enterprise_activation_bundle(output_path)
 

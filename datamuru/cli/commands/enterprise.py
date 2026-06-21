@@ -26,6 +26,32 @@ def activation_group() -> None:
     """Inspect local Enterprise activation readiness."""
 
 
+@control_plane_group.command("architecture")
+@click.option("--config", "config_path", default="datamuru.yml", show_default=True)
+@click.option("--out", "output_path", type=click.Path(dir_okay=False, path_type=str))
+@click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
+@with_cli_errors
+def control_plane_architecture(config_path: str, output_path: str | None, output_format: str) -> None:
+    dm = DataMuru(config_path=config_path)
+    architecture = dm.enterprise_control_plane_architecture()
+    written_path = None
+    if output_path:
+        written_path = dm.write_enterprise_control_plane_architecture(output_path)
+
+    if output_format == "json":
+        console.print_json(json.dumps(architecture.to_dict(), indent=2))
+        return
+
+    console.print("[primary]Hosted control plane architecture[/primary]: reference-architecture")
+    console.print(f"Project: [code]{architecture.project}[/code]")
+    console.print(f"Provider: [code]{architecture.provider}[/code]")
+    console.print(f"Components: [code]{len(architecture.components)}[/code]")
+    console.print(f"Decisions: [code]{len(architecture.decisions)}[/code]")
+    console.print(f"Backlog items: [code]{len(architecture.implementation_backlog)}[/code]")
+    if written_path:
+        console.print(f"[success]Architecture contract written:[/success] [code]{written_path}[/code]")
+
+
 @control_plane_group.command("contract")
 @click.option("--config", "config_path", default="datamuru.yml", show_default=True)
 @click.option("--out", "output_path", type=click.Path(dir_okay=False, path_type=str))

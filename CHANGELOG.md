@@ -11,6 +11,7 @@ and this project aims to follow Semantic Versioning.
 - Added `datamuru enterprise activation check` for local hosted-control-plane and license activation readiness preflight.
 - Added `datamuru enterprise activation export` for redacted activation handoff bundle generation.
 - Added `datamuru enterprise activation evidence` for redacted audit evidence export.
+- Added `datamuru enterprise control-plane architecture` for hosted control plane reference architecture export.
 - Added the `enterprise.activation` root configuration contract and docs for redacted Enterprise onboarding payloads.
 - Added `datamuru enterprise control-plane contract` for redacted hosted control plane handoff contracts.
 - Added `datamuru state inspect` for local and remote state backend readiness checks.

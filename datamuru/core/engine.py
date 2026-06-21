@@ -125,6 +125,18 @@ class DataMuruEngine:
 
         return build_control_plane_contract(project, environ=os.environ)
 
+    def enterprise_control_plane_architecture(self):
+        project, _, _, _ = self._load()
+        from datamuru.enterprise import build_hosted_control_plane_architecture
+
+        return build_hosted_control_plane_architecture(project)
+
+    def write_enterprise_control_plane_architecture(self, output_path: str | Path):
+        from datamuru.enterprise import write_hosted_control_plane_architecture
+
+        architecture = self.enterprise_control_plane_architecture()
+        return write_hosted_control_plane_architecture(architecture, output_path)
+
     def write_enterprise_activation_bundle(self, output_path: str | Path):
         from datamuru.enterprise import write_activation_bundle
 

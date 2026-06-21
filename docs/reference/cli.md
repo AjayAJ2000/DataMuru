@@ -263,6 +263,20 @@ configuration. The contract combines activation readiness, state backend
 posture, feature flags, and hosted follow-up actions. It does not provision a
 tenant, call a license server, or include the license key value.
 
+## `enterprise control-plane architecture`
+
+```text
+datamuru enterprise control-plane architecture
+  [--config TEXT]
+  [--out TEXT]
+  [--output text|json]
+```
+
+Builds a versioned hosted control plane reference architecture contract. The
+contract describes components, data flows, extension points, trust boundaries,
+accepted decisions, implementation backlog, and non-goals. It is an offline
+planning artifact and does not provision hosted infrastructure.
+
 ## `agile export`
 
 ```text

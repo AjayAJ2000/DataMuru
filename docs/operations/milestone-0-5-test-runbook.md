@@ -13,6 +13,7 @@ This runbook covers:
 - text and JSON output from `datamuru enterprise activation check`;
 - redacted handoff bundle export from `datamuru enterprise activation export`;
 - redacted audit evidence export from `datamuru enterprise activation evidence`;
+- hosted control plane reference architecture export from `datamuru enterprise control-plane architecture`;
 - redacted hosted handoff contracts from `datamuru enterprise control-plane contract`;
 - local and remote backend readiness output from `datamuru state inspect`;
 - license key environment-variable detection without secret disclosure;
@@ -360,7 +361,58 @@ Bug evidence to capture:
 - command output;
 - whether the API behavior differs from CLI behavior.
 
-## 10. Hosted control plane handoff contract
+## 10. Hosted control plane reference architecture
+
+Run the architecture export command:
+
+```powershell
+python -m datamuru.cli.main --no-banner enterprise control-plane architecture `
+  --config datamuru.yml `
+  --out .\.datamuru\control-plane\architecture.json `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- stdout is valid JSON;
+- `.datamuru/control-plane/architecture.json` exists;
+- `schema_version` is `datamuru.hosted_control_plane_architecture.v1`;
+- `status` is `reference-architecture`;
+- `components` includes `oss_cli_and_python_api`, `hosted_control_plane_api`,
+  `job_runner`, `state_extension`, and `audit_evidence_store`;
+- `decisions` includes `HCP-001`, `HCP-002`, `HCP-003`, and `HCP-004`;
+- `implementation_backlog` includes `HCP-B3` for the remote state extension;
+- `non_goals` state that secret values must not be stored in project YAML.
+
+Optional parser check:
+
+```powershell
+$json = python -m datamuru.cli.main --no-banner enterprise control-plane architecture `
+  --config datamuru.yml `
+  --output json | ConvertFrom-Json
+
+$json.schema_version
+$json.status
+$json.components.Count
+$json.implementation_backlog.Count
+```
+
+Expected parser values:
+
+- `datamuru.hosted_control_plane_architecture.v1`;
+- `reference-architecture`;
+- at least `5`;
+- at least `5`.
+
+Bug evidence to capture:
+
+- command output;
+- generated architecture file;
+- whether any generated architecture field conflicts with the current hosted
+  control plane product direction.
+
+## 11. Hosted control plane handoff contract
 
 Run the contract command with a ready Enterprise activation config:
 
@@ -424,7 +476,7 @@ Bug evidence to capture:
 - confirmation that no tenant provisioning, license-server call, or cloud
   state access occurred.
 
-## 11. State backend readiness inspection
+## 12. State backend readiness inspection
 
 Run the local backend inspection from a sandbox project:
 
@@ -503,7 +555,7 @@ Bug evidence to capture:
 - redacted `state` block;
 - whether any provider credential prompt or cloud access occurred.
 
-## 12. Documentation and schema coverage
+## 13. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -528,7 +580,7 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 13. Local quality gate
+## 14. Local quality gate
 
 Run this before reporting the milestone as tested:
 

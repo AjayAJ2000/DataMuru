@@ -28,9 +28,11 @@ DataMuru(config_path: str | Path, environment: str | None = None)
 | `enterprise_activation_report()` | activation readiness report |
 | `enterprise_activation_evidence_report()` | redacted activation audit evidence report |
 | `enterprise_control_plane_contract()` | hosted control plane handoff contract |
+| `enterprise_control_plane_architecture()` | hosted control plane reference architecture |
 | `write_enterprise_activation_bundle(output_path)` | redacted activation handoff bundle path |
 | `write_enterprise_activation_evidence(output_path)` | redacted activation audit evidence path |
 | `write_enterprise_control_plane_contract(output_path)` | redacted hosted control plane contract path |
+| `write_enterprise_control_plane_architecture(output_path)` | hosted control plane architecture path |
 | `plan(target=None)` | `Plan` |
 | `save_plan(output_path, target=None)` | saved-plan result |
 | `apply(target=None)` | `ApplyResult` |

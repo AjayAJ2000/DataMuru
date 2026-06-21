@@ -108,6 +108,12 @@ required hosted follow-up actions. The OSS runtime does not provision tenants,
 activate licenses, or execute shared remote state; those responsibilities stay
 behind Enterprise extensions or a hosted service.
 
+The hosted architecture itself is also exportable through
+`datamuru enterprise control-plane architecture`. That command emits a versioned
+reference contract covering components, data flows, extension points, trust
+boundaries, decisions, backlog, and non-goals. The human-readable companion page
+is [Hosted control plane architecture](hosted-control-plane.md).
+
 ## Architecture map
 
 | Area | Why it exists | What to read |
@@ -117,6 +123,7 @@ behind Enterprise extensions or a hosted service.
 | Core runtime | Explains config, state, planning, apply, and importer packages. | [Core runtime](core-runtime.md) |
 | Provider model | Explains how platform-specific adapters fit into a cloud-neutral core. | [Provider model](provider-model.md) |
 | Configuration model | Explains how root, provider, workspace, environment, and governance files relate. | [Configuration model](configuration-model.md) |
+| Hosted control plane | Explains the Enterprise hosted architecture, extension points, and trust boundaries. | [Hosted control plane](hosted-control-plane.md) |
 | Governance architecture | Explains taxonomy, RBAC, masking, and provider grant compilation. | [Governance architecture](../governance/overview.md) |
 
 ## How to read the architecture docs

@@ -60,6 +60,12 @@ from datamuru.core.plan.saved import SavedPlanDocument, SavedPlanMetadata
 from datamuru.core.state.inspection import StateBackendCheck, StateBackendReport
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
 from datamuru.enterprise.activation import ActivationBundle, ActivationCheck, ActivationReport
+from datamuru.enterprise.architecture import (
+    ArchitectureComponent,
+    ArchitectureDecision,
+    ArchitectureWorkItem,
+    HostedControlPlaneArchitecture,
+)
 from datamuru.enterprise.control_plane import ControlPlaneCheck, ControlPlaneContract
 from datamuru.enterprise.evidence import ActivationEvidenceReport, EvidenceArtifact
 
@@ -68,6 +74,9 @@ __all__ = [
     "ActivationCheck",
     "ActivationEvidenceReport",
     "ActivationReport",
+    "ArchitectureComponent",
+    "ArchitectureDecision",
+    "ArchitectureWorkItem",
     "ApplyFailure",
     "ApplyResult",
     "DataMuruModel",
@@ -77,6 +86,7 @@ __all__ = [
     "ControlPlaneContract",
     "EditionSummary",
     "EvidenceArtifact",
+    "HostedControlPlaneArchitecture",
     "Plan",
     "PlanChange",
     "ResourceDescriptor",
