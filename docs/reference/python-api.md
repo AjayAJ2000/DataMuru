@@ -26,7 +26,9 @@ DataMuru(config_path: str | Path, environment: str | None = None)
 | `edition_summary()` | `EditionSummary` |
 | `state_backend_report()` | state backend readiness report |
 | `enterprise_activation_report()` | activation readiness report |
+| `enterprise_control_plane_contract()` | hosted control plane handoff contract |
 | `write_enterprise_activation_bundle(output_path)` | redacted activation handoff bundle path |
+| `write_enterprise_control_plane_contract(output_path)` | redacted hosted control plane contract path |
 | `plan(target=None)` | `Plan` |
 | `save_plan(output_path, target=None)` | saved-plan result |
 | `apply(target=None)` | `ApplyResult` |

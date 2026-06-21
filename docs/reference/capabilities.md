@@ -8,6 +8,7 @@ This page describes DataMuru OSS `0.4.0a0`.
 - configuration validation and provider diagnostics;
 - local state backend;
 - local and remote state backend readiness inspection;
+- hosted control plane handoff contract generation;
 - deterministic plan, target, apply, destroy, and saved-plan workflows;
 - PAT-based live workspace connectivity;
 - live catalog and schema observation, creation, and deletion;
@@ -40,6 +41,7 @@ OSS can reference existing principals for Unity Catalog permissions.
 ## Not yet complete
 
 - production cloud state backends;
+- hosted control plane tenant provisioning;
 - multi-workspace orchestration;
 - AWS and GCP feature parity;
 - automatic adoption without explicit targets or fingerprint review;

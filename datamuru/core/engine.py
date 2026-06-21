@@ -119,11 +119,23 @@ class DataMuruEngine:
 
         return build_activation_report(project, environ=os.environ)
 
+    def enterprise_control_plane_contract(self):
+        project, _, _, _ = self._load()
+        from datamuru.enterprise import build_control_plane_contract
+
+        return build_control_plane_contract(project, environ=os.environ)
+
     def write_enterprise_activation_bundle(self, output_path: str | Path):
         from datamuru.enterprise import write_activation_bundle
 
         report = self.enterprise_activation_report()
         return write_activation_bundle(report, output_path)
+
+    def write_enterprise_control_plane_contract(self, output_path: str | Path):
+        from datamuru.enterprise import write_control_plane_contract
+
+        contract = self.enterprise_control_plane_contract()
+        return write_control_plane_contract(contract, output_path)
 
     def doctor(self):
         project, environment, provider, _ = self._load()

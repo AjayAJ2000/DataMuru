@@ -16,9 +16,47 @@ def enterprise_group() -> None:
     """Inspect Enterprise activation and hosted control plane readiness."""
 
 
+@enterprise_group.group("control-plane")
+def control_plane_group() -> None:
+    """Build hosted control plane handoff contracts."""
+
+
 @enterprise_group.group("activation")
 def activation_group() -> None:
     """Inspect local Enterprise activation readiness."""
+
+
+@control_plane_group.command("contract")
+@click.option("--config", "config_path", default="datamuru.yml", show_default=True)
+@click.option("--out", "output_path", type=click.Path(dir_okay=False, path_type=str))
+@click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
+@with_cli_errors
+def control_plane_contract(config_path: str, output_path: str | None, output_format: str) -> None:
+    dm = DataMuru(config_path=config_path)
+    contract = dm.enterprise_control_plane_contract()
+    written_path = None
+    if output_path:
+        written_path = dm.write_enterprise_control_plane_contract(output_path)
+
+    if output_format == "json":
+        console.print_json(json.dumps(contract.to_dict(), indent=2))
+    else:
+        status = "ready" if contract.ready else "blocked"
+        style = "success" if contract.ready else "error"
+        console.print(f"[primary]Hosted control plane contract[/primary]: [{style}]{status}[/{style}]")
+        console.print(f"Project: [code]{contract.project}[/code]")
+        console.print(f"Provider: [code]{contract.provider}[/code]")
+        console.print(f"State backend: [code]{contract.state.backend}[/code] ({contract.state.mode})")
+        for check in contract.checks:
+            style = "error" if check.level == "error" else "warning"
+            console.print(f"[{style}][{check.level}][/{style}] {check.path}: {check.message}")
+        if written_path:
+            console.print(f"[success]Contract written:[/success] [code]{written_path}[/code]")
+        if contract.ready:
+            console.print("[success]Control plane contract is ready for Enterprise handoff.[/success]")
+
+    if not contract.ready:
+        raise SystemExit(1)
 
 
 @activation_group.command("check")

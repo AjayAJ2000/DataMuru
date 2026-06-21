@@ -234,6 +234,20 @@ command fails without writing a file when activation is blocked. Use
 `--allow-blocked` only when support asks for a diagnostic bundle that includes
 failed checks.
 
+## `enterprise control-plane contract`
+
+```text
+datamuru enterprise control-plane contract
+  [--config TEXT]
+  [--out TEXT]
+  [--output text|json]
+```
+
+Builds a redacted hosted control plane handoff contract from local project
+configuration. The contract combines activation readiness, state backend
+posture, feature flags, and hosted follow-up actions. It does not provision a
+tenant, call a license server, or include the license key value.
+
 ## `agile export`
 
 ```text

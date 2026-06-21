@@ -101,6 +101,13 @@ schemas, Unity Catalog grants, and discovery workflows. Other resources remain
 local-only or Enterprise-only. The
 [capability reference](../reference/capabilities.md) is the source of truth.
 
+Hosted control plane work starts as an explicit OSS contract boundary. The
+`datamuru enterprise control-plane contract` command builds a redacted local
+handoff artifact with activation readiness, state posture, feature flags, and
+required hosted follow-up actions. The OSS runtime does not provision tenants,
+activate licenses, or execute shared remote state; those responsibilities stay
+behind Enterprise extensions or a hosted service.
+
 ## Architecture map
 
 | Area | Why it exists | What to read |

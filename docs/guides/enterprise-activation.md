@@ -73,6 +73,32 @@ The bundle does not contain the license key value. If activation is blocked,
 the command exits without writing a file. Use `--allow-blocked` only when a
 support engineer asks for a diagnostic bundle with failed checks.
 
+## Build a control plane contract
+
+After activation readiness passes, build a hosted control plane contract:
+
+```powershell
+datamuru enterprise control-plane contract `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\control-plane-contract.json `
+  --output json
+```
+
+The contract is a redacted, offline handoff artifact for a future Enterprise
+control plane or support workflow. It includes:
+
+- activation readiness and redacted onboarding metadata;
+- local or remote state backend posture;
+- enabled feature flags;
+- project paths and provider config references;
+- hosted follow-up actions for entitlement, tenant binding, secret handling,
+  shared state, and evidence capture.
+
+The contract can be ready even when it contains warnings. For example, local
+state is valid for OSS workflows but still warns that hosted multi-user
+execution needs a shared state extension. Remote state contracts are recognized
+as hosted boundaries; OSS still does not read or write remote state directly.
+
 ## What the check validates
 
 The preflight fails when:

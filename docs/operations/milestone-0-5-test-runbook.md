@@ -12,6 +12,7 @@ This runbook covers:
 - Enterprise activation readiness checks for hosted control plane onboarding;
 - text and JSON output from `datamuru enterprise activation check`;
 - redacted handoff bundle export from `datamuru enterprise activation export`;
+- redacted hosted handoff contracts from `datamuru enterprise control-plane contract`;
 - local and remote backend readiness output from `datamuru state inspect`;
 - license key environment-variable detection without secret disclosure;
 - Python API activation report generation;
@@ -296,7 +297,71 @@ Bug evidence to capture:
 - command output;
 - whether the API behavior differs from CLI behavior.
 
-## 9. State backend readiness inspection
+## 9. Hosted control plane handoff contract
+
+Run the contract command with a ready Enterprise activation config:
+
+```powershell
+$env:DATAMURU_LICENSE_KEY="test-license-value"
+
+python -m datamuru.cli.main --no-banner enterprise control-plane contract `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\control-plane-contract.json `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- stdout is valid JSON;
+- `.datamuru/activation/control-plane-contract.json` exists;
+- `schema_version` is `datamuru.hosted_control_plane_contract.v1`;
+- top-level `ready` is `true`;
+- `activation.ready` is `true`;
+- `integration.tenant_id` matches `enterprise.activation.tenant_id`;
+- `integration.license_key_env` is `DATAMURU_LICENSE_KEY`;
+- `integration.license_key_present` is `true`;
+- `state.backend` matches the configured state backend;
+- the literal `test-license-value` is absent from stdout and the file.
+
+Optional parser check:
+
+```powershell
+$json = python -m datamuru.cli.main --no-banner enterprise control-plane contract `
+  --config datamuru.yml `
+  --output json | ConvertFrom-Json
+
+$json.schema_version
+$json.ready
+$json.integration.tenant_id
+$json.integration.license_key_present
+$json.state.backend
+```
+
+Expected parser values:
+
+- `datamuru.hosted_control_plane_contract.v1`;
+- `True`;
+- the configured tenant id;
+- `True`;
+- the configured state backend.
+
+Review warning checks:
+
+- `control_plane.state.local_single_user` is expected for local state;
+- `control_plane.state.remote_extension_required` is expected for recognized
+  remote state contracts such as `s3`;
+- warnings do not block a handoff contract when activation has passed.
+
+Bug evidence to capture:
+
+- command output;
+- generated contract file with secrets redacted;
+- redacted `enterprise.activation` and `state` blocks;
+- confirmation that no tenant provisioning, license-server call, or cloud
+  state access occurred.
+
+## 10. State backend readiness inspection
 
 Run the local backend inspection from a sandbox project:
 
@@ -375,12 +440,13 @@ Bug evidence to capture:
 - redacted `state` block;
 - whether any provider credential prompt or cloud access occurred.
 
-## 10. Documentation and schema coverage
+## 11. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
 ```powershell
 python -m pytest tests\unit\test_documentation.py -q
+$env:NO_MKDOCS_2_WARNING = "1"
 python -m mkdocs build --strict
 ```
 
@@ -399,13 +465,14 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 11. Local quality gate
+## 12. Local quality gate
 
 Run this before reporting the milestone as tested:
 
 ```powershell
 python -m ruff check datamuru tests
 python -m pytest -q --basetemp .datamuru\pytest-tmp -p no:cacheprovider
+$env:NO_MKDOCS_2_WARNING = "1"
 python -m mkdocs build --strict
 ```
 

@@ -60,6 +60,7 @@ from datamuru.core.plan.saved import SavedPlanDocument, SavedPlanMetadata
 from datamuru.core.state.inspection import StateBackendCheck, StateBackendReport
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
 from datamuru.enterprise.activation import ActivationBundle, ActivationCheck, ActivationReport
+from datamuru.enterprise.control_plane import ControlPlaneCheck, ControlPlaneContract
 
 __all__ = [
     "ActivationBundle",
@@ -70,6 +71,8 @@ __all__ = [
     "DataMuruModel",
     "DoctorCheck",
     "DoctorReport",
+    "ControlPlaneCheck",
+    "ControlPlaneContract",
     "EditionSummary",
     "Plan",
     "PlanChange",
