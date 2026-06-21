@@ -24,6 +24,8 @@ DataMuru(config_path: str | Path, environment: str | None = None)
 | `validate()` | validation issues |
 | `doctor()` | `DoctorReport` |
 | `edition_summary()` | `EditionSummary` |
+| `enterprise_activation_report()` | activation readiness report |
+| `write_enterprise_activation_bundle(output_path)` | redacted activation handoff bundle path |
 | `plan(target=None)` | `Plan` |
 | `save_plan(output_path, target=None)` | saved-plan result |
 | `apply(target=None)` | `ApplyResult` |

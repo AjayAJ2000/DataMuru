@@ -2,9 +2,10 @@ import json
 
 from click.testing import CliRunner
 
+from datamuru.api import DataMuru
 from datamuru.cli.main import cli
 from datamuru.core.config import load_project
-from datamuru.enterprise import build_activation_report
+from datamuru.enterprise import build_activation_bundle, build_activation_report
 
 
 def _enable_enterprise_activation(sample_project):
@@ -103,3 +104,109 @@ def test_activation_cli_fails_when_license_env_missing(sample_project):
     assert result.exit_code == 1
     assert "License key environment variable" in result.output
     assert "DATAMURU_LICENSE_KEY is not set" in result.output.replace("\n", " ")
+
+
+def test_activation_bundle_wraps_redacted_report(sample_project):
+    config_path = _enable_enterprise_activation(sample_project)
+    project = load_project(config_path)
+    report = build_activation_report(project, environ={"DATAMURU_LICENSE_KEY": "secret-value"})
+
+    bundle = build_activation_bundle(report)
+    payload = bundle.to_dict()
+
+    assert payload["schema_version"] == "datamuru.enterprise_activation_bundle.v1"
+    assert payload["status"] == "ready"
+    assert payload["report"]["ready"] is True
+    assert payload["report"]["payload"]["activation"]["license_key_present"] is True
+    assert "secret-value" not in json.dumps(payload)
+
+
+def test_activation_export_writes_ready_bundle(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_path = sample_project / ".datamuru" / "activation" / "bundle.json"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "export",
+            "--config",
+            str(config_path),
+            "--out",
+            str(output_path),
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    cli_payload = json.loads(result.output)
+    bundle = json.loads(output_path.read_text(encoding="utf-8"))
+    assert cli_payload["ready"] is True
+    assert bundle["status"] == "ready"
+    assert bundle["report"]["payload"]["activation"]["license_key_env"] == "DATAMURU_LICENSE_KEY"
+    assert "secret-value" not in json.dumps(bundle)
+
+
+def test_activation_bundle_writer_is_available_from_python_api(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_path = sample_project / ".datamuru" / "activation" / "api-bundle.json"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    resolved = DataMuru(config_path).write_enterprise_activation_bundle(output_path)
+
+    bundle = json.loads(resolved.read_text(encoding="utf-8"))
+    assert bundle["status"] == "ready"
+    assert bundle["report"]["ready"] is True
+    assert "secret-value" not in json.dumps(bundle)
+
+
+def test_activation_export_blocks_without_allow_blocked(sample_project):
+    output_path = sample_project / ".datamuru" / "activation" / "blocked.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "--no-banner",
+            "enterprise",
+            "activation",
+            "export",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Activation bundle not written" in result.output
+    assert not output_path.exists()
+
+
+def test_activation_export_can_write_blocked_diagnostic_bundle(sample_project):
+    output_path = sample_project / ".datamuru" / "activation" / "blocked.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "export",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_path),
+            "--allow-blocked",
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    bundle = json.loads(output_path.read_text(encoding="utf-8"))
+    assert bundle["status"] == "blocked"
+    assert bundle["report"]["ready"] is False
+    assert bundle["report"]["checks"]

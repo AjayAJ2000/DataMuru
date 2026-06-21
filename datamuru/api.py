@@ -34,6 +34,9 @@ class DataMuru:
     def enterprise_activation_report(self):
         return self.engine.enterprise_activation_report()
 
+    def write_enterprise_activation_bundle(self, output_path: str | Path):
+        return self.engine.write_enterprise_activation_bundle(output_path)
+
     def doctor(self):
         return self.engine.doctor()
 

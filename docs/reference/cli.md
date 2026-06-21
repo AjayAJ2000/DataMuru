@@ -207,6 +207,21 @@ activation metadata, and configured license key environment variable needed for
 onboarding. JSON output includes a redacted activation payload and never prints
 the license key value.
 
+## `enterprise activation export`
+
+```text
+datamuru enterprise activation export
+  [--config TEXT]
+  --out TEXT
+  [--allow-blocked]
+  [--output text|json]
+```
+
+Writes a redacted Enterprise activation handoff bundle for onboarding. The
+command fails without writing a file when activation is blocked. Use
+`--allow-blocked` only when support asks for a diagnostic bundle that includes
+failed checks.
+
 ## `agile export`
 
 ```text

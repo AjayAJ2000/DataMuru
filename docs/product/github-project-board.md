@@ -61,6 +61,7 @@ Create these items first:
 | Hosted control plane product architecture | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.0a0 |
 | Enterprise purchase and license activation flow | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.0a0 |
 | Enterprise activation readiness preflight | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
+| Enterprise activation handoff bundle export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 
 ## Labels
 

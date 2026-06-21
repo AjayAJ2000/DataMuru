@@ -114,6 +114,12 @@ class DataMuruEngine:
 
         return build_activation_report(project, environ=os.environ)
 
+    def write_enterprise_activation_bundle(self, output_path: str | Path):
+        from datamuru.enterprise import write_activation_bundle
+
+        report = self.enterprise_activation_report()
+        return write_activation_bundle(report, output_path)
+
     def doctor(self):
         project, environment, provider, _ = self._load()
         return provider.doctor(project, environment)

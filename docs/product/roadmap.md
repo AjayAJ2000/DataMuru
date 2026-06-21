@@ -49,6 +49,7 @@ Focus:
 ### v0.5
 
 - Enterprise activation readiness preflight for hosted control plane onboarding
+- Redacted activation handoff bundle export for onboarding evidence
 - Hosted control plane product architecture and OSS extension contracts
 - Enterprise purchase and license activation flow
 - Remote-state planning boundary for multi-user hosted workflows

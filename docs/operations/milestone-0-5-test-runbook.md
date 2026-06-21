@@ -11,6 +11,7 @@ This runbook covers:
 - the `enterprise.activation` root configuration contract;
 - Enterprise activation readiness checks for hosted control plane onboarding;
 - text and JSON output from `datamuru enterprise activation check`;
+- redacted handoff bundle export from `datamuru enterprise activation export`;
 - license key environment-variable detection without secret disclosure;
 - Python API activation report generation;
 - documentation and schema coverage for the activation contract.
@@ -221,7 +222,60 @@ Expected result:
 
 Restore a valid email before continuing.
 
-## 7. Python API activation report
+## 7. Activation handoff bundle export
+
+Run the export command with a ready activation config:
+
+```powershell
+python -m datamuru.cli.main --no-banner enterprise activation export `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\enterprise-activation.json `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- `.datamuru/activation/enterprise-activation.json` exists;
+- JSON command output includes `ready: true`;
+- bundle `schema_version` is `datamuru.enterprise_activation_bundle.v1`;
+- bundle `status` is `ready`;
+- bundle embeds the redacted activation report;
+- the literal license value is absent from the bundle.
+
+Blocked export check:
+
+```powershell
+Remove-Item Env:DATAMURU_LICENSE_KEY -ErrorAction SilentlyContinue
+
+python -m datamuru.cli.main --no-banner enterprise activation export `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked.json
+```
+
+Expected result:
+
+- command exits nonzero;
+- `blocked.json` is not written;
+- output explains which checks failed.
+
+Use this diagnostic path only when support requests a blocked bundle:
+
+```powershell
+python -m datamuru.cli.main --no-banner enterprise activation export `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked.json `
+  --allow-blocked
+```
+
+Expected result:
+
+- command exits successfully;
+- bundle `status` is `blocked`;
+- failed checks are present;
+- no secret value is present.
+
+## 8. Python API activation report
 
 Run this from the repository root or an environment where DataMuru is installed:
 
@@ -241,7 +295,7 @@ Bug evidence to capture:
 - command output;
 - whether the API behavior differs from CLI behavior.
 
-## 8. Documentation and schema coverage
+## 9. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -265,7 +319,7 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 9. Local quality gate
+## 10. Local quality gate
 
 Run this before reporting the milestone as tested:
 

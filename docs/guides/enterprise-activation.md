@@ -51,6 +51,28 @@ datamuru --no-banner enterprise activation check `
 The JSON payload is safe to attach to an onboarding ticket because it redacts
 the license key value and includes only `license_key_present`.
 
+## Export a handoff bundle
+
+When the preflight is ready, write a redacted activation bundle:
+
+```powershell
+datamuru enterprise activation export `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\enterprise-activation.json
+```
+
+The bundle contains:
+
+- the activation report;
+- the redacted onboarding payload;
+- the readiness status;
+- follow-up notes for entitlement, tenant provisioning, control plane binding,
+  and evidence capture.
+
+The bundle does not contain the license key value. If activation is blocked,
+the command exits without writing a file. Use `--allow-blocked` only when a
+support engineer asks for a diagnostic bundle with failed checks.
+
 ## What the check validates
 
 The preflight fails when:

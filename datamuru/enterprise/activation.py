@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import UTC, datetime
+import json
+from pathlib import Path
 from typing import Any
 
 from datamuru.core.config.models import LoadedProject
@@ -48,6 +51,23 @@ class ActivationReport(DataMuruModel):
         }
 
 
+class ActivationBundle(DataMuruModel):
+    schema_version: str
+    generated_at: str
+    status: str
+    report: ActivationReport
+    onboarding: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "generated_at": self.generated_at,
+            "status": self.status,
+            "report": self.report.to_dict(),
+            "onboarding": self.onboarding,
+        }
+
+
 def build_activation_report(
     project: LoadedProject,
     *,
@@ -67,6 +87,46 @@ def build_activation_report(
         payload=payload,
         checks=checks,
     )
+
+
+def build_activation_bundle(
+    report: ActivationReport,
+    *,
+    generated_at: datetime | None = None,
+) -> ActivationBundle:
+    timestamp = (generated_at or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
+    return ActivationBundle(
+        schema_version="datamuru.enterprise_activation_bundle.v1",
+        generated_at=timestamp.isoformat().replace("+00:00", "Z"),
+        status="ready" if report.ready else "blocked",
+        report=report,
+        onboarding={
+            "handoff": "Share this file with the Enterprise onboarding or control plane provisioning workflow.",
+            "secret_handling": (
+                "The license key value is intentionally omitted. The receiving workflow must read the named "
+                "environment variable or request the secret through an approved secret manager."
+            ),
+            "required_follow_up": [
+                "confirm commercial entitlement",
+                "provision or verify tenant",
+                "bind tenant to control plane URL",
+                "record activation evidence",
+            ],
+        },
+    )
+
+
+def write_activation_bundle(
+    report: ActivationReport,
+    output_path: str | Path,
+    *,
+    generated_at: datetime | None = None,
+) -> Path:
+    bundle = build_activation_bundle(report, generated_at=generated_at)
+    resolved = Path(output_path).resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    resolved.write_text(json.dumps(bundle.to_dict(), indent=2) + "\n", encoding="utf-8")
+    return resolved
 
 
 def _activation_config(project: LoadedProject) -> dict[str, Any]:
