@@ -10,6 +10,7 @@ and this project aims to follow Semantic Versioning.
 ### Added
 - Added `datamuru enterprise activation check` for local hosted-control-plane and license activation readiness preflight.
 - Added the `enterprise.activation` root configuration contract and docs for redacted Enterprise onboarding payloads.
+- Added a milestone 0.5 test runbook for feature-by-feature activation readiness validation.
 
 ## [0.4.0a0] - 2026-06-20
 
