@@ -19,9 +19,21 @@ Run the tests:
 ```bash
 python -m ruff check datamuru tests
 python -m pytest
-python -m mkdocs build --strict
+NO_MKDOCS_2_WARNING=1 python -m mkdocs build --strict
 python -m build
 python -m twine check dist/*
+```
+
+Material for MkDocs `9.7.2` and newer prints an upstream notice about the
+future MkDocs `2.0` direction. DataMuru pins MkDocs to `>=1.6,<2`, so the notice
+is not a failing upgrade requirement. Set `NO_MKDOCS_2_WARNING=1` for local and
+CI documentation builds to keep logs focused on DataMuru warnings and errors.
+
+PowerShell equivalent:
+
+```powershell
+$env:NO_MKDOCS_2_WARNING = "1"
+python -m mkdocs build --strict
 ```
 
 Run config validation:

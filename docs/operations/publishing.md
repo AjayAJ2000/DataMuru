@@ -42,10 +42,14 @@ No `PYPI_TOKEN` secret is required. The release job requests a short-lived OIDC 
 ```bash
 python -m ruff check datamuru tests
 python -m pytest
-python -m mkdocs build --strict
+NO_MKDOCS_2_WARNING=1 python -m mkdocs build --strict
 python -m build
 python -m twine check dist/*
 ```
+
+Use the `NO_MKDOCS_2_WARNING=1` environment variable only to suppress the
+upstream Material for MkDocs informational banner about future MkDocs `2.0`
+compatibility. DataMuru's docs dependency remains pinned to MkDocs `>=1.6,<2`.
 
 4. Commit and push the release changes.
 5. Confirm the **CI** and **Documentation** workflows pass.
