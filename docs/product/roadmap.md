@@ -53,6 +53,7 @@ Focus:
 - Hosted control plane product architecture and OSS extension contracts
 - Enterprise purchase and license activation flow
 - Remote-state planning boundary for multi-user hosted workflows
+- State backend readiness inspection for local and remote backend contracts
 - Audit evidence and activation handoff documentation
 
 ### v1.0 target direction

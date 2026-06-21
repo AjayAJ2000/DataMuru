@@ -12,6 +12,7 @@ This runbook covers:
 - Enterprise activation readiness checks for hosted control plane onboarding;
 - text and JSON output from `datamuru enterprise activation check`;
 - redacted handoff bundle export from `datamuru enterprise activation export`;
+- local and remote backend readiness output from `datamuru state inspect`;
 - license key environment-variable detection without secret disclosure;
 - Python API activation report generation;
 - documentation and schema coverage for the activation contract.
@@ -295,7 +296,86 @@ Bug evidence to capture:
 - command output;
 - whether the API behavior differs from CLI behavior.
 
-## 9. Documentation and schema coverage
+## 9. State backend readiness inspection
+
+Run the local backend inspection from a sandbox project:
+
+```powershell
+python -m datamuru.cli.main --no-banner state inspect `
+  --config datamuru.yml `
+  --output json
+```
+
+Expected result:
+
+- stdout is valid JSON;
+- command exits successfully;
+- `backend` is `local`;
+- `remote` is `false`;
+- `runtime_supported` is `true`;
+- `mode` is `read-write`;
+- `success` is `true`;
+- checks include `state.local.supported`.
+
+Optional parser check:
+
+```powershell
+$json = python -m datamuru.cli.main --no-banner state inspect `
+  --config datamuru.yml `
+  --output json | ConvertFrom-Json
+
+$json.backend
+$json.runtime_supported
+$json.mode
+$json.success
+```
+
+Expected parser values:
+
+- `local`;
+- `True`;
+- `read-write`;
+- `True`.
+
+In the sandbox copy, change only the state backend to a remote contract:
+
+```yaml
+state:
+  backend: s3
+  path: s3://acme-datamuru-state/prod/datamuru-state.json
+```
+
+Run:
+
+```powershell
+python -m datamuru.cli.main --no-banner state inspect `
+  --config datamuru.yml `
+  --output json
+```
+
+Expected result:
+
+- command exits nonzero;
+- stdout is still valid JSON;
+- `backend` is `s3`;
+- `remote` is `true`;
+- `runtime_supported` is `false`;
+- `mode` is `contract-only`;
+- `success` is `false`;
+- checks include `state.s3.not_implemented`;
+- the command does not require AWS credentials and does not perform a cloud
+  network call.
+
+Restore `state.backend: local` before running plan, apply, adoption, or
+destructive tests in the OSS runtime.
+
+Bug evidence to capture:
+
+- local and remote command output;
+- redacted `state` block;
+- whether any provider credential prompt or cloud access occurred.
+
+## 10. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -319,7 +399,7 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 10. Local quality gate
+## 11. Local quality gate
 
 Run this before reporting the milestone as tested:
 

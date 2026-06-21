@@ -31,6 +31,9 @@ class DataMuru:
     def edition_summary(self):
         return self.engine.edition_summary()
 
+    def state_backend_report(self):
+        return self.engine.state_backend_report()
+
     def enterprise_activation_report(self):
         return self.engine.enterprise_activation_report()
 

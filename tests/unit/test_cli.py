@@ -32,12 +32,12 @@ def test_cli_banner_is_suppressed_for_json_output(sample_project):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["edition", "show", "--config", str(sample_project / "datamuru.yml"), "--output", "json"],
+        ["state", "inspect", "--config", str(sample_project / "datamuru.yml"), "--output", "json"],
     )
 
     assert result.exit_code == 0
     assert "DataMuru CLI" not in result.output
-    assert json.loads(result.output)["edition"] == "open-source"
+    assert json.loads(result.output)["backend"] == "local"
 
 
 def test_validate_command(sample_project):

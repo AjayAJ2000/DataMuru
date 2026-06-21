@@ -40,6 +40,12 @@ The last four are Enterprise-only. A false value is allowed in OSS.
 | `backend` | `local`, `s3`, `azure_blob`, or `gcs`; only local is implemented in the OSS alpha |
 | `path` | State file path |
 
+Run `datamuru state inspect --output json` to check backend readiness before
+plan or apply workflows. Local state reports `mode: read-write`. Remote backend
+values are accepted as a forward-compatible contract for hosted workflows, but
+the OSS alpha reports them as `mode: contract-only` and exits nonzero so
+automation does not accidentally proceed with an unsupported shared backend.
+
 ## `provider`
 
 Contains `name`, `cloud`, and `config`. Supported cloud identifiers are

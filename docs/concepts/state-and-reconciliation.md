@@ -29,6 +29,17 @@ state writes.
 State does not contain the data stored in a catalog or schema. Back up state,
 but also use provider-native data, metadata, and disaster-recovery controls.
 
+## Inspect backend readiness
+
+Use `datamuru state inspect` before plan, apply, adoption, or destructive test
+flows when a project may move between local and hosted execution.
+
+Local state reports a ready, read-write backend. Remote backend values such as
+`s3`, `azure_blob`, and `gcs` are recognized as shared-state contracts, but the
+OSS alpha does not read from or write to those services. The command exits
+nonzero for remote backends and returns a structured JSON report so CI and
+hosted-control-plane handoffs can fail before mutating anything.
+
 ## Protect state
 
 - Do not hand-edit fingerprints.

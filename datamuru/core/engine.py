@@ -15,6 +15,7 @@ from datamuru.core.plan import (
     validate_saved_plan_document,
 )
 from datamuru.core.state import resolve_state_backend
+from datamuru.core.state.inspection import inspect_state_backend
 from datamuru.governance.masking import compile_masking_resources
 from datamuru.governance.rbac import compile_rbac_resources
 from datamuru.governance.taxonomy import compile_taxonomy_resources
@@ -107,6 +108,10 @@ class DataMuruEngine:
             enabled_features=sorted(enabled_features),
             restricted_features=restricted_features,
         )
+
+    def state_backend_report(self):
+        project = load_project(self.config_path)
+        return inspect_state_backend(project)
 
     def enterprise_activation_report(self):
         project, _, _, _ = self._load()

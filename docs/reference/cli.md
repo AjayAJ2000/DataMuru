@@ -188,6 +188,18 @@ resources. A catalog target also selects its declared schemas.
 `--auto-approve` writes state only when every selected resource exists live and
 matches its declared fingerprint.
 
+## `state inspect`
+
+```text
+datamuru state inspect [--config TEXT] [--output text|json]
+```
+
+Reports whether the configured state backend can run in the current OSS
+runtime. Local state is ready for read-write workflows. Remote backend values
+(`s3`, `azure_blob`, and `gcs`) are recognized as configuration contracts, but
+the OSS alpha reports them as blocked instead of attempting cloud reads or
+writes. Use JSON output in CI to fail early before plan or apply workflows.
+
 ## `edition show`
 
 ```text

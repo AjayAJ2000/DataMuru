@@ -7,6 +7,7 @@ This page describes DataMuru OSS `0.4.0a0`.
 - project initialization;
 - configuration validation and provider diagnostics;
 - local state backend;
+- local and remote state backend readiness inspection;
 - deterministic plan, target, apply, destroy, and saved-plan workflows;
 - PAT-based live workspace connectivity;
 - live catalog and schema observation, creation, and deletion;
