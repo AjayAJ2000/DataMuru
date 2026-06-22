@@ -14,7 +14,9 @@ Answer these questions before writing production YAML:
 - Where will state and saved-plan artifacts live?
 - What is the rollback and cleanup process for test resources?
 
-If the answers are unclear, run a local or sandbox evaluation first.
+If the answers are unclear, run a local or sandbox evaluation first. Confirm the
+scope against [current capabilities and limits](../reference/capabilities-limits.md)
+before treating a workflow as supported.
 
 ## Phase 1: Local proof
 
@@ -101,6 +103,9 @@ datamuru import generate --config datamuru.yml --catalog existing_catalog --out 
 
 Review generated YAML before adoption. Do not import everything and apply
 blindly.
+
+Targeted import/adoption workflows are available where supported. Automatic
+broad ownership adoption across a workspace is not available in this alpha.
 
 ## Phase 6: Enterprise identity proof
 

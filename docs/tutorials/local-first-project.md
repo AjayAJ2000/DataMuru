@@ -5,7 +5,7 @@ idempotency model without contacting a cloud service.
 
 ## Prerequisites
 
-- DataMuru `0.1.0a0` installed
+- DataMuru `0.4.0a0` installed
 - an empty working directory
 
 ## Create the project
@@ -20,10 +20,15 @@ Confirm that `providers/databricks.yml` contains:
 provider:
   cloud: azure
   execution_mode: state-only
-  host: https://your-workspace.cloud.databricks.com
+  host_env: DATABRICKS_HOST
   auth_type: pat
   token_env: DATABRICKS_TOKEN
 ```
+
+This local tutorial does not read `DATABRICKS_HOST` or `DATABRICKS_TOKEN`
+because `execution_mode` is `state-only`. The environment-variable shape keeps
+the file ready for later `live-readonly` testing without storing workspace
+details in YAML.
 
 The host and token are not used in `state-only` mode.
 

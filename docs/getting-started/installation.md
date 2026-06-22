@@ -12,6 +12,10 @@ This repository supports three installation stories:
 - Git
 - A shell environment capable of running Python CLI commands
 
+!!! info "Current documented release"
+    The current packaged release documented for installation is DataMuru
+    `0.4.0a0`. Pin this version for reproducible alpha evaluations.
+
 ## Install from source
 
 ```bash
@@ -20,7 +24,7 @@ python -m pip install -e .
 
 ## Install from PyPI
 
-Once the package is published, the preferred team installation path should be:
+For quick personal evaluation:
 
 ```bash
 pip install datamuru
@@ -35,7 +39,7 @@ pip install "datamuru[databricks]"
 For pinned production or shared platform usage, prefer explicit version pinning:
 
 ```bash
-pip install "datamuru==0.1.0a0"
+pip install "datamuru==0.4.0a0"
 ```
 
 For internal rollout guides and enterprise onboarding, document the exact supported version instead of relying on `latest`.
@@ -65,7 +69,7 @@ python -m mkdocs serve
 To produce a static build:
 
 ```bash
-python -m mkdocs build --strict
+NO_MKDOCS_2_WARNING=1 python -m mkdocs build --strict
 ```
 
 ## Notes for teams

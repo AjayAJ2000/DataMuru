@@ -10,21 +10,23 @@ to mutate the workspace.
 - a personal access token with permission to read the workspace;
 - one workspace YAML file in the project.
 
-## Set the token
+## Set environment variables
 
 === "Windows PowerShell"
 
     ```powershell
+    $env:DATABRICKS_HOST = "https://your-workspace.cloud.databricks.com"
     $env:DATABRICKS_TOKEN = "replace-with-your-token"
     ```
 
 === "macOS or Linux"
 
     ```bash
+    export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
     export DATABRICKS_TOKEN="replace-with-your-token"
     ```
 
-Do not write the token into YAML, shell history, screenshots, or issue reports.
+Do not write tokens into YAML, shell history, screenshots, or issue reports.
 
 ## Configure read-only execution
 
@@ -34,14 +36,14 @@ Update `providers/databricks.yml`:
 provider:
   cloud: azure
   execution_mode: live-readonly
-  host: https://your-workspace.cloud.databricks.com
+  host_env: DATABRICKS_HOST
   auth_type: pat
   token_env: DATABRICKS_TOKEN
   connect_timeout_seconds: 10
 ```
 
-Replace the host with the exact workspace origin. Do not include a path such as
-`/sql/warehouses`.
+Set `DATABRICKS_HOST` to the exact workspace origin. Do not include a path such
+as `/sql/warehouses`.
 
 ## Validate before connecting
 
@@ -89,3 +91,9 @@ datamuru apply --config datamuru.yml --target catalog:unique_test_name --auto-ap
 
 The read-only guard is intentional. Switch to `live-apply` only after reviewing
 [Choose an execution mode](../guides/execution-modes.md).
+
+Expected safe failure:
+
+```text
+Provider operation blocked because execution_mode is live-readonly.
+```

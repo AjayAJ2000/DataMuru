@@ -42,4 +42,4 @@ Before applying:
 6. retain a copy of state and the reviewed configuration.
 
 Live apply does not mean every modeled resource has a live implementation. See
-[Current capabilities and limits](../reference/capabilities.md).
+[Current capabilities and limits](../reference/capabilities-limits.md).

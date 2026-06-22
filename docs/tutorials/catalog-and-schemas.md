@@ -27,7 +27,7 @@ Add the environment variable name to `providers/databricks.yml`:
 provider:
   cloud: azure
   execution_mode: live-apply
-  host: https://your-workspace.cloud.databricks.com
+  host_env: DATABRICKS_HOST
   auth_type: pat
   token_env: DATABRICKS_TOKEN
   sql_warehouse_id_env: DATABRICKS_SQL_WAREHOUSE_ID

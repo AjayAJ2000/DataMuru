@@ -23,4 +23,4 @@ strategies. The alpha compiles masking resources as local governance intent;
 live column-mask installation is not yet implemented.
 
 See the [RBAC model](../governance/rbac.md) and
-[capability reference](capabilities.md).
+[capability reference](capabilities-limits.md).

@@ -6,6 +6,10 @@ DataMuru runs with the permissions of its configured Databricks identity. A
 compromised token or CI runner can perform every operation that identity can
 perform.
 
+Match controls to the supported surface in
+[current capabilities and limits](../reference/capabilities-limits.md). Do not
+grant privileges for roadmap resources that DataMuru cannot yet reconcile.
+
 ## Credential rules
 
 - Store credentials in environment variables or a secret manager.
@@ -30,6 +34,8 @@ perform.
 - Review release tags before publication.
 - Retain audit logs from GitHub, PyPI, and Databricks.
 - Use saved plans and approvals for shared environments.
+- Run `live-readonly` checks before any new `live-apply` workspace.
+- Keep production credentials outside developer laptops when possible.
 
 ## Incident response
 

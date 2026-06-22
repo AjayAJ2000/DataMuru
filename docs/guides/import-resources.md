@@ -3,6 +3,11 @@
 Use import discovery to generate configuration candidates from an existing
 workspace.
 
+Explicit targeted import and adoption workflows are available for supported
+Databricks resources. Automatic broad ownership adoption across a workspace is
+not available in this alpha; each adopted target must be reviewed and selected
+deliberately.
+
 ## Discover
 
 ```powershell

@@ -99,7 +99,7 @@ DataMuru intentionally keeps these concerns separate:
 The Databricks provider performs real API operations for supported catalogs,
 schemas, Unity Catalog grants, and discovery workflows. Other resources remain
 local-only or Enterprise-only. The
-[capability reference](../reference/capabilities.md) is the source of truth.
+[capability reference](../reference/capabilities-limits.md) is the source of truth.
 
 Hosted control plane work starts as an explicit OSS contract boundary. The
 `datamuru enterprise control-plane contract` command builds a redacted local

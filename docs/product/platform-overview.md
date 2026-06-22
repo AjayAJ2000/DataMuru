@@ -66,6 +66,10 @@ The current repository is a bootstrap foundation for:
 
 This means the alpha should be treated as the beginning of the framework, not the full market promise yet.
 
+For the supported surface, roadmap items, and Enterprise-only boundaries, use
+the [current capabilities and limits](../reference/capabilities-limits.md) page
+as the canonical reference.
+
 ## Product maturity model
 
 | Stage | What users should expect |

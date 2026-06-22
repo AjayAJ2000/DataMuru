@@ -4,6 +4,9 @@ This tutorial discovers supported Databricks resources and generates a starter
 workspace YAML file. Import is a review workflow, not automatic ownership
 transfer.
 
+Targeted adoption is available for selected supported resources after review.
+Automatic broad ownership adoption across an entire workspace is not available.
+
 ## Prerequisites
 
 - `live-readonly` or `live-apply` execution mode;
