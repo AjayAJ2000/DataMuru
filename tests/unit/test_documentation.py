@@ -1,4 +1,5 @@
 import re
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -10,6 +11,11 @@ MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 MARKDOWN_LINK_WITH_TEXT = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 VAGUE_LINK_TEXT = {"click here", "here", "this", "this link", "read more"}
+
+
+def _project_version() -> str:
+    project = tomllib.loads((REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    return project["project"]["version"]
 
 
 def _nav_paths(value):
@@ -96,3 +102,26 @@ def test_public_documentation_has_no_local_windows_paths():
             invalid.append(str(page.relative_to(REPOSITORY_ROOT)))
 
     assert invalid == []
+
+
+def test_public_documentation_has_no_stale_alpha_versions():
+    stale_version = re.compile(r"\b(?:v)?0\.1\.0a0\b")
+    offenders: list[str] = []
+    for page in [REPOSITORY_ROOT / "README.md", *DOCS_ROOT.rglob("*.md")]:
+        if stale_version.search(page.read_text(encoding="utf-8")):
+            offenders.append(str(page.relative_to(REPOSITORY_ROOT)))
+
+    assert offenders == []
+
+
+def test_home_and_installation_show_current_documented_release():
+    version = _project_version()
+    missing: list[str] = []
+    for page in [
+        DOCS_ROOT / "index.md",
+        DOCS_ROOT / "getting-started" / "installation.md",
+    ]:
+        if version not in page.read_text(encoding="utf-8"):
+            missing.append(str(page.relative_to(REPOSITORY_ROOT)))
+
+    assert missing == []

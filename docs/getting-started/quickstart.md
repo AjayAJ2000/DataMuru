@@ -13,7 +13,7 @@ and does not contact Databricks.
     python -m venv .venv
     .\.venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    pip install datamuru==0.1.0a0
+    pip install datamuru==0.4.0a0
     ```
 
 === "macOS or Linux"
@@ -24,7 +24,7 @@ and does not contact Databricks.
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    pip install datamuru==0.1.0a0
+    pip install datamuru==0.4.0a0
     ```
 
 Verify the installation:
@@ -44,6 +44,15 @@ The command creates a root configuration and supporting directories. Keep the
 provider in `state-only` mode for this tutorial. It also creates `.env.example`
 with the Databricks environment variable names used when you later connect to a
 workspace.
+
+Expected result:
+
+```text
+Created DataMuru project at .
+Next steps:
+  1. Review datamuru.yml
+  2. Run datamuru validate --config datamuru.yml
+```
 
 ## 3. Validate the configuration
 
@@ -69,6 +78,12 @@ datamuru plan --config datamuru.yml
 The first plan uses `+`, `~`, `=`, and `-` to represent create, update, no-op,
 and destroy actions. Review every destroy action before continuing.
 
+Expected result in the starter project:
+
+```text
+Plan: create local-state records for declared sample resources.
+```
+
 ## 5. Apply to local state
 
 ```powershell
@@ -78,6 +93,12 @@ datamuru apply --config datamuru.yml --auto-approve
 In `state-only` mode, apply records the desired resources in the configured
 local state file. It does not create cloud resources.
 
+Expected result:
+
+```text
+Apply complete.
+```
+
 ## 6. Verify idempotency
 
 ```powershell
@@ -86,6 +107,21 @@ datamuru plan --config datamuru.yml
 
 Expected result: declared resources report `resource already matches` or the
 plan contains no required changes.
+
+## Safe read-only failure
+
+When you later connect a provider in `live-readonly`, mutation remains blocked.
+A direct apply should fail safely instead of changing Databricks:
+
+```powershell
+datamuru apply --config datamuru.yml --auto-approve
+```
+
+Expected result:
+
+```text
+Provider operation blocked because execution_mode is live-readonly.
+```
 
 ## What you learned
 

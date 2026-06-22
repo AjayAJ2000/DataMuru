@@ -59,4 +59,4 @@ Read:
 
 DataMuru performs real live operations for selected resources. It does not yet
 implement the complete PRD. Before each test, check
-[Current capabilities and limits](../reference/capabilities.md).
+[Current capabilities and limits](../reference/capabilities-limits.md).

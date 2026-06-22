@@ -20,7 +20,7 @@ documentation pull request.
 1. Search the documentation and existing GitHub issues.
 2. Run `validate`, `doctor --output json`, and the failing command again.
 3. Compare the behavior with the
-   [current capability reference](../reference/capabilities.md).
+   [current capability reference](../reference/capabilities-limits.md).
 
 ## Include useful diagnostic information
 

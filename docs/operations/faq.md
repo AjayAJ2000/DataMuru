@@ -2,7 +2,7 @@
 
 ## Is DataMuru production-ready?
 
-Not generally. `0.1.0a0` is an alpha release with real but bounded provider
+Not generally. `0.4.0a0` is an alpha release with real but bounded provider
 support. Use the [production-readiness checklist](production-readiness.md)
 before a pilot.
 
@@ -49,7 +49,10 @@ backend names are reserved in the contract but are not implemented yet.
 ## Can I import an existing workspace?
 
 You can discover supported resources and generate starter workspace YAML.
-Automatic conflict-safe ownership adoption is not yet implemented.
+Explicit targeted import/adoption workflows are available where supported:
+review generated YAML, choose one or more `--target` values, preview adoption,
+and use `--auto-approve` only when the live fingerprint matches the declaration.
+Automatic broad ownership adoption across a workspace is not yet available.
 
 ## How do I report a problem?
 

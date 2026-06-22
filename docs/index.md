@@ -7,28 +7,54 @@
   </div>
 </div>
 
-DataMuru is a provider-agnostic declarative data infrastructure and governance
-framework. You describe the platform resources, access rules, and governance
-intent that you want. DataMuru validates the configuration, compares it with
-state and supported live resources, shows a deterministic plan, and applies
-approved changes.
+DataMuru is an alpha, Python-first, declarative data infrastructure and
+governance framework. You describe the platform resources, access rules, and
+governance intent that you want. DataMuru validates the configuration, compares
+it with state and supported live resources, shows a deterministic plan, and
+applies approved changes.
 
 Databricks is the first live provider adapter in the current alpha. The product
 direction is broader: a shared control layer for data platform resources,
 governance, brownfield adoption, and eventually multi-cloud execution.
 
-```powershell
-pip install datamuru
-datamuru validate --config datamuru.yml
-datamuru doctor --config datamuru.yml
-datamuru plan --config datamuru.yml
-```
+!!! info "Current documented release"
+    The current packaged release documented for installation is DataMuru
+    `0.4.0a0`. Pages on `main` may also document unreleased `0.5.0a0`
+    milestone work before the next PyPI publication.
 
 !!! warning "Alpha software"
     DataMuru `0.4.0a0` is an alpha release. It supports real Databricks
     operations for the resource types listed in the
-    [capability reference](reference/capabilities.md), but it is not yet a
+    [capability reference](reference/capabilities-limits.md), but it is not yet a
     complete production platform. Test with non-production resources first.
+
+Today DataMuru can safely:
+
+- initialize projects;
+- validate configuration;
+- plan changes;
+- apply local state changes;
+- connect to Databricks;
+- manage selected catalogs, schemas, and Unity Catalog grants;
+- discover and explicitly adopt supported existing resources.
+
+It cannot yet fully:
+
+- replace Terraform or a general cloud infrastructure platform;
+- manage every Databricks object;
+- provide production cloud state backends;
+- run broad multi-workspace orchestration;
+- enforce every governance policy live;
+- guarantee transactional rollback.
+
+Start with the local state-only path:
+
+```powershell
+pip install "datamuru==0.4.0a0"
+datamuru init --name quickstart --output-dir .
+datamuru validate --config datamuru.yml --strict
+datamuru plan --config datamuru.yml
+```
 
 ## Choose your goal
 
@@ -88,7 +114,7 @@ The OSS alpha includes:
 Some resource types are modeled locally but do not yet have live provider
 effects. Account-level identity lifecycle is an Enterprise capability and also
 depends on Databricks account SCIM availability. See
-[Current capabilities and limits](reference/capabilities.md) before planning a
+[Current capabilities and limits](reference/capabilities-limits.md) before planning a
 rollout.
 
 ## The operating loop

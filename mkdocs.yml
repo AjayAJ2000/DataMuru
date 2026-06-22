@@ -57,33 +57,30 @@ extra_css:
   - stylesheets/extra.css
 
 nav:
-  - Home: index.md
+  - Home:
+      - Overview: index.md
   - Start:
-      - Choose a path: getting-started/overview.md
+      - What is DataMuru?: getting-started/overview.md
       - Evaluation checklist: getting-started/evaluation-checklist.md
       - Installation: getting-started/installation.md
       - Five-minute local quickstart: getting-started/quickstart.md
       - Databricks Free Edition: getting-started/databricks-free-edition.md
   - Tutorials:
-      - Learn with a local project: tutorials/local-first-project.md
-      - Connect a Databricks workspace: tutorials/connect-databricks.md
-      - Provision a catalog and schemas: tutorials/catalog-and-schemas.md
-      - Import an existing workspace: tutorials/import-existing-workspace.md
-  - How-to guides:
-      - Configure a project: guides/configure-project.md
-      - Structure an enterprise project: guides/enterprise-project-structure.md
-      - Authenticate to Databricks: guides/authentication.md
-      - Move from OSS to Enterprise: guides/oss-to-enterprise.md
-      - Prepare Enterprise activation: guides/enterprise-activation.md
-      - Plan Databricks to Snowflake adoption: guides/databricks-to-snowflake.md
+      - Local project: tutorials/local-first-project.md
+      - Connect Databricks: tutorials/connect-databricks.md
+      - Create catalog and schemas: tutorials/catalog-and-schemas.md
+      - Import existing workspace: tutorials/import-existing-workspace.md
+  - How-to:
+      - Configure project: guides/configure-project.md
+      - Authenticate: guides/authentication.md
       - Choose an execution mode: guides/execution-modes.md
       - Validate and diagnose setup: guides/validate-and-doctor.md
-      - Review and apply changes: guides/plan-and-apply.md
-      - Target related resources: guides/target-resources.md
-      - Use saved plans: guides/saved-plans.md
+      - Plan and apply: guides/plan-and-apply.md
+      - Saved plans: guides/saved-plans.md
+      - Target resources: guides/target-resources.md
       - Manage catalogs and schemas: guides/catalogs-and-schemas.md
-      - Manage Unity Catalog permissions: guides/permissions.md
-      - Work with existing resources: guides/import-resources.md
+      - Manage permissions: guides/permissions.md
+      - Import or adopt resources: guides/import-resources.md
       - Destroy resources safely: guides/destroy-resources.md
       - Troubleshoot DataMuru: guides/troubleshooting.md
   - Concepts:
@@ -91,62 +88,64 @@ nav:
       - Configuration hierarchy: concepts/configuration-hierarchy.md
       - State and reconciliation: concepts/state-and-reconciliation.md
       - Lifecycle model: concepts/lifecycle-model.md
-      - Resources, addresses, and targets: concepts/resources-and-addresses.md
       - Safety model: concepts/safety-model.md
+      - Resources and addresses: concepts/resources-and-addresses.md
   - Architecture:
-      - Architecture overview: architecture/overview.md
       - Library architecture: architecture/library-architecture.md
       - Command lifecycle: architecture/command-lifecycle.md
       - Core runtime: architecture/core-runtime.md
-      - Provider model: architecture/provider-model.md
+      - Provider architecture: architecture/provider-model.md
       - Configuration model: architecture/configuration-model.md
       - Hosted control plane: architecture/hosted-control-plane.md
-      - Governance architecture: governance/overview.md
-      - OSS and Enterprise boundary: product/editions.md
+      - Architecture overview: architecture/overview.md
   - Governance:
-      - Governance model: governance/overview.md
-      - RBAC model: governance/rbac.md
-      - Classification and masking: governance/classification-and-masking.md
+      - Overview: governance/overview.md
+      - RBAC examples: governance/rbac.md
+      - Masking and policy roadmap: governance/classification-and-masking.md
   - Reference:
       - Glossary: reference/glossary.md
-      - CLI Reference: reference/cli.md
-      - Root configuration: reference/root-config.md
+      - CLI: reference/cli.md
+      - Config files: reference/root-config.md
       - Workspace configuration: reference/workspace-config.md
-      - Databricks provider: reference/databricks-provider.md
+      - Providers: reference/databricks-provider.md
       - Snowflake provider: reference/snowflake-provider.md
-      - AI discovery: reference/ai-discovery.md
       - Governance configuration: reference/governance-config.md
       - Environment variables: reference/environment-variables.md
-      - Resource types and addresses: reference/resources.md
-      - Plan and apply results: reference/results.md
-      - Error codes: reference/errors.md
+      - Resource types: reference/resources.md
+      - Results: reference/results.md
+      - Errors: reference/errors.md
       - Python API: reference/python-api.md
-      - JSON schemas: reference/schemas.md
-      - Current capabilities and limits: reference/capabilities.md
+      - Schemas: reference/schemas.md
+      - Current capabilities and limits: reference/capabilities-limits.md
+      - AI discovery: reference/ai-discovery.md
   - Operations:
-      - Operating model: operations/usage-guidelines.md
       - Team adoption: operations/team-adoption-guidelines.md
-      - Enterprise rollout playbook: operations/enterprise-rollout-playbook.md
-      - Security and credentials: operations/security.md
-      - Support and feedback: operations/support.md
-      - ACL and RBAC guidelines: operations/acl-guidelines.md
+      - Security: operations/security.md
       - Production readiness: operations/production-readiness.md
-      - Upgrades and compatibility: operations/upgrades.md
+      - Upgrades: operations/upgrades.md
+      - Publishing: operations/publishing.md
+      - Support: operations/support.md
+      - ACL and RBAC guidelines: operations/acl-guidelines.md
+      - Operating model: operations/usage-guidelines.md
       - Documentation maintenance: operations/documentation-maintenance.md
       - Testing and release: operations/testing-and-release.md
-      - Milestone 0.4 test runbook: operations/milestone-0-4-test-runbook.md
-      - Milestone 0.5 test runbook: operations/milestone-0-5-test-runbook.md
-      - Package and docs publishing: operations/publishing.md
       - FAQ: operations/faq.md
-  - Product:
-      - Platform overview: product/platform-overview.md
-      - Product requirements summary: product/product-requirements-summary.md
+  - Enterprise:
+      - Enterprise overview: product/platform-overview.md
+      - OSS to Enterprise: guides/oss-to-enterprise.md
+      - Enterprise activation: guides/enterprise-activation.md
+      - Enterprise rollout playbook: operations/enterprise-rollout-playbook.md
+      - Enterprise testing: product/enterprise-testing.md
+      - Enterprise project structure: guides/enterprise-project-structure.md
+      - Databricks to Snowflake path: guides/databricks-to-snowflake.md
       - Editions and commercial model: product/editions.md
-      - Enterprise testing runbook: product/enterprise-testing.md
-      - Packaging and distribution: product/packaging-and-distribution.md
-      - Agile planning with GitHub Projects: product/agile-github-projects.md
-      - Recommended GitHub Project board: product/github-project-board.md
+  - Product Planning:
       - Roadmap: product/roadmap.md
+      - PRD summary: product/product-requirements-summary.md
+      - GitHub Project board: product/github-project-board.md
+      - Agile project setup: product/agile-github-projects.md
+      - Milestone runbooks: product/milestone-runbooks.md
+      - Packaging and distribution: product/packaging-and-distribution.md
   - Contribute:
       - Contributing: contributing/index.md
       - Documentation style guide: contributing/documentation-style-guide.md
