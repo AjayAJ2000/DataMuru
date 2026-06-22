@@ -73,6 +73,30 @@ The bundle does not contain the license key value. If activation is blocked,
 the command exits without writing a file. Use `--allow-blocked` only when a
 support engineer asks for a diagnostic bundle with failed checks.
 
+## Export a purchase and license request
+
+To start commercial entitlement, tenant provisioning, or support review without
+calling a license server, write a redacted purchase request:
+
+```powershell
+datamuru enterprise activation purchase-request `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\purchase-request.json `
+  --output json
+```
+
+The request includes:
+
+- organization and contact metadata;
+- purchase reference and support plan;
+- requested Enterprise entitlements based on enabled features;
+- tenant id, deployment region, and control plane URL;
+- license key environment-variable name and presence status;
+- confirmation that the command is offline and does not provision a tenant.
+
+It does not contain the license key value. If activation is blocked, the command
+does not write a file unless `--allow-blocked` is supplied for support triage.
+
 ## Export audit evidence
 
 Generate a redacted evidence report for an onboarding, audit, or support ticket:

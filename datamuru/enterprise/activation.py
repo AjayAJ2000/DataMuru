@@ -68,6 +68,27 @@ class ActivationBundle(DataMuruModel):
         }
 
 
+class ActivationPurchaseRequest(DataMuruModel):
+    schema_version: str
+    generated_at: str
+    status: str
+    report: ActivationReport
+    commercial: dict[str, Any]
+    fulfillment: dict[str, Any]
+    license: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "generated_at": self.generated_at,
+            "status": self.status,
+            "report": self.report.to_dict(),
+            "commercial": self.commercial,
+            "fulfillment": self.fulfillment,
+            "license": self.license,
+        }
+
+
 def build_activation_report(
     project: LoadedProject,
     *,
@@ -114,6 +135,76 @@ def build_activation_bundle(
             ],
         },
     )
+
+
+def build_activation_purchase_request(
+    report: ActivationReport,
+    *,
+    generated_at: datetime | None = None,
+) -> ActivationPurchaseRequest:
+    timestamp = (generated_at or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
+    activation = report.payload.get("activation", {})
+    features = report.payload.get("features", {})
+    return ActivationPurchaseRequest(
+        schema_version="datamuru.enterprise_purchase_request.v1",
+        generated_at=timestamp.isoformat().replace("+00:00", "Z"),
+        status="ready" if report.ready else "blocked",
+        report=report,
+        commercial={
+            "organization": activation.get("organization"),
+            "contact_email": activation.get("contact_email"),
+            "purchase_reference": activation.get("purchase_reference"),
+            "support_plan": activation.get("support_plan"),
+            "requested_entitlements": [
+                name
+                for name in [
+                    "hosted_control_plane",
+                    "identity_management",
+                    "multi_workspace",
+                    "compliance_reporting",
+                ]
+                if features.get(name)
+            ],
+        },
+        fulfillment={
+            "tenant_id": activation.get("tenant_id"),
+            "deployment_region": activation.get("deployment_region"),
+            "control_plane_url": activation.get("control_plane_url"),
+            "required_actions": [
+                "confirm commercial entitlement",
+                "issue or validate enterprise license",
+                "provision hosted control plane tenant",
+                "bind tenant to control plane URL",
+                "record activation evidence",
+            ],
+            "offline": True,
+            "provisions_tenant": False,
+            "calls_license_server": False,
+        },
+        license={
+            "license_key_env": activation.get("license_key_env"),
+            "license_key_present": activation.get("license_key_present", False),
+            "secret_values_included": False,
+            "secret_handling": (
+                "The license key value is intentionally omitted. The receiving workflow must "
+                "resolve the named environment variable or request the secret through an approved "
+                "secret manager."
+            ),
+        },
+    )
+
+
+def write_activation_purchase_request(
+    report: ActivationReport,
+    output_path: str | Path,
+    *,
+    generated_at: datetime | None = None,
+) -> Path:
+    request = build_activation_purchase_request(report, generated_at=generated_at)
+    resolved = Path(output_path).resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    resolved.write_text(json.dumps(request.to_dict(), indent=2) + "\n", encoding="utf-8")
+    return resolved
 
 
 def write_activation_bundle(

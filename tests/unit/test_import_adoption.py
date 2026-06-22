@@ -17,6 +17,7 @@ from datamuru.core.importer.models import (
     ImportCatalogResource,
     ImportDiscoveryReport,
     ImportGrantResource,
+    ImportJobCheckpoint,
     ImportGroupResource,
     ImportSchemaResource,
     ImportServicePrincipalResource,
@@ -527,6 +528,22 @@ def test_import_discover_writes_resumable_job_checkpoint(sample_project, tmp_pat
         {"object_type": "catalog", "object_name": "dm_imported"}
     ]
     assert payload["grants"][0]["principal"] == "analysts"
+
+
+def test_import_job_checkpoint_accepts_writer_timestamp_round_trip():
+    checkpoint = ImportJobCheckpoint.model_validate(
+        {
+            "version": 1,
+            "completed_grant_targets": [
+                {"object_type": "catalog", "object_name": "poc_platform_team"}
+            ],
+            "grants": [],
+            "updated_at": "2026-06-22T12:26:32.376988+00:00",
+        }
+    )
+
+    assert checkpoint.updated_at == "2026-06-22T12:26:32.376988+00:00"
+    assert checkpoint.to_dict()["updated_at"] == "2026-06-22T12:26:32.376988+00:00"
 
 
 def test_databricks_import_resume_skips_completed_grant_targets(monkeypatch):

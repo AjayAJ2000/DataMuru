@@ -59,7 +59,12 @@ from datamuru.core.plan.models import Plan, PlanChange, ResourceDescriptor
 from datamuru.core.plan.saved import SavedPlanDocument, SavedPlanMetadata
 from datamuru.core.state.inspection import StateBackendCheck, StateBackendReport
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
-from datamuru.enterprise.activation import ActivationBundle, ActivationCheck, ActivationReport
+from datamuru.enterprise.activation import (
+    ActivationBundle,
+    ActivationCheck,
+    ActivationPurchaseRequest,
+    ActivationReport,
+)
 from datamuru.enterprise.architecture import (
     ArchitectureComponent,
     ArchitectureDecision,
@@ -73,6 +78,7 @@ __all__ = [
     "ActivationBundle",
     "ActivationCheck",
     "ActivationEvidenceReport",
+    "ActivationPurchaseRequest",
     "ActivationReport",
     "ArchitectureComponent",
     "ArchitectureDecision",

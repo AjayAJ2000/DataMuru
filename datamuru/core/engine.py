@@ -143,6 +143,18 @@ class DataMuruEngine:
         report = self.enterprise_activation_report()
         return write_activation_bundle(report, output_path)
 
+    def enterprise_activation_purchase_request(self):
+        from datamuru.enterprise import build_activation_purchase_request
+
+        report = self.enterprise_activation_report()
+        return build_activation_purchase_request(report)
+
+    def write_enterprise_activation_purchase_request(self, output_path: str | Path):
+        from datamuru.enterprise import write_activation_purchase_request
+
+        report = self.enterprise_activation_report()
+        return write_activation_purchase_request(report, output_path)
+
     def enterprise_activation_evidence_report(self):
         project, _, _, _ = self._load()
         from datamuru.enterprise import build_activation_evidence_report

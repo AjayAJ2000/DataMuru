@@ -1,6 +1,6 @@
 # DataMuru Project Status
 
-Last updated: 2026-06-20
+Last updated: 2026-06-22
 
 Project board: [DataMuru Product Roadmap](https://github.com/users/AjayAJ2000/projects/1)
 
@@ -88,6 +88,8 @@ functional boundaries, such as security testing or governance documentation.
 ## Completed work summary
 
 - Python package and CLI foundation.
+- Clean source repository root with generated starter projects kept under
+  `examples/` rather than tracked as top-level project state.
 - Databricks catalog and schema live apply.
 - Scoped import controls and grant guardrails.
 - PyPI alpha release pipeline.
@@ -109,7 +111,9 @@ functional boundaries, such as security testing or governance documentation.
 ## Blocked work summary
 
 - Hosted control plane architecture: initial OSS activation-readiness contract is now in progress.
-- Enterprise license activation model: local preflight exists; commercial purchase and tenant provisioning remain blocked on Enterprise backend decisions.
+- Enterprise license activation model: local preflight and redacted offline
+  purchase request exports exist; actual license issuance and tenant
+  provisioning remain blocked on Enterprise backend decisions.
 - Databricks live integration tests: blocked on a dedicated test workspace.
 - Snowflake trial integration tests: blocked on Snowflake trial credentials.
 - Snowflake grants import and RBAC mapping: blocked on Snowflake live discovery and account access.
@@ -134,7 +138,8 @@ functional boundaries, such as security testing or governance documentation.
 7. Harden Databricks account SCIM identity support.
 8. Create Databricks live integration test environment.
 9. Create Snowflake trial validation environment.
-10. Expand the Enterprise activation preflight into hosted control plane architecture and licensing handoff docs.
+10. Connect offline Enterprise activation contracts to a future hosted
+    entitlement and tenant-provisioning backend.
 
 ## Readiness
 

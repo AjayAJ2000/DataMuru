@@ -1,10 +1,13 @@
 from .activation import (
     ActivationBundle,
     ActivationCheck,
+    ActivationPurchaseRequest,
     ActivationReport,
     build_activation_bundle,
+    build_activation_purchase_request,
     build_activation_report,
     write_activation_bundle,
+    write_activation_purchase_request,
 )
 from .architecture import (
     ArchitectureComponent,
@@ -31,6 +34,7 @@ __all__ = [
     "ActivationBundle",
     "ActivationCheck",
     "ActivationEvidenceReport",
+    "ActivationPurchaseRequest",
     "ActivationReport",
     "ArchitectureComponent",
     "ArchitectureDecision",
@@ -41,11 +45,13 @@ __all__ = [
     "HostedControlPlaneArchitecture",
     "build_activation_bundle",
     "build_activation_evidence_report",
+    "build_activation_purchase_request",
     "build_activation_report",
     "build_control_plane_contract",
     "build_hosted_control_plane_architecture",
     "write_activation_bundle",
     "write_activation_evidence_report",
+    "write_activation_purchase_request",
     "write_control_plane_contract",
     "write_hosted_control_plane_architecture",
 ]

@@ -62,6 +62,7 @@ class ImportJobCheckpoint(DataMuruModel):
     version: int = 1
     provider: str | None = None
     environment: str | None = None
+    updated_at: str | None = None
     completed_grant_targets: list[ImportGrantTarget] = Field(default_factory=list)
     grants: list[ImportGrantResource] = Field(default_factory=list)
 

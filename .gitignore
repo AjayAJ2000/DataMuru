@@ -23,6 +23,16 @@ site/
 .pytest-tmp-*/
 saved-plan.json
 *.dm
+
+# Project files generated when `datamuru init --output-dir .` is run from the
+# repository root. Keep shareable examples under examples/ instead.
+/datamuru.yml
+/environments/
+/providers/
+/workspaces/
+/governance/
+/.env.example
+
 .DS_Store
 Thumbs.db
 .idea/

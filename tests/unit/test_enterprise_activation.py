@@ -8,6 +8,7 @@ from datamuru.core.config import load_project
 from datamuru.enterprise import (
     build_activation_bundle,
     build_activation_evidence_report,
+    build_activation_purchase_request,
     build_activation_report,
 )
 
@@ -166,6 +167,126 @@ def test_activation_bundle_writer_is_available_from_python_api(sample_project, m
     assert bundle["status"] == "ready"
     assert bundle["report"]["ready"] is True
     assert "secret-value" not in json.dumps(bundle)
+
+
+def test_activation_purchase_request_wraps_commercial_handoff(sample_project):
+    config_path = _enable_enterprise_activation(sample_project)
+    project = load_project(config_path)
+    report = build_activation_report(project, environ={"DATAMURU_LICENSE_KEY": "secret-value"})
+
+    purchase_request = build_activation_purchase_request(report)
+    payload = purchase_request.to_dict()
+
+    assert payload["schema_version"] == "datamuru.enterprise_purchase_request.v1"
+    assert payload["status"] == "ready"
+    assert payload["commercial"]["organization"] == "Acme Data"
+    assert payload["commercial"]["purchase_reference"] == "PO-12345"
+    assert "hosted_control_plane" in payload["commercial"]["requested_entitlements"]
+    assert "identity_management" in payload["commercial"]["requested_entitlements"]
+    assert payload["fulfillment"]["tenant_id"] == "acme-prod"
+    assert payload["fulfillment"]["offline"] is True
+    assert payload["fulfillment"]["provisions_tenant"] is False
+    assert payload["fulfillment"]["calls_license_server"] is False
+    assert payload["license"]["license_key_env"] == "DATAMURU_LICENSE_KEY"
+    assert payload["license"]["license_key_present"] is True
+    assert payload["license"]["secret_values_included"] is False
+    assert "secret-value" not in json.dumps(payload)
+
+
+def test_activation_purchase_request_cli_writes_ready_request(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_path = sample_project / ".datamuru" / "activation" / "purchase-request.json"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "purchase-request",
+            "--config",
+            str(config_path),
+            "--out",
+            str(output_path),
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    cli_payload = json.loads(result.output)
+    request = json.loads(output_path.read_text(encoding="utf-8"))
+    assert cli_payload["ready"] is True
+    assert request["status"] == "ready"
+    assert request["commercial"]["support_plan"] == "enterprise"
+    assert request["license"]["license_key_env"] == "DATAMURU_LICENSE_KEY"
+    assert "secret-value" not in result.output
+    assert "secret-value" not in json.dumps(request)
+
+
+def test_activation_purchase_request_writer_is_available_from_python_api(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_path = sample_project / ".datamuru" / "activation" / "api-purchase-request.json"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    request = DataMuru(config_path).enterprise_activation_purchase_request()
+    resolved = DataMuru(config_path).write_enterprise_activation_purchase_request(output_path)
+
+    payload = json.loads(resolved.read_text(encoding="utf-8"))
+    assert request.status == "ready"
+    assert payload["status"] == "ready"
+    assert payload["fulfillment"]["control_plane_url"] == "https://control.datamuru.example"
+    assert "secret-value" not in json.dumps(payload)
+
+
+def test_activation_purchase_request_blocks_without_allow_blocked(sample_project):
+    output_path = sample_project / ".datamuru" / "activation" / "blocked-purchase-request.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "--no-banner",
+            "enterprise",
+            "activation",
+            "purchase-request",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Purchase request not written" in result.output
+    assert not output_path.exists()
+
+
+def test_activation_purchase_request_can_write_blocked_diagnostic_request(sample_project):
+    output_path = sample_project / ".datamuru" / "activation" / "blocked-purchase-request.json"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "purchase-request",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_path),
+            "--allow-blocked",
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    request = json.loads(output_path.read_text(encoding="utf-8"))
+    assert request["status"] == "blocked"
+    assert request["report"]["ready"] is False
+    assert request["report"]["checks"]
+    assert request["license"]["secret_values_included"] is False
 
 
 def test_activation_export_blocks_without_allow_blocked(sample_project):

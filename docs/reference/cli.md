@@ -234,6 +234,22 @@ command fails without writing a file when activation is blocked. Use
 `--allow-blocked` only when support asks for a diagnostic bundle that includes
 failed checks.
 
+## `enterprise activation purchase-request`
+
+```text
+datamuru enterprise activation purchase-request
+  [--config TEXT]
+  --out TEXT
+  [--allow-blocked]
+  [--output text|json]
+```
+
+Writes a redacted offline purchase and license activation request for the
+Enterprise onboarding or support workflow. The artifact includes commercial
+metadata, requested entitlements, tenant fulfillment fields, and license
+environment-variable status. It does not provision a tenant, call a license
+server, or include the license key value.
+
 ## `enterprise activation evidence`
 
 ```text

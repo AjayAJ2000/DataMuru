@@ -12,6 +12,8 @@ This runbook covers:
 - Enterprise activation readiness checks for hosted control plane onboarding;
 - text and JSON output from `datamuru enterprise activation check`;
 - redacted handoff bundle export from `datamuru enterprise activation export`;
+- redacted purchase and license activation request export from
+  `datamuru enterprise activation purchase-request`;
 - redacted audit evidence export from `datamuru enterprise activation evidence`;
 - hosted control plane reference architecture export from `datamuru enterprise control-plane architecture`;
 - redacted hosted handoff contracts from `datamuru enterprise control-plane contract`;
@@ -279,7 +281,68 @@ Expected result:
 - failed checks are present;
 - no secret value is present.
 
-## 8. Activation audit evidence export
+## 8. Purchase and license activation request
+
+Run the purchase-request command with a ready activation config:
+
+```powershell
+$env:DATAMURU_LICENSE_KEY="test-license-value"
+
+python -m datamuru.cli.main --no-banner enterprise activation purchase-request `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\purchase-request.json `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- `.datamuru/activation/purchase-request.json` exists;
+- JSON command output includes `ready: true`;
+- request `schema_version` is `datamuru.enterprise_purchase_request.v1`;
+- request `status` is `ready`;
+- request includes `commercial.purchase_reference` and `commercial.support_plan`;
+- request includes requested entitlements such as `hosted_control_plane`;
+- request `fulfillment.offline` is `true`;
+- request `fulfillment.provisions_tenant` is `false`;
+- request `fulfillment.calls_license_server` is `false`;
+- request `license.secret_values_included` is `false`;
+- the literal license value is absent from stdout and the file.
+
+Blocked request check:
+
+```powershell
+Remove-Item Env:DATAMURU_LICENSE_KEY -ErrorAction SilentlyContinue
+
+python -m datamuru.cli.main --no-banner enterprise activation purchase-request `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked-purchase-request.json
+```
+
+Expected result:
+
+- command exits nonzero;
+- `blocked-purchase-request.json` is not written;
+- output explains which activation checks failed.
+
+Use this diagnostic path only when support requests a blocked purchase request:
+
+```powershell
+python -m datamuru.cli.main --no-banner enterprise activation purchase-request `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked-purchase-request.json `
+  --allow-blocked `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- request `status` is `blocked`;
+- failed activation checks are present;
+- license metadata still says no secret values are included.
+
+## 9. Activation audit evidence export
 
 Run the evidence export command with a ready activation config:
 
@@ -341,9 +404,10 @@ Expected result:
 - audit metadata still says no provider mutation, no state mutation, and no
   secret values included.
 
-## 9. Python API activation report
+## 10. Python API activation report
 
-Run this from the repository root or an environment where DataMuru is installed:
+Run this from a sandbox DataMuru project root or an environment where DataMuru
+is installed:
 
 ```powershell
 python -c "import os, json; from datamuru.api import DataMuru; os.environ['DATAMURU_LICENSE_KEY']='test-license-value'; report=DataMuru('datamuru.yml').enterprise_activation_report(); print(json.dumps(report.to_dict(), indent=2))"
@@ -361,7 +425,19 @@ Bug evidence to capture:
 - command output;
 - whether the API behavior differs from CLI behavior.
 
-## 10. Hosted control plane reference architecture
+Also verify the purchase request API:
+
+```powershell
+python -c "import os, json; from datamuru.api import DataMuru; os.environ['DATAMURU_LICENSE_KEY']='test-license-value'; request=DataMuru('datamuru.yml').enterprise_activation_purchase_request(); print(json.dumps(request.to_dict(), indent=2))"
+```
+
+Expected result:
+
+- `schema_version` is `datamuru.enterprise_purchase_request.v1`;
+- `status` is `ready`;
+- the literal license value is absent from output.
+
+## 11. Hosted control plane reference architecture
 
 Run the architecture export command:
 
@@ -412,7 +488,7 @@ Bug evidence to capture:
 - whether any generated architecture field conflicts with the current hosted
   control plane product direction.
 
-## 11. Hosted control plane handoff contract
+## 12. Hosted control plane handoff contract
 
 Run the contract command with a ready Enterprise activation config:
 
@@ -476,7 +552,7 @@ Bug evidence to capture:
 - confirmation that no tenant provisioning, license-server call, or cloud
   state access occurred.
 
-## 12. State backend readiness inspection
+## 13. State backend readiness inspection
 
 Run the local backend inspection from a sandbox project:
 
@@ -555,7 +631,7 @@ Bug evidence to capture:
 - redacted `state` block;
 - whether any provider credential prompt or cloud access occurred.
 
-## 13. Documentation and schema coverage
+## 14. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -580,7 +656,7 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 14. Local quality gate
+## 15. Local quality gate
 
 Run this before reporting the milestone as tested:
 

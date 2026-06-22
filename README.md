@@ -17,7 +17,7 @@ It provisions and governs provider-backed data estates from declarative configur
 This public repository is the canonical home of the DataMuru Open Source Edition,
 the shared configuration contract, the `datamuru` PyPI package, and the public documentation.
 
-This repository contains the `v0.3 alpha` implementation with the following scope:
+This repository contains the `v0.4 alpha` implementation with the following scope:
 
 - Foundation layer: config loading, validation, local state, planning, apply, and destroy.
 - Azure-first Databricks provider abstraction with multi-cloud-ready interfaces.
@@ -28,7 +28,7 @@ This repository contains the `v0.3 alpha` implementation with the following scop
 
 ## Current stage
 
-DataMuru is currently in the `v0.3 alpha` stage.
+DataMuru is currently in the `v0.4 alpha` stage.
 
 The package and CLI execute supported live Databricks operations when `execution_mode: live-apply` is configured. Alpha support currently covers catalogs, schemas, Unity Catalog ACLs, import discovery/config generation, and capability-aware account SCIM identity operations.
 
@@ -55,7 +55,9 @@ Enterprise extends the public core; it does not maintain a competing fork of the
 ## Quick start
 
 ```bash
-pip install datamuru
+pip install "datamuru==0.4.0a0"
+datamuru init --name quickstart --output-dir datamuru-quickstart
+cd datamuru-quickstart
 datamuru validate --config datamuru.yml
 datamuru doctor --config datamuru.yml
 datamuru plan --config datamuru.yml
@@ -108,6 +110,7 @@ For package-oriented team usage, also read:
 
 - `datamuru/`: shared installable Python package
 - `docs/`: versioned product documentation published through GitHub Pages
+- `examples/`: shareable sample DataMuru projects and generated-project fixtures
 - `schemas/`: public configuration contracts
 - `tests/`: unit, provider-contract, and end-to-end tests
 - `.github/workflows/`: CI, documentation deployment, link validation, and
