@@ -1,6 +1,6 @@
 # Production readiness
 
-DataMuru `0.1.0a0` is not generally production-ready. Use this checklist to
+DataMuru `0.4.0a0` is not generally production-ready. Use this checklist to
 decide whether a bounded pilot is acceptable.
 
 ## Required before a pilot

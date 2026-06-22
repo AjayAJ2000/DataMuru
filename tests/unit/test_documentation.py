@@ -10,6 +10,8 @@ MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 MARKDOWN_LINK_WITH_TEXT = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 VAGUE_LINK_TEXT = {"click here", "here", "this", "this link", "read more"}
+CANONICAL_ALPHA_VERSION = "0.4.0a0"
+STALE_ALPHA_VERSION = re.compile(r"\b0\.[123]\.0a0\b")
 
 
 def _nav_paths(value):
@@ -96,3 +98,16 @@ def test_public_documentation_has_no_local_windows_paths():
             invalid.append(str(page.relative_to(REPOSITORY_ROOT)))
 
     assert invalid == []
+
+
+def test_public_documentation_has_no_stale_alpha_versions():
+    stale: list[str] = []
+    for page in [REPOSITORY_ROOT / "README.md", *DOCS_ROOT.rglob("*.md")]:
+        text = page.read_text(encoding="utf-8")
+        for match in STALE_ALPHA_VERSION.finditer(text):
+            stale.append(
+                f"{page.relative_to(REPOSITORY_ROOT)}: {match.group(0)} "
+                f"should be {CANONICAL_ALPHA_VERSION}"
+            )
+
+    assert stale == []

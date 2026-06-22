@@ -3,7 +3,12 @@
 <div class="dm-docs-hero">
   <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="196" height="196">
   <div>
-    <p>Provider-agnostic data infrastructure, governed by design.</p>
+    <p class="dm-eyebrow">Current documented release: 0.4.0a0 alpha</p>
+    <p class="dm-hero-lede">Python-first data infrastructure and governance, planned before it changes anything.</p>
+    <div class="dm-hero-actions">
+      <a class="dm-button dm-button-primary" href="getting-started/quickstart/">Start locally</a>
+      <a class="dm-button" href="reference/capabilities/">Check capabilities</a>
+    </div>
   </div>
 </div>
 
@@ -17,8 +22,34 @@ Databricks is the first live provider adapter in the current alpha. The product
 direction is broader: a shared control layer for data platform resources,
 governance, brownfield adoption, and eventually multi-cloud execution.
 
+<div class="dm-status-grid">
+  <section>
+    <h2>Safe to evaluate today</h2>
+    <ul>
+      <li>initialize projects;</li>
+      <li>validate configuration;</li>
+      <li>plan changes before mutation;</li>
+      <li>apply local state changes;</li>
+      <li>connect to Databricks in read-only mode;</li>
+      <li>manage selected catalogs, schemas, and grants;</li>
+      <li>discover and import supported existing resources for review.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Not a full replacement yet</h2>
+    <ul>
+      <li>general Terraform replacement;</li>
+      <li>every Databricks object type;</li>
+      <li>production cloud state backends;</li>
+      <li>broad multi-workspace orchestration;</li>
+      <li>live enforcement for every governance policy;</li>
+      <li>transactional rollback guarantees.</li>
+    </ul>
+  </section>
+</div>
+
 ```powershell
-pip install datamuru
+pip install "datamuru==0.4.0a0"
 datamuru validate --config datamuru.yml
 datamuru doctor --config datamuru.yml
 datamuru plan --config datamuru.yml

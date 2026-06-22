@@ -1,24 +1,41 @@
 # Current capabilities and limits
 
-This page describes DataMuru OSS `0.4.0a0`.
+This page describes DataMuru OSS `0.4.0a0`. Treat it as the canonical status
+reference for current product capability claims.
 
-## Implemented
+Status terms used across the docs:
 
-- project initialization;
-- configuration validation and provider diagnostics;
-- local state backend;
-- local and remote state backend readiness inspection;
-- hosted control plane handoff contract generation;
-- hosted control plane reference architecture export;
-- redacted activation audit evidence export;
-- deterministic plan, target, apply, destroy, and saved-plan workflows;
-- PAT-based live workspace connectivity;
-- live catalog and schema observation, creation, and deletion;
-- catalog creation with managed locations or Databricks default storage;
-- live catalog and schema grants compiled from RBAC;
-- workspace catalog, schema, and group discovery;
-- generated starter workspace YAML;
-- Python API and JSON output for selected commands.
+| Status | Meaning |
+| --- | --- |
+| Supported | Implemented and covered by tests for the stated scope. |
+| Partial | Implemented for a bounded subset of providers, resources, or modes. |
+| Experimental | Available for evaluation, but APIs, outputs, or behavior may change. |
+| Enterprise | Requires DataMuru Enterprise features or commercial activation. |
+| Roadmap | Planned or designed, but not implemented in the OSS alpha. |
+| Not supported | Not available in the current release. |
+
+## Capability matrix
+
+| Capability | Status | Current scope |
+| --- | --- | --- |
+| Project initialization | Supported | Generates a local project scaffold and safe default execution mode. |
+| Configuration validation | Supported | Root, provider, workspace, environment, and governance configuration. |
+| Provider diagnostics | Supported | CLI doctor checks with structured output for configured providers. |
+| Local state backend | Supported | JSON state files with no remote locking. |
+| Remote state readiness inspection | Experimental | Configuration and planning boundary checks only. |
+| Hosted control plane handoff | Experimental | Contract and architecture export, not hosted tenant provisioning. |
+| Deterministic plan/apply/destroy | Partial | Local state and supported Databricks resources. |
+| Saved plans and targets | Supported | Reviewable plan artifacts and targeted execution. |
+| Databricks connectivity | Supported | PAT-based workspace connectivity. |
+| Databricks catalogs and schemas | Partial | Observe, create, update planned metadata, and delete supported objects. |
+| Databricks Unity Catalog grants | Partial | Catalog and schema grants compiled from RBAC. |
+| Workspace discovery/import | Partial | Supported catalog, schema, and group discovery with reviewable YAML. |
+| Governance taxonomy and masking | Experimental | Validated and compiled as local intent, no live policy enforcement. |
+| Python API | Supported | Selected command engine surfaces and structured results. |
+| Enterprise identity lifecycle | Enterprise | Requires Enterprise configuration and Databricks account SCIM support. |
+| Production cloud state backends | Roadmap | Names reserved; implementation not complete. |
+| Broad multi-workspace orchestration | Roadmap | Not available in the OSS alpha. |
+| Transactional rollback | Not supported | Manual recovery and provider cleanup remain required. |
 
 ## Local-only modeling
 
