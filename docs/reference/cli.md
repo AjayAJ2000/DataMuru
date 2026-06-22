@@ -199,6 +199,8 @@ runtime. Local state is ready for read-write workflows. Remote backend values
 (`s3`, `azure_blob`, and `gcs`) are recognized as configuration contracts, but
 the OSS alpha reports them as blocked instead of attempting cloud reads or
 writes. Use JSON output in CI to fail early before plan or apply workflows.
+When a remote state contract is configured, plan, apply, destroy, and adoption
+commands fail before provider work with `DMR-STATE-REMOTE`.
 
 ## `edition show`
 

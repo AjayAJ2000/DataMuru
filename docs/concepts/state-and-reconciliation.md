@@ -40,6 +40,12 @@ OSS alpha does not read from or write to those services. The command exits
 nonzero for remote backends and returns a structured JSON report so CI and
 hosted-control-plane handoffs can fail before mutating anything.
 
+Plan, apply, destroy, and adoption workflows also stop before provider work when
+a recognized remote state contract is configured. The runtime raises
+`DMR-STATE-REMOTE` with the same backend mode and readiness context reported by
+`state inspect`. Use local state for OSS execution or route the project through
+a hosted control plane or Enterprise state extension.
+
 ## Protect state
 
 - Do not hand-edit fingerprints.

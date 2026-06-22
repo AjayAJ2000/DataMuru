@@ -1,11 +1,13 @@
 import json
 
+import pytest
 from click.testing import CliRunner
 
 from datamuru.api import DataMuru
 from datamuru.cli.main import cli
 from datamuru.core.config import load_project
 from datamuru.core.state import inspect_state_backend
+from datamuru.errors import StateBackendError
 
 
 def _set_state_backend(sample_project, backend: str, path: str) -> None:
@@ -84,3 +86,17 @@ def test_state_inspect_cli_outputs_remote_json_and_fails(sample_project):
     assert payload["remote"] is True
     assert payload["runtime_supported"] is False
     assert payload["checks"][0]["code"] == "state.azure_blob.not_implemented"
+
+
+def test_plan_fails_fast_for_remote_state_backend_contract(sample_project):
+    _set_state_backend(sample_project, "s3", "s3://datamuru-state/sample-project/dev.json")
+
+    with pytest.raises(StateBackendError) as exc_info:
+        DataMuru(sample_project / "datamuru.yml").plan()
+
+    assert exc_info.value.code == "DMR-STATE-REMOTE"
+    assert exc_info.value.context["backend"] == "s3"
+    assert exc_info.value.context["remote"] is True
+    assert exc_info.value.context["runtime_supported"] is False
+    assert exc_info.value.context["mode"] == "contract-only"
+    assert "hosted control plane" in exc_info.value.suggestion

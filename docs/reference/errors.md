@@ -12,6 +12,7 @@ exit code.
 | `DMR-APPLY-1001` | Apply Dependency Skipped | child resource skipped because its parent failed earlier in the apply |
 | `DMR-IMPORT-1001` | Import Adoption Blocked | missing live resources or fingerprint conflicts prevent state adoption |
 | `DMR-STATE-1001` | State Backend Error | unsupported backend or inaccessible state |
+| `DMR-STATE-REMOTE` | Remote State Boundary | `s3`, `azure_blob`, or `gcs` is configured for OSS plan/apply/adoption before a hosted state extension is available |
 | `DMR-CORE-1001` | Unsupported Operation | capability is not implemented for the selected mode |
 
 ## Read an error

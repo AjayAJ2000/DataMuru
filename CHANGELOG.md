@@ -16,6 +16,7 @@ and this project aims to follow Semantic Versioning.
 - Added the `enterprise.activation` root configuration contract and docs for redacted Enterprise onboarding payloads.
 - Added `datamuru enterprise control-plane contract` for redacted hosted control plane handoff contracts.
 - Added `datamuru state inspect` for local and remote state backend readiness checks.
+- Added an explicit `DMR-STATE-REMOTE` planning boundary for recognized remote state contracts in the OSS runtime.
 - Added a milestone 0.5 test runbook for feature-by-feature activation readiness validation.
 
 ### Fixed
