@@ -211,3 +211,42 @@ def activation_evidence(config_path: str, output_path: str, allow_blocked: bool,
     console.print(f"[{style}]Activation evidence written:[/{style}] [code]{resolved}[/code]")
     if not report.ready:
         console.print("[warning]Evidence includes blocked checks for support triage.[/warning]")
+
+
+@activation_group.command("package")
+@click.option("--config", "config_path", default="datamuru.yml", show_default=True)
+@click.option("--out", "output_dir", required=True, type=click.Path(file_okay=False, path_type=str))
+@click.option(
+    "--allow-blocked",
+    is_flag=True,
+    help="Write a blocked package with failed checks for support triage.",
+)
+@click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
+@with_cli_errors
+def activation_package(config_path: str, output_dir: str, allow_blocked: bool, output_format: str) -> None:
+    dm = DataMuru(config_path=config_path)
+    package = dm.enterprise_activation_handoff_package(output_dir)
+    if not package.ready and not allow_blocked:
+        if output_format == "json":
+            console.print_json(json.dumps(package.to_dict(), indent=2))
+        else:
+            console.print("[error]Activation handoff package not written because activation is blocked.[/error]")
+            console.print("[accent]Use --allow-blocked only when support asked for a blocked package.[/accent]")
+        raise SystemExit(1)
+
+    written = dm.write_enterprise_activation_handoff_package(output_dir)
+    payload = {
+        "path": str(output_dir),
+        "ready": written.ready,
+        "status": written.status,
+        "artifacts": [artifact.to_dict() for artifact in written.artifacts],
+    }
+    if output_format == "json":
+        console.print_json(json.dumps(payload, indent=2))
+        return
+
+    style = "success" if written.ready else "warning"
+    console.print(f"[{style}]Activation handoff package written:[/{style}] [code]{output_dir}[/code]")
+    console.print(f"Artifacts: [code]{len(written.artifacts) + 1}[/code]")
+    if not written.ready:
+        console.print("[warning]Package includes blocked checks for support triage.[/warning]")

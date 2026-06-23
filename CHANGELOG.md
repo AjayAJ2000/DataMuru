@@ -12,6 +12,7 @@ and this project aims to follow Semantic Versioning.
 - Added `datamuru enterprise activation export` for redacted activation handoff bundle generation.
 - Added `datamuru enterprise activation purchase-request` for redacted offline purchase and license activation handoff packages.
 - Added `datamuru enterprise activation evidence` for redacted audit evidence export.
+- Added `datamuru enterprise activation package` for a single redacted onboarding directory with activation, purchase, evidence, control-plane, architecture, and manifest artifacts.
 - Added `datamuru enterprise control-plane architecture` for hosted control plane reference architecture export.
 - Added the `enterprise.activation` root configuration contract and docs for redacted Enterprise onboarding payloads.
 - Added `datamuru enterprise control-plane contract` for redacted hosted control plane handoff contracts.

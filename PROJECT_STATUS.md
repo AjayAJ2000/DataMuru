@@ -1,6 +1,6 @@
 # DataMuru Project Status
 
-Last updated: 2026-06-22
+Last updated: 2026-06-23
 
 Project board: [DataMuru Product Roadmap](https://github.com/users/AjayAJ2000/projects/1)
 
@@ -90,6 +90,8 @@ functional boundaries, such as security testing or governance documentation.
 - Python package and CLI foundation.
 - Clean source repository root with generated starter projects kept under
   `examples/` rather than tracked as top-level project state.
+- Enterprise activation handoff package export for Cline, onboarding, and
+  support review workflows.
 - Databricks catalog and schema live apply.
 - Scoped import controls and grant guardrails.
 - PyPI alpha release pipeline.

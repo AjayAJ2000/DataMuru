@@ -114,6 +114,32 @@ offline, does not mutate provider resources, does not mutate state, and omits
 secret values. If activation is blocked, the command does not write an evidence
 file unless `--allow-blocked` is supplied for support triage.
 
+## Export a full handoff package
+
+For Cline, onboarding, or support workflows that need every redacted activation
+artifact in one directory, write a package:
+
+```powershell
+datamuru enterprise activation package `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\handoff-package `
+  --output json
+```
+
+The package writes:
+
+- `enterprise-activation.json`;
+- `purchase-request.json`;
+- `activation-evidence.json`;
+- `control-plane-contract.json`;
+- `control-plane-architecture.json`;
+- `manifest.json`.
+
+The manifest lists artifact schema versions, ready or blocked status, and
+redaction guarantees. It does not include license key values or provider token
+values. If activation is blocked, the command does not write the package unless
+`--allow-blocked` is supplied for support triage.
+
 ## Build a control plane contract
 
 After activation readiness passes, build a hosted control plane contract:

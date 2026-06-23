@@ -62,6 +62,7 @@ Create these items first:
 | Enterprise purchase and license activation flow | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.0a0 |
 | Enterprise activation readiness preflight | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | Enterprise activation handoff bundle export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
+| Enterprise activation handoff package export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | State backend readiness inspection | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | Hosted control plane handoff contract | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | Activation audit evidence export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |

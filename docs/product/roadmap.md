@@ -54,6 +54,7 @@ Focus:
 - Versioned hosted control plane reference architecture export
 - Redacted hosted control plane handoff contract generation
 - Enterprise purchase and license activation flow
+- Single-directory Enterprise activation handoff package export
 - Remote-state planning boundary for multi-user hosted workflows
 - State backend readiness inspection for local and remote backend contracts
 - Audit evidence and activation handoff documentation

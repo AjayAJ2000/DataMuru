@@ -61,6 +61,12 @@ class DataMuru:
     def write_enterprise_activation_evidence(self, output_path: str | Path):
         return self.engine.write_enterprise_activation_evidence(output_path)
 
+    def enterprise_activation_handoff_package(self, output_dir: str | Path):
+        return self.engine.enterprise_activation_handoff_package(output_dir)
+
+    def write_enterprise_activation_handoff_package(self, output_dir: str | Path):
+        return self.engine.write_enterprise_activation_handoff_package(output_dir)
+
     def write_enterprise_control_plane_contract(self, output_path: str | Path):
         return self.engine.write_enterprise_control_plane_contract(output_path)
 

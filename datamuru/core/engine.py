@@ -167,6 +167,18 @@ class DataMuruEngine:
         report = self.enterprise_activation_evidence_report()
         return write_activation_evidence_report(report, output_path)
 
+    def enterprise_activation_handoff_package(self, output_dir: str | Path):
+        project, _, _, _ = self._load()
+        from datamuru.enterprise import build_activation_handoff_package
+
+        return build_activation_handoff_package(project, output_dir, environ=os.environ)
+
+    def write_enterprise_activation_handoff_package(self, output_dir: str | Path):
+        project, _, _, _ = self._load()
+        from datamuru.enterprise import write_activation_handoff_package
+
+        return write_activation_handoff_package(project, output_dir, environ=os.environ)
+
     def write_enterprise_control_plane_contract(self, output_path: str | Path):
         from datamuru.enterprise import write_control_plane_contract
 

@@ -8,6 +8,7 @@ from datamuru.core.config import load_project
 from datamuru.enterprise import (
     build_activation_bundle,
     build_activation_evidence_report,
+    build_activation_handoff_package,
     build_activation_purchase_request,
     build_activation_report,
 )
@@ -451,3 +452,130 @@ def test_activation_evidence_can_write_blocked_diagnostic_report(sample_project)
     assert evidence["status"] == "blocked"
     assert evidence["activation"]["checks"]
     assert evidence["audit"]["secret_values_included"] is False
+
+
+def test_activation_handoff_package_manifest_lists_redacted_artifacts(sample_project):
+    config_path = _enable_enterprise_activation(sample_project)
+    project = load_project(config_path)
+
+    package = build_activation_handoff_package(
+        project,
+        sample_project / ".datamuru" / "activation-package",
+        environ={"DATAMURU_LICENSE_KEY": "secret-value"},
+    )
+    payload = package.to_dict()
+
+    assert payload["schema_version"] == "datamuru.enterprise_activation_handoff_package.v1"
+    assert payload["status"] == "ready"
+    assert payload["ready"] is True
+    assert payload["redaction"]["secret_values_included"] is False
+    assert {artifact["name"] for artifact in payload["artifacts"]} == {
+        "activation_bundle",
+        "purchase_request",
+        "activation_evidence",
+        "control_plane_contract",
+        "control_plane_architecture",
+    }
+    assert "secret-value" not in json.dumps(payload)
+
+
+def test_activation_package_cli_writes_ready_package(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_dir = sample_project / ".datamuru" / "activation-package"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "package",
+            "--config",
+            str(config_path),
+            "--out",
+            str(output_dir),
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert (output_dir / "manifest.json").exists()
+    assert (output_dir / "enterprise-activation.json").exists()
+    assert (output_dir / "purchase-request.json").exists()
+    assert (output_dir / "activation-evidence.json").exists()
+    assert (output_dir / "control-plane-contract.json").exists()
+    assert (output_dir / "control-plane-architecture.json").exists()
+    cli_payload = json.loads(result.output)
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert cli_payload["ready"] is True
+    assert manifest["status"] == "ready"
+    assert manifest["redaction"]["license_key_value_included"] is False
+    assert "secret-value" not in result.output
+    assert "secret-value" not in json.dumps(manifest)
+
+
+def test_activation_package_writer_is_available_from_python_api(sample_project, monkeypatch):
+    config_path = _enable_enterprise_activation(sample_project)
+    output_dir = sample_project / ".datamuru" / "api-activation-package"
+    monkeypatch.setenv("DATAMURU_LICENSE_KEY", "secret-value")
+
+    package = DataMuru(config_path).enterprise_activation_handoff_package(output_dir)
+    written = DataMuru(config_path).write_enterprise_activation_handoff_package(output_dir)
+
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert package.ready is True
+    assert written.ready is True
+    assert manifest["ready"] is True
+    assert len(manifest["artifacts"]) == 5
+    assert "secret-value" not in json.dumps(manifest)
+
+
+def test_activation_package_blocks_without_allow_blocked(sample_project):
+    output_dir = sample_project / ".datamuru" / "blocked-activation-package"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "--no-banner",
+            "enterprise",
+            "activation",
+            "package",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Activation handoff package not written" in result.output
+    assert not output_dir.exists()
+
+
+def test_activation_package_can_write_blocked_diagnostic_package(sample_project):
+    output_dir = sample_project / ".datamuru" / "blocked-activation-package"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "package",
+            "--config",
+            str(sample_project / "datamuru.yml"),
+            "--out",
+            str(output_dir),
+            "--allow-blocked",
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    evidence = json.loads((output_dir / "activation-evidence.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "blocked"
+    assert manifest["ready"] is False
+    assert evidence["activation"]["checks"]
+    assert manifest["redaction"]["secret_values_included"] is False

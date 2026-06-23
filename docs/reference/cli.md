@@ -267,6 +267,30 @@ report wraps activation readiness, the hosted control plane contract, audit
 metadata, and follow-up actions. The command fails without writing a file when
 activation is blocked unless `--allow-blocked` is set for support triage.
 
+## `enterprise activation package`
+
+```text
+datamuru enterprise activation package
+  [--config TEXT]
+  --out TEXT
+  [--allow-blocked]
+  [--output text|json]
+```
+
+Writes a single redacted activation handoff directory for onboarding. The
+package includes:
+
+- `enterprise-activation.json`;
+- `purchase-request.json`;
+- `activation-evidence.json`;
+- `control-plane-contract.json`;
+- `control-plane-architecture.json`;
+- `manifest.json`.
+
+The command fails without writing files when activation is blocked unless
+`--allow-blocked` is set for support triage. The manifest records artifact
+schema versions, ready or blocked status, and redaction guarantees.
+
 ## `enterprise control-plane contract`
 
 ```text

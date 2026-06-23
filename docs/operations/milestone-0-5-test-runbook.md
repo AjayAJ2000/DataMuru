@@ -15,6 +15,7 @@ This runbook covers:
 - redacted purchase and license activation request export from
   `datamuru enterprise activation purchase-request`;
 - redacted audit evidence export from `datamuru enterprise activation evidence`;
+- single-directory redacted handoff packages from `datamuru enterprise activation package`;
 - hosted control plane reference architecture export from `datamuru enterprise control-plane architecture`;
 - redacted hosted handoff contracts from `datamuru enterprise control-plane contract`;
 - local and remote backend readiness output from `datamuru state inspect`;
@@ -552,7 +553,101 @@ Bug evidence to capture:
 - confirmation that no tenant provisioning, license-server call, or cloud
   state access occurred.
 
-## 13. State backend readiness inspection
+## 13. Activation handoff package
+
+Run the package command with a ready Enterprise activation config:
+
+```powershell
+$env:DATAMURU_LICENSE_KEY="test-license-value"
+
+python -m datamuru.cli.main --no-banner enterprise activation package `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\handoff-package `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- stdout is valid JSON;
+- `.datamuru/activation/handoff-package/manifest.json` exists;
+- package `ready` is `true`;
+- manifest `schema_version` is `datamuru.enterprise_activation_handoff_package.v1`;
+- package contains `enterprise-activation.json`;
+- package contains `purchase-request.json`;
+- package contains `activation-evidence.json`;
+- package contains `control-plane-contract.json`;
+- package contains `control-plane-architecture.json`;
+- manifest lists five artifacts and their schema versions;
+- manifest `redaction.secret_values_included` is `false`;
+- the literal `test-license-value` is absent from stdout and every generated
+  file.
+
+Optional parser check:
+
+```powershell
+$json = python -m datamuru.cli.main --no-banner enterprise activation package `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\handoff-package `
+  --output json | ConvertFrom-Json
+
+$manifest = Get-Content .\.datamuru\activation\handoff-package\manifest.json | ConvertFrom-Json
+
+$json.ready
+$manifest.schema_version
+$manifest.artifacts.Count
+$manifest.redaction.secret_values_included
+```
+
+Expected parser values:
+
+- `True`;
+- `datamuru.enterprise_activation_handoff_package.v1`;
+- `5`;
+- `False`.
+
+Blocked package check:
+
+```powershell
+Remove-Item Env:DATAMURU_LICENSE_KEY -ErrorAction SilentlyContinue
+
+python -m datamuru.cli.main --no-banner enterprise activation package `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked-package
+```
+
+Expected result:
+
+- command exits nonzero;
+- `blocked-package` is not written;
+- output explains the package was not written because activation is blocked.
+
+Use this diagnostic path only when support requests a blocked package:
+
+```powershell
+python -m datamuru.cli.main --no-banner enterprise activation package `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\blocked-package `
+  --allow-blocked `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- manifest `status` is `blocked`;
+- failed activation checks are present in the package artifacts;
+- redaction metadata still says no secret values are included.
+
+Bug evidence to capture:
+
+- command output;
+- generated manifest;
+- list of files in the package directory;
+- confirmation that no tenant provisioning, license-server call, provider
+  mutation, state mutation, or secret disclosure occurred.
+
+## 14. State backend readiness inspection
 
 Run the local backend inspection from a sandbox project:
 
@@ -631,7 +726,7 @@ Bug evidence to capture:
 - redacted `state` block;
 - whether any provider credential prompt or cloud access occurred.
 
-## 14. Documentation and schema coverage
+## 15. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -656,7 +751,7 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 15. Local quality gate
+## 16. Local quality gate
 
 Run this before reporting the milestone as tested:
 
