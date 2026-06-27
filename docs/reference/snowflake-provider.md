@@ -14,6 +14,16 @@ Install the Snowflake extra before live discovery:
 pip install "datamuru[snowflake]"
 ```
 
+Generate a provider-correct starter project:
+
+```powershell
+datamuru init `
+  --name snowflake-smoke `
+  --provider snowflake `
+  --execution-mode live-readonly `
+  --output-dir .\snowflake-smoke
+```
+
 ## Provider config
 
 ```yaml
@@ -38,6 +48,30 @@ Supported auth fields:
 | `warehouse` | Default Snowflake warehouse for discovery sessions. |
 | `role` | Role for discovery sessions. |
 
+Use the organization-account form for `SNOWFLAKE_ACCOUNT`, such as
+`acme-analytics`. Do not include `https://` or `.snowflakecomputing.com`.
+`warehouse` and `role` are non-secret provider values and currently remain in
+the provider file rather than separate environment variables.
+
+Browser SSO is the default and does not require a password in project files. A
+disposable trial user can use password authentication for non-interactive test
+automation:
+
+```yaml
+provider:
+  cloud: snowflake
+  account_env: SNOWFLAKE_ACCOUNT
+  user_env: SNOWFLAKE_USER
+  auth_type: snowflake
+  password_env: SNOWFLAKE_PASSWORD
+  warehouse: COMPUTE_WH
+  role: DATAMURU_READONLY
+  execution_mode: live-readonly
+```
+
+Keep `SNOWFLAKE_PASSWORD` in the current shell or an approved secret store.
+Never write it into YAML or `.env.example`.
+
 ## Current support
 
 | Capability | Status |
@@ -58,7 +92,7 @@ Snowflake trials are useful for validating naming, environment layout, and
 provider-neutral planning.
 
 1. Create a Snowflake trial account.
-2. Capture the account identifier, warehouse, role, and user.
+2. Capture the organization-account identifier, warehouse, read-only role, and user.
 3. Configure the Snowflake provider in `live-readonly` mode.
 4. Run `validate`, `doctor`, and bounded import discovery.
 5. Declare target databases and schemas using DataMuru catalog/schema resources.
@@ -73,6 +107,9 @@ datamuru doctor --config datamuru.yml
 datamuru import discover --config datamuru.yml --catalog FINANCE
 datamuru plan --config datamuru.yml
 ```
+
+`doctor` checks configuration shape and connector availability. The bounded
+`import discover` command is the first live SQL connection test.
 
 Snowflake discovery maps Snowflake databases to DataMuru catalogs and Snowflake
 schemas to DataMuru schemas. It filters common Snowflake system databases and

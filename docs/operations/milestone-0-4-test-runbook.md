@@ -169,9 +169,11 @@ Review:
 Configure Snowflake credentials without secrets in YAML:
 
 ```powershell
-$env:SNOWFLAKE_ACCOUNT="<account>"
+$env:SNOWFLAKE_ACCOUNT="<organization-account>"
 $env:SNOWFLAKE_USER="<user>"
 ```
+
+Do not use the full Snowflake browser hostname for `SNOWFLAKE_ACCOUNT`.
 
 Provider example:
 
@@ -197,6 +199,7 @@ python -m datamuru.cli.main --no-banner import discover --config datamuru.yml --
 Expected result:
 
 - doctor reports Snowflake account and connector readiness;
+- bounded discovery completes the first live Snowflake SQL connection;
 - discovery returns Snowflake databases as DataMuru catalogs;
 - schemas are listed under each selected database;
 - apply and destroy remain blocked for live Snowflake mutation.

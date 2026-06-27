@@ -23,6 +23,7 @@ and this project aims to follow Semantic Versioning.
 
 ### Fixed
 - Fixed resumable import job checkpoints so the `updated_at` timestamp written by `--job-checkpoint` can be read back by `--resume-from`.
+- Fixed `datamuru init --provider snowflake` so generated provider, environment, workspace, README, and default cloud values use Snowflake settings instead of Databricks defaults.
 
 ## [0.4.0a0] - 2026-06-20
 

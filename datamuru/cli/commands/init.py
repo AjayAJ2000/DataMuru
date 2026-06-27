@@ -13,7 +13,7 @@ from ..output import console
 @click.command("init")
 @click.option("--name", default="datamuru-project", show_default=True)
 @click.option("--provider", default="databricks", show_default=True)
-@click.option("--cloud", default="azure", show_default=True)
+@click.option("--cloud", default=None, help="Provider cloud; defaults to snowflake for Snowflake and azure otherwise.")
 @click.option("--edition", default="open-source", show_default=True)
 @click.option(
     "--execution-mode",
@@ -23,13 +23,21 @@ from ..output import console
 )
 @click.option("--output-dir", default=".", show_default=True)
 @with_cli_errors
-def init_command(name: str, provider: str, cloud: str, edition: str, execution_mode: str, output_dir: str) -> None:
+def init_command(
+    name: str,
+    provider: str,
+    cloud: str | None,
+    edition: str,
+    execution_mode: str,
+    output_dir: str,
+) -> None:
     scaffolder = ProjectScaffolder()
+    resolved_cloud = cloud or ("snowflake" if provider == "snowflake" else "azure")
     created = scaffolder.scaffold(
         output_dir,
         name=name,
         provider=provider,
-        cloud=cloud,
+        cloud=resolved_cloud,
         edition=edition,
         execution_mode=execution_mode,
     )

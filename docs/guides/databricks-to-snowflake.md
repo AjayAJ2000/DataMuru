@@ -28,14 +28,20 @@ Use a Snowflake trial account for local validation. Create or identify:
 - account identifier;
 - user or SSO login;
 - warehouse for tests;
-- role with permission to create databases and schemas in the test account.
+- role with access to inspect the test database and schemas.
 
 Configure environment variables:
 
 ```powershell
-$env:SNOWFLAKE_ACCOUNT="your-account"
+$env:SNOWFLAKE_ACCOUNT="your-organization-your-account"
 $env:SNOWFLAKE_USER="your-user"
 ```
+
+The account value is the Snowflake organization-account identifier, not the
+full browser hostname. Browser SSO is the default. For a disposable trial user
+used by automation, set `SNOWFLAKE_PASSWORD` in the shell and change the
+provider to `auth_type: snowflake` with
+`password_env: SNOWFLAKE_PASSWORD`.
 
 Use a provider file:
 

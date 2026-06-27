@@ -25,12 +25,14 @@ datamuru init
   [--output-dir TEXT]
 ```
 
-Defaults: name `datamuru-project`, provider `databricks`, cloud `azure`,
-edition `open-source`, execution mode `state-only`, and current output
-directory.
+Defaults: name `datamuru-project`, provider `databricks`, edition
+`open-source`, execution mode `state-only`, and current output directory. Cloud
+defaults to `snowflake` for the Snowflake provider and `azure` otherwise.
 
 The generated Databricks provider config uses `host_env`, `token_env`, and
 `sql_warehouse_id_env` so workspace-specific values stay outside YAML.
+The generated Snowflake provider config uses `account_env`, `user_env`, browser
+SSO, and `live-readonly` compatible defaults.
 
 ## `validate`
 

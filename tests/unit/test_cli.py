@@ -106,6 +106,77 @@ def test_init_command_accepts_live_readonly_execution_mode(tmp_path):
     assert "execution_mode: live-readonly" in provider_config
 
 
+def test_init_command_creates_provider_specific_snowflake_project(tmp_path):
+    runner = CliRunner()
+    output_dir = tmp_path / "snowflake-project"
+
+    result = runner.invoke(
+        cli,
+        [
+            "init",
+            "--name",
+            "snowflake-project",
+            "--provider",
+            "snowflake",
+            "--cloud",
+            "snowflake",
+            "--execution-mode",
+            "live-readonly",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    provider_config = (output_dir / "providers" / "snowflake.yml").read_text(encoding="utf-8")
+    env_example = (output_dir / ".env.example").read_text(encoding="utf-8")
+    readme = (output_dir / "README.md").read_text(encoding="utf-8")
+    workspace_config = (output_dir / "workspaces" / "alpha-dev.yml").read_text(encoding="utf-8")
+
+    assert "account_env: SNOWFLAKE_ACCOUNT" in provider_config
+    assert "user_env: SNOWFLAKE_USER" in provider_config
+    assert "auth_type: externalbrowser" in provider_config
+    assert "warehouse: COMPUTE_WH" in provider_config
+    assert "role: SYSADMIN" in provider_config
+    assert "execution_mode: live-readonly" in provider_config
+    assert "DATABRICKS_" not in provider_config
+    assert "SNOWFLAKE_ACCOUNT=" in env_example
+    assert "SNOWFLAKE_USER=" in env_example
+    assert "DATABRICKS_" not in env_example
+    assert "## Snowflake testing" in readme
+    assert "SNOWFLAKE_ACCOUNT" in readme
+    assert "Databricks testing" not in readme
+    assert readme.startswith("# snowflake-project\n\nThis project was generated")
+    assert "\n        This project" not in readme
+    assert "region: us-west-2" in workspace_config
+    assert "region: eastus2" not in workspace_config
+    issues = validate_project(output_dir / "datamuru.yml")
+    assert not [issue for issue in issues if issue.level == "error"]
+
+
+def test_init_command_infers_snowflake_cloud_from_provider(tmp_path):
+    runner = CliRunner()
+    output_dir = tmp_path / "snowflake-default-cloud"
+
+    result = runner.invoke(
+        cli,
+        [
+            "init",
+            "--provider",
+            "snowflake",
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    root_config = (output_dir / "datamuru.yml").read_text(encoding="utf-8")
+    provider_config = (output_dir / "providers" / "snowflake.yml").read_text(encoding="utf-8")
+    assert "name: snowflake" in root_config
+    assert "cloud: snowflake" in root_config
+    assert "cloud: snowflake" in provider_config
+
+
 def test_plan_command_reports_unmatched_target(sample_project):
     runner = CliRunner()
     target = "user:not-declared@company.com"
