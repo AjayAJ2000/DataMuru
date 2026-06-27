@@ -16,6 +16,7 @@ from datamuru.enterprise.activation import (
 from datamuru.enterprise.architecture import build_hosted_control_plane_architecture
 from datamuru.enterprise.control_plane import build_control_plane_contract
 from datamuru.enterprise.evidence import build_activation_evidence_report
+from datamuru.enterprise.registry import build_tenant_entitlement_record
 from datamuru.modeling import DataMuruModel
 
 if TYPE_CHECKING:
@@ -75,9 +76,10 @@ def build_activation_handoff_package(
     evidence = build_activation_evidence_report(project, environ=environ, generated_at=timestamp)
     contract = build_control_plane_contract(project, environ=environ, generated_at=timestamp)
     architecture = build_hosted_control_plane_architecture(project, generated_at=timestamp)
+    tenant_record = build_tenant_entitlement_record(project, environ=environ, generated_at=timestamp)
     purchase_request = build_activation_purchase_request(activation, generated_at=timestamp)
     bundle = build_activation_bundle(activation, generated_at=timestamp)
-    package_ready = activation.ready and evidence.ready and contract.ready
+    package_ready = activation.ready and evidence.ready and contract.ready and tenant_record.ready
     status = "ready" if package_ready else "blocked"
     resolved = Path(output_dir).resolve()
 
@@ -112,6 +114,12 @@ def build_activation_handoff_package(
                 architecture.status,
                 ready=True,
             ),
+            _artifact(
+                "tenant_entitlement_record",
+                "tenant-entitlement-record.json",
+                tenant_record.to_dict(),
+                tenant_record.status,
+            ),
         ],
         redaction={
             "secret_values_included": False,
@@ -140,6 +148,7 @@ def write_activation_handoff_package(
     evidence = build_activation_evidence_report(project, environ=environ, generated_at=timestamp)
     contract = build_control_plane_contract(project, environ=environ, generated_at=timestamp)
     architecture = build_hosted_control_plane_architecture(project, generated_at=timestamp)
+    tenant_record = build_tenant_entitlement_record(project, environ=environ, generated_at=timestamp)
     purchase_request = build_activation_purchase_request(activation, generated_at=timestamp)
     bundle = build_activation_bundle(activation, generated_at=timestamp)
     package = build_activation_handoff_package(
@@ -156,6 +165,7 @@ def write_activation_handoff_package(
     _write_json(resolved / "activation-evidence.json", evidence.to_dict())
     _write_json(resolved / "control-plane-contract.json", contract.to_dict())
     _write_json(resolved / "control-plane-architecture.json", architecture.to_dict())
+    _write_json(resolved / "tenant-entitlement-record.json", tenant_record.to_dict())
     _write_json(resolved / "manifest.json", package.to_dict())
     return package
 

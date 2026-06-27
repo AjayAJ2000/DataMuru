@@ -125,6 +125,18 @@ class DataMuruEngine:
 
         return build_control_plane_contract(project, environ=os.environ)
 
+    def enterprise_tenant_entitlement_record(self):
+        project, _, _, _ = self._load()
+        from datamuru.enterprise import build_tenant_entitlement_record
+
+        return build_tenant_entitlement_record(project, environ=os.environ)
+
+    def write_enterprise_tenant_entitlement_record(self, output_path: str | Path):
+        from datamuru.enterprise import write_tenant_entitlement_record
+
+        record = self.enterprise_tenant_entitlement_record()
+        return write_tenant_entitlement_record(record, output_path)
+
     def enterprise_control_plane_architecture(self):
         project, _, _, _ = self._load()
         from datamuru.enterprise import build_hosted_control_plane_architecture

@@ -35,6 +35,11 @@ from .handoff import (
     build_activation_handoff_package,
     write_activation_handoff_package,
 )
+from .registry import (
+    TenantEntitlementRecord,
+    build_tenant_entitlement_record,
+    write_tenant_entitlement_record,
+)
 
 __all__ = [
     "ActivationBundle",
@@ -51,6 +56,7 @@ __all__ = [
     "ControlPlaneContract",
     "EvidenceArtifact",
     "HostedControlPlaneArchitecture",
+    "TenantEntitlementRecord",
     "build_activation_bundle",
     "build_activation_evidence_report",
     "build_activation_handoff_package",
@@ -58,10 +64,12 @@ __all__ = [
     "build_activation_report",
     "build_control_plane_contract",
     "build_hosted_control_plane_architecture",
+    "build_tenant_entitlement_record",
     "write_activation_bundle",
     "write_activation_evidence_report",
     "write_activation_handoff_package",
     "write_activation_purchase_request",
     "write_control_plane_contract",
     "write_hosted_control_plane_architecture",
+    "write_tenant_entitlement_record",
 ]

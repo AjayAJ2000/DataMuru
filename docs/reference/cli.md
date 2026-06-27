@@ -285,11 +285,32 @@ package includes:
 - `activation-evidence.json`;
 - `control-plane-contract.json`;
 - `control-plane-architecture.json`;
+- `tenant-entitlement-record.json`;
 - `manifest.json`.
 
 The command fails without writing files when activation is blocked unless
 `--allow-blocked` is set for support triage. The manifest records artifact
 schema versions, ready or blocked status, and redaction guarantees.
+
+## `enterprise control-plane tenant-record`
+
+```text
+datamuru enterprise control-plane tenant-record
+  [--config TEXT]
+  --out TEXT
+  [--allow-blocked]
+  [--output text|json]
+```
+
+Writes an immutable, redacted tenant entitlement record with schema
+`datamuru.tenant_entitlement_record.v1`. The `record_id` is stable for the same
+project, tenant, and entitlement binding even when the generation time or
+license-key availability changes. The command is offline and does not provision
+a tenant, call a license server, mutate provider resources, or mutate state.
+
+The command fails without writing a file when activation is blocked. Use
+`--allow-blocked` only for a support-requested diagnostic record containing
+failed checks. JSON output is the complete redacted record.
 
 ## `enterprise control-plane contract`
 

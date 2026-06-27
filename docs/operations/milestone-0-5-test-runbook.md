@@ -16,6 +16,7 @@ This runbook covers:
   `datamuru enterprise activation purchase-request`;
 - redacted audit evidence export from `datamuru enterprise activation evidence`;
 - single-directory redacted handoff packages from `datamuru enterprise activation package`;
+- deterministic redacted tenant entitlement records from `datamuru enterprise control-plane tenant-record`;
 - hosted control plane reference architecture export from `datamuru enterprise control-plane architecture`;
 - redacted hosted handoff contracts from `datamuru enterprise control-plane contract`;
 - local and remote backend readiness output from `datamuru state inspect`;
@@ -578,7 +579,8 @@ Expected result:
 - package contains `activation-evidence.json`;
 - package contains `control-plane-contract.json`;
 - package contains `control-plane-architecture.json`;
-- manifest lists five artifacts and their schema versions;
+- package contains `tenant-entitlement-record.json`;
+- manifest lists six artifacts and their schema versions;
 - manifest `redaction.secret_values_included` is `false`;
 - the literal `test-license-value` is absent from stdout and every generated
   file.
@@ -603,7 +605,7 @@ Expected parser values:
 
 - `True`;
 - `datamuru.enterprise_activation_handoff_package.v1`;
-- `5`;
+- `6`;
 - `False`.
 
 Blocked package check:
@@ -647,7 +649,139 @@ Bug evidence to capture:
 - confirmation that no tenant provisioning, license-server call, provider
   mutation, state mutation, or secret disclosure occurred.
 
-## 14. State backend readiness inspection
+## 14. Tenant entitlement record
+
+Set a clearly fake license value and export a ready record:
+
+```powershell
+$env:DATAMURU_LICENSE_KEY="test-license-value"
+
+python -m datamuru.cli.main --no-banner enterprise control-plane tenant-record `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\tenant-entitlement-record.json `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- stdout is valid JSON and matches the written file;
+- `schema_version` is `datamuru.tenant_entitlement_record.v1`;
+- `status` is `ready` and `ready` is `true`;
+- `record_id` starts with `ter_` and has 24 characters;
+- tenant and entitlement fields match the activation config;
+- `security.offline` is `true`;
+- every mutation and provisioning security flag is `false`;
+- `security.secret_values_included` is `false`.
+
+Inspect the contract:
+
+```powershell
+$record = Get-Content .\.datamuru\activation\tenant-entitlement-record.json | ConvertFrom-Json
+
+$record.schema_version
+$record.record_id
+$record.tenant.tenant_id
+$record.entitlement.enabled_features
+$record.entitlement.license_key_env
+$record.entitlement.license_key_present
+$record.security
+```
+
+Expected parser values include the configured tenant, enabled Enterprise
+features, `DATAMURU_LICENSE_KEY`, `True` for license availability, and the
+offline non-mutation security contract.
+
+Verify deterministic identity across generation times:
+
+```powershell
+Start-Sleep -Seconds 1
+
+python -m datamuru.cli.main --no-banner enterprise control-plane tenant-record `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\tenant-entitlement-record-rerun.json `
+  --output json | Out-Null
+
+$first = Get-Content .\.datamuru\activation\tenant-entitlement-record.json | ConvertFrom-Json
+$second = Get-Content .\.datamuru\activation\tenant-entitlement-record-rerun.json | ConvertFrom-Json
+
+$first.generated_at -ne $second.generated_at
+$first.record_id -eq $second.record_id
+```
+
+Expected results are `True` and `True`.
+
+Verify that license availability does not change tenant identity:
+
+```powershell
+Remove-Item Env:DATAMURU_LICENSE_KEY -ErrorAction SilentlyContinue
+
+python -m datamuru.cli.main --no-banner enterprise control-plane tenant-record `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\tenant-entitlement-record-no-license.json `
+  --allow-blocked `
+  --output json | Out-Null
+
+$withoutLicense = Get-Content .\.datamuru\activation\tenant-entitlement-record-no-license.json | ConvertFrom-Json
+$withoutLicense.status
+$withoutLicense.entitlement.license_key_present
+$first.record_id -eq $withoutLicense.record_id
+```
+
+Expected values are `blocked`, `False`, and `True`. The diagnostic record has
+an activation check for the missing environment variable.
+
+Verify redaction and local-path exclusion:
+
+```powershell
+$serialized = Get-Content .\.datamuru\activation\tenant-entitlement-record.json -Raw
+$serialized.Contains("test-license-value")
+$serialized.Contains((Resolve-Path .).Path)
+```
+
+Both values must be `False`.
+
+Verify the default blocked guard writes nothing:
+
+```powershell
+$blockedPath = ".\.datamuru\activation\tenant-entitlement-record-blocked.json"
+Remove-Item $blockedPath -ErrorAction SilentlyContinue
+
+python -m datamuru.cli.main --no-banner enterprise control-plane tenant-record `
+  --config datamuru.yml `
+  --out $blockedPath
+
+Test-Path $blockedPath
+```
+
+Expected result:
+
+- command exits nonzero;
+- output says the record was not written because activation is blocked;
+- `Test-Path` returns `False`.
+
+Confirm activation package integration:
+
+```powershell
+$manifest = Get-Content .\.datamuru\activation\handoff-package\manifest.json | ConvertFrom-Json
+$manifest.artifacts.Count
+$manifest.artifacts.name -contains "tenant_entitlement_record"
+Test-Path .\.datamuru\activation\handoff-package\tenant-entitlement-record.json
+```
+
+Expected values are `6`, `True`, and `True`.
+
+Bug evidence to capture:
+
+- ready and blocked command output;
+- both redacted record files;
+- the two record IDs and generation timestamps;
+- the package manifest artifact entry;
+- results of both redaction checks;
+- confirmation that no network call, tenant provisioning, provider mutation, or
+  state mutation occurred.
+
+## 15. State backend readiness inspection
 
 Run the local backend inspection from a sandbox project:
 
@@ -726,7 +860,7 @@ Bug evidence to capture:
 - redacted `state` block;
 - whether any provider credential prompt or cloud access occurred.
 
-## 15. Documentation and schema coverage
+## 16. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -748,10 +882,12 @@ Review these pages manually:
 
 - `docs/guides/enterprise-activation.md`;
 - `docs/reference/cli.md`;
+- `docs/reference/python-api.md`;
+- `docs/reference/capabilities.md`;
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 16. Local quality gate
+## 17. Local quality gate
 
 Run this before reporting the milestone as tested:
 

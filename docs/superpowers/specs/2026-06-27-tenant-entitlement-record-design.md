@@ -1,6 +1,6 @@
 # Tenant entitlement record design
 
-Status: approved approach, pending written-spec review
+Status: implemented, pending milestone release
 
 ## Context
 

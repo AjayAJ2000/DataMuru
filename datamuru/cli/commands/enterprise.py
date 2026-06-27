@@ -5,7 +5,11 @@ import json
 import click
 
 from datamuru.api import DataMuru
-from datamuru.enterprise import write_activation_bundle, write_activation_purchase_request
+from datamuru.enterprise import (
+    write_activation_bundle,
+    write_activation_purchase_request,
+    write_tenant_entitlement_record,
+)
 
 from ..guard import with_cli_errors
 from ..output import console
@@ -83,6 +87,45 @@ def control_plane_contract(config_path: str, output_path: str | None, output_for
 
     if not contract.ready:
         raise SystemExit(1)
+
+
+@control_plane_group.command("tenant-record")
+@click.option("--config", "config_path", default="datamuru.yml", show_default=True)
+@click.option("--out", "output_path", required=True, type=click.Path(dir_okay=False, path_type=str))
+@click.option(
+    "--allow-blocked",
+    is_flag=True,
+    help="Write a blocked tenant entitlement record with failed checks for support triage.",
+)
+@click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
+@with_cli_errors
+def tenant_entitlement_record(
+    config_path: str,
+    output_path: str,
+    allow_blocked: bool,
+    output_format: str,
+) -> None:
+    record = DataMuru(config_path=config_path).enterprise_tenant_entitlement_record()
+    if not record.ready and not allow_blocked:
+        if output_format == "json":
+            console.print_json(json.dumps(record.to_dict(), indent=2))
+        else:
+            console.print("[error]Tenant entitlement record not written because activation is blocked.[/error]")
+            for check in record.checks:
+                console.print(f"[error][{check.level}][/error] {check.path}: {check.message}")
+            console.print("[accent]Use --allow-blocked only when support asked for a diagnostic record.[/accent]")
+        raise SystemExit(1)
+
+    resolved = write_tenant_entitlement_record(record, output_path)
+    if output_format == "json":
+        console.print_json(json.dumps(record.to_dict(), indent=2))
+        return
+
+    style = "success" if record.ready else "warning"
+    console.print(f"[{style}]Tenant entitlement record written:[/{style}] [code]{resolved}[/code]")
+    console.print(f"Record ID: [code]{record.record_id}[/code]")
+    if not record.ready:
+        console.print("[warning]Record includes blocked checks for support triage.[/warning]")
 
 
 @activation_group.command("check")

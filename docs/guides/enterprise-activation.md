@@ -133,6 +133,7 @@ The package writes:
 - `activation-evidence.json`;
 - `control-plane-contract.json`;
 - `control-plane-architecture.json`;
+- `tenant-entitlement-record.json`;
 - `manifest.json`.
 
 The manifest lists artifact schema versions, ready or blocked status, and
@@ -165,6 +166,28 @@ The contract can be ready even when it contains warnings. For example, local
 state is valid for OSS workflows but still warns that hosted multi-user
 execution needs a shared state extension. Remote state contracts are recognized
 as hosted boundaries; OSS still does not read or write remote state directly.
+
+## Export a tenant entitlement record
+
+Create an immutable record for reviewed onboarding or support handoff:
+
+```powershell
+datamuru enterprise control-plane tenant-record `
+  --config datamuru.yml `
+  --out .\.datamuru\activation\tenant-entitlement-record.json `
+  --output json
+```
+
+The record binds the project, organization, tenant, deployment region, control
+plane URL, support plan, purchase reference, and enabled Enterprise features.
+Its `record_id` is deterministic for those stable redacted fields. Generation
+time, activation checks, readiness status, and license-key availability do not
+change the identifier.
+
+The artifact records the license environment-variable name and whether the
+variable is available, but never includes the secret value or an absolute local
+project path. This OSS command does not create a hosted registry entry or
+provision a tenant. Those capabilities remain roadmap work.
 
 ## What the check validates
 

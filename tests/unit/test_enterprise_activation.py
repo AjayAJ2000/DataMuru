@@ -475,6 +475,7 @@ def test_activation_handoff_package_manifest_lists_redacted_artifacts(sample_pro
         "activation_evidence",
         "control_plane_contract",
         "control_plane_architecture",
+        "tenant_entitlement_record",
     }
     assert "secret-value" not in json.dumps(payload)
 
@@ -506,6 +507,7 @@ def test_activation_package_cli_writes_ready_package(sample_project, monkeypatch
     assert (output_dir / "activation-evidence.json").exists()
     assert (output_dir / "control-plane-contract.json").exists()
     assert (output_dir / "control-plane-architecture.json").exists()
+    assert (output_dir / "tenant-entitlement-record.json").exists()
     cli_payload = json.loads(result.output)
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert cli_payload["ready"] is True
@@ -527,7 +529,7 @@ def test_activation_package_writer_is_available_from_python_api(sample_project, 
     assert package.ready is True
     assert written.ready is True
     assert manifest["ready"] is True
-    assert len(manifest["artifacts"]) == 5
+    assert len(manifest["artifacts"]) == 6
     assert "secret-value" not in json.dumps(manifest)
 
 
@@ -575,7 +577,10 @@ def test_activation_package_can_write_blocked_diagnostic_package(sample_project)
     assert result.exit_code == 0
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
     evidence = json.loads((output_dir / "activation-evidence.json").read_text(encoding="utf-8"))
+    tenant_record = json.loads((output_dir / "tenant-entitlement-record.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "blocked"
     assert manifest["ready"] is False
     assert evidence["activation"]["checks"]
+    assert tenant_record["status"] == "blocked"
+    assert tenant_record["checks"]
     assert manifest["redaction"]["secret_values_included"] is False
