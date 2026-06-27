@@ -1,15 +1,17 @@
 # DataMuru Documentation
 
 <div class="dm-docs-hero">
-  <div class="dm-hero-mark">
-    <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="144" height="144">
-  </div>
-  <div>
-    <p class="dm-eyebrow">Current documented release: 0.4.0a0 alpha</p>
-    <p class="dm-hero-lede">Python-first data infrastructure and governance, planned before it changes anything.</p>
-    <div class="dm-hero-actions">
-      <a class="dm-button dm-button-primary" href="getting-started/quickstart/">Start locally</a>
-      <a class="dm-button" href="reference/capabilities/">Check capabilities</a>
+  <div class="dm-hero-copy">
+    <div class="dm-hero-mark">
+      <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="144" height="144">
+    </div>
+    <div>
+      <p class="dm-eyebrow">Current documented release: 0.4.0a0 alpha</p>
+      <p class="dm-hero-lede">Python-first data infrastructure and governance, planned before it changes anything.</p>
+      <div class="dm-hero-actions">
+        <a class="dm-button dm-button-primary" href="getting-started/quickstart/">Start locally</a>
+        <a class="dm-button" href="reference/capabilities/">Check capabilities</a>
+      </div>
     </div>
   </div>
   <div class="dm-hero-terminal" aria-label="Safe DataMuru command sequence">
