@@ -111,3 +111,15 @@ def test_public_documentation_has_no_stale_alpha_versions():
             )
 
     assert stale == []
+
+
+def test_snowflake_to_databricks_mapping_is_documented():
+    cli_reference = (DOCS_ROOT / "reference" / "cli.md").read_text(encoding="utf-8")
+    runbook = (DOCS_ROOT / "operations" / "milestone-0-5-test-runbook.md").read_text(
+        encoding="utf-8"
+    )
+    mkdocs = (REPOSITORY_ROOT / "mkdocs.yml").read_text(encoding="utf-8")
+
+    assert "map-databricks" in cli_reference
+    assert "Snowflake to Databricks" in runbook
+    assert "guides/snowflake-to-databricks.md" in mkdocs

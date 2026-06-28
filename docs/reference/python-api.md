@@ -47,10 +47,27 @@ DataMuru(config_path: str | Path, environment: str | None = None)
 | `import_discover(include_system=False, catalogs=None, progress=None)` | `ImportDiscoveryReport` |
 | `import_generate(...)` | generated workspace configuration result |
 | `import_adopt(targets=[...], commit=False)` | `ImportAdoptionResult` |
+| `import_databricks_to_snowflake_mapping(...)` | review-only Databricks-to-Snowflake mapping result |
+| `import_snowflake_to_databricks_mapping(...)` | review-only Snowflake-to-Databricks mapping result |
 
 `progress` is an optional callback that receives dictionaries such as
 `{"message": "...", "total": 12, "completed": 5}`. CLI text output uses this to
 render import progress while keeping JSON output machine-readable.
+
+Reverse mapping example:
+
+```python
+mapping = dm.import_snowflake_to_databricks_mapping(
+    databases=["FINANCE"],
+    target_workspace="databricks-dev",
+    target_cloud="azure",
+    catalog_prefix="sf",
+    identifier_case="lower",
+)
+```
+
+The method returns `SnowflakeToDatabricksMappingResult`. Its YAML is a draft;
+the call does not move data or invoke provider mutation methods.
 
 ## Example: guarded apply
 

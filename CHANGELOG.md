@@ -8,6 +8,7 @@ and this project aims to follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Added `datamuru import map-databricks` for review-only Snowflake-to-Databricks database and schema mapping drafts with collision checks.
 - Added explicit Snowflake Programmatic Access Token authentication for redacted live-readonly database and schema discovery.
 - Added `datamuru enterprise activation check` for local hosted-control-plane and license activation readiness preflight.
 - Added `datamuru enterprise activation export` for redacted activation handoff bundle generation.

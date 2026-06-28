@@ -29,6 +29,7 @@ Status terms used across the docs:
 | Saved plans and targets | Supported | Reviewable plan artifacts and targeted execution. |
 | Databricks connectivity | Supported | PAT-based workspace connectivity. |
 | Snowflake connectivity | Partial | Browser SSO, password environment variables, and PAT authentication for live-readonly database/schema discovery. PAT users remain subject to Snowflake network policy. |
+| Cross-provider mapping drafts | Partial | Review-only catalog/schema mappings in both Databricks-to-Snowflake and Snowflake-to-Databricks directions; no data movement, grants, or mutation. |
 | Databricks catalogs and schemas | Partial | Observe, create, update planned metadata, and delete supported objects. |
 | Databricks Unity Catalog grants | Partial | Catalog and schema grants compiled from RBAC. |
 | Workspace discovery/import | Partial | Supported catalog, schema, and group discovery with reviewable YAML. |

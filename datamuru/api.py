@@ -178,3 +178,22 @@ class DataMuru:
             schema_case=schema_case,
             progress=progress,
         )
+
+    def import_snowflake_to_databricks_mapping(
+        self,
+        *,
+        databases: list[str] | None = None,
+        target_workspace: str = "databricks-target",
+        target_cloud: str = "azure",
+        catalog_prefix: str | None = None,
+        identifier_case: str = "lower",
+        progress: ImportProgressCallback | None = None,
+    ):
+        return self.engine.import_snowflake_to_databricks_mapping(
+            databases=databases,
+            target_workspace=target_workspace,
+            target_cloud=target_cloud,
+            catalog_prefix=catalog_prefix,
+            identifier_case=identifier_case,
+            progress=progress,
+        )

@@ -175,6 +175,27 @@ Snowflake databases and Databricks schemas to Snowflake schemas.
 Use `--catalog` to keep the draft bounded. Use `--database-prefix` and
 `--schema-case` to match enterprise Snowflake naming standards.
 
+## `import map-databricks`
+
+```text
+datamuru import map-databricks
+  [--config TEXT]
+  [--database TEXT]...
+  [--target-workspace TEXT]
+  [--target-cloud azure|aws|gcp]
+  [--catalog-prefix TEXT]
+  [--identifier-case lower|preserve]
+  [--out TEXT]
+  [--output text|json]
+```
+
+Generates a draft Snowflake-to-Databricks mapping from live-readonly Snowflake
+database/schema discovery. Databases map to catalogs and schemas map to
+schemas. Repeat `--database` to bound the source scope.
+
+The command performs no mutation or data movement. Identifier normalization is
+deterministic, and target catalog or schema collisions block generation.
+
 ## `import adopt`
 
 ```text

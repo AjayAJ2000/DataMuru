@@ -124,6 +124,20 @@ class DatabricksToSnowflakeMappingResult(DataMuruModel):
         return self.model_dump(mode="python")
 
 
+class SnowflakeToDatabricksMappingResult(DataMuruModel):
+    provider: str
+    environment: str
+    source_workspace: str
+    target_workspace: str
+    target_cloud: str
+    mapping_file_text: str
+    selected_databases: list[str] = Field(default_factory=list)
+    mapped_catalogs: list[str] = Field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return self.model_dump(mode="python")
+
+
 class ImportAdoptionConflict(DataMuruModel):
     address: str
     reason: str

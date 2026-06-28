@@ -1,6 +1,6 @@
 # Snowflake To Databricks Mapping Draft Design
 
-Status: approved approach, pending implementation
+Status: implemented, pending milestone release
 
 ## Context
 

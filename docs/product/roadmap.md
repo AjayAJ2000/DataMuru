@@ -60,6 +60,7 @@ Focus:
 - State backend readiness inspection for local and remote backend contracts
 - Audit evidence and activation handoff documentation
 - Redacted activation audit evidence export
+- Snowflake-to-Databricks database/schema mapping drafts with collision checks
 
 ### v1.0 target direction
 

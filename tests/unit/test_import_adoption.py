@@ -4,15 +4,18 @@ import json
 from types import SimpleNamespace
 
 import pytest
+import yaml
 from click.testing import CliRunner
 
 from datamuru.api import DataMuru
 from datamuru.cli.main import cli
 from datamuru.core.config import load_project
+from datamuru.core.engine import DataMuruEngine
 from datamuru.core.plan import fingerprint, matches_target
 from datamuru.core.state import resolve_state_backend
 from datamuru.core.state.models import StateResourceRecord, StateSnapshot
-from datamuru.errors import ImportAdoptionError, ProviderError
+from datamuru.core.importer.engine import ImportEngine
+from datamuru.errors import ImportAdoptionError, ProviderError, ValidationError
 from datamuru.core.importer.models import (
     ImportCatalogResource,
     ImportDiscoveryReport,
@@ -23,11 +26,438 @@ from datamuru.core.importer.models import (
     ImportServicePrincipalResource,
     ImportUserResource,
     ImportWorkspaceResource,
+    SnowflakeToDatabricksMappingResult,
 )
 from datamuru.providers.databricks.client import ConnectivityProbeResult
 from datamuru.providers.databricks.provider import DatabricksProvider
 from datamuru.providers.factory import load_provider
+from datamuru.providers.snowflake.provider import SnowflakeProvider
 from datamuru.types import ResourceDescriptor
+
+
+def test_snowflake_to_databricks_mapping_result_serializes():
+    result = SnowflakeToDatabricksMappingResult(
+        provider="snowflake",
+        environment="dev",
+        source_workspace="snowflake-live",
+        target_workspace="databricks-dev",
+        target_cloud="azure",
+        mapping_file_text="migration: {}\n",
+        selected_databases=["FINANCE"],
+        mapped_catalogs=["sf_finance"],
+    )
+
+    assert result.to_dict()["mapped_catalogs"] == ["sf_finance"]
+    assert result.to_dict()["target_cloud"] == "azure"
+
+
+def _configure_snowflake_project(sample_project):
+    root = sample_project / "datamuru.yml"
+    root.write_text(
+        root.read_text(encoding="utf-8")
+        .replace("provider: databricks", "provider: snowflake", 1)
+        .replace("name: databricks", "name: snowflake", 1)
+        .replace("cloud: azure", "cloud: snowflake", 1)
+        .replace("config: ./providers/databricks.yml", "config: ./providers/snowflake.yml", 1),
+        encoding="utf-8",
+    )
+    (sample_project / "providers" / "snowflake.yml").write_text(
+        "\n".join(
+            [
+                "provider:",
+                "  cloud: snowflake",
+                "  account_env: SNOWFLAKE_ACCOUNT",
+                "  user_env: SNOWFLAKE_USER",
+                "  auth_type: externalbrowser",
+                "  execution_mode: live-readonly",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    workspace = sample_project / "workspaces" / "alpha-dev.yml"
+    workspace.write_text(
+        workspace.read_text(encoding="utf-8").replace("cloud: azure", "cloud: snowflake", 1),
+        encoding="utf-8",
+    )
+    return sample_project
+
+
+def test_import_engine_maps_snowflake_database_to_databricks_catalog(sample_project, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[
+                ImportCatalogResource(
+                    name="FINANCE",
+                    schemas=[
+                        ImportSchemaResource(name="RAW"),
+                        ImportSchemaResource(name="CURATED"),
+                    ],
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = ImportEngine(
+        config_path=snowflake_project / "datamuru.yml",
+        environment="dev",
+    ).snowflake_to_databricks_mapping(
+        databases=["FINANCE"],
+        target_workspace="databricks-dev",
+        target_cloud="azure",
+        catalog_prefix="sf",
+        identifier_case="lower",
+    )
+
+    payload = yaml.safe_load(result.mapping_file_text)["migration"]
+    assert payload["source"]["provider"] == "snowflake"
+    assert payload["target"] == {
+        "provider": "databricks",
+        "workspace": "databricks-dev",
+        "cloud": "azure",
+    }
+    assert payload["mappings"]["databases"]["FINANCE"] == {
+        "catalog": "sf_finance",
+        "schemas": {"RAW": "raw", "CURATED": "curated"},
+    }
+    assert payload["review"]["status"] == "draft"
+
+
+def test_snowflake_to_databricks_mapping_blocks_catalog_collision(sample_project, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[
+                ImportCatalogResource(name="FINANCE-RAW"),
+                ImportCatalogResource(name="FINANCE_RAW"),
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportEngine(snowflake_project / "datamuru.yml").snowflake_to_databricks_mapping()
+
+    assert exc_info.value.context["target_identifier"] == "finance_raw"
+    assert exc_info.value.context["source_databases"] == ["FINANCE-RAW", "FINANCE_RAW"]
+
+
+def test_snowflake_to_databricks_mapping_blocks_schema_collision(sample_project, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[
+                ImportCatalogResource(
+                    name="FINANCE",
+                    schemas=[
+                        ImportSchemaResource(name="RAW-ZONE"),
+                        ImportSchemaResource(name="RAW_ZONE"),
+                    ],
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportEngine(snowflake_project / "datamuru.yml").snowflake_to_databricks_mapping()
+
+    assert exc_info.value.context["target_identifier"] == "raw_zone"
+    assert exc_info.value.context["source_database"] == "FINANCE"
+    assert exc_info.value.context["source_schemas"] == ["RAW-ZONE", "RAW_ZONE"]
+
+
+def test_snowflake_to_databricks_mapping_rejects_empty_identifier(sample_project, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[ImportCatalogResource(name="---")],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportEngine(snowflake_project / "datamuru.yml").snowflake_to_databricks_mapping()
+
+    assert exc_info.value.context == {"source_name": "---"}
+
+
+def test_python_api_delegates_snowflake_to_databricks_mapping(sample_project, monkeypatch):
+    expected = SnowflakeToDatabricksMappingResult(
+        provider="snowflake",
+        environment="dev",
+        source_workspace="snowflake-live",
+        target_workspace="databricks-dev",
+        target_cloud="azure",
+        mapping_file_text="migration: {}\n",
+        selected_databases=["FINANCE"],
+        mapped_catalogs=["sf_finance"],
+    )
+    captured = {}
+
+    def fake_mapping(self, **kwargs):
+        captured.update(kwargs)
+        return expected
+
+    monkeypatch.setattr(
+        DataMuruEngine,
+        "import_snowflake_to_databricks_mapping",
+        fake_mapping,
+        raising=False,
+    )
+
+    result = DataMuru(sample_project / "datamuru.yml").import_snowflake_to_databricks_mapping(
+        databases=["FINANCE"],
+        target_workspace="databricks-dev",
+        target_cloud="azure",
+        catalog_prefix="sf",
+        identifier_case="preserve",
+    )
+
+    assert result is expected
+    assert captured == {
+        "databases": ["FINANCE"],
+        "target_workspace": "databricks-dev",
+        "target_cloud": "azure",
+        "catalog_prefix": "sf",
+        "identifier_case": "preserve",
+        "progress": None,
+    }
+
+
+def test_import_map_databricks_generates_mapping_draft(sample_project, tmp_path, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[
+                ImportCatalogResource(
+                    name="FINANCE",
+                    schemas=[ImportSchemaResource(name="RAW")],
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+    output_path = tmp_path / "finance.mapping.yml"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "import",
+            "map-databricks",
+            "--config",
+            str(snowflake_project / "datamuru.yml"),
+            "--database",
+            "FINANCE",
+            "--target-workspace",
+            "databricks-dev",
+            "--target-cloud",
+            "azure",
+            "--catalog-prefix",
+            "sf",
+            "--out",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    mapping_text = output_path.read_text(encoding="utf-8")
+    assert "provider: snowflake" in mapping_text
+    assert "provider: databricks" in mapping_text
+    assert "catalog: sf_finance" in mapping_text
+
+
+def test_import_map_databricks_help_exposes_mapping_options():
+    result = CliRunner().invoke(cli, ["import", "map-databricks", "--help"])
+
+    assert result.exit_code == 0
+    assert "--database" in result.output
+    assert "--target-workspace" in result.output
+    assert "--target-cloud" in result.output
+    assert "--catalog-prefix" in result.output
+    assert "--identifier-case" in result.output
+
+
+def test_import_map_databricks_json_output(sample_project, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[
+                ImportCatalogResource(
+                    name="Finance-Curated",
+                    schemas=[ImportSchemaResource(name="Silver Layer")],
+                )
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "import",
+            "map-databricks",
+            "--config",
+            str(snowflake_project / "datamuru.yml"),
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mapped_catalogs"] == ["finance_curated"]
+    assert "Silver Layer: silver_layer" in payload["mapping_file_text"]
+
+
+@pytest.mark.parametrize(
+    ("option", "value", "context_key"),
+    [
+        ("identifier_case", "upper", "identifier_case"),
+        ("target_cloud", "snowflake", "target_cloud"),
+    ],
+)
+def test_snowflake_to_databricks_mapping_rejects_unsupported_options(
+    sample_project,
+    option,
+    value,
+    context_key,
+):
+    kwargs = {option: value}
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportEngine(sample_project / "datamuru.yml").snowflake_to_databricks_mapping(**kwargs)
+
+    assert exc_info.value.context[context_key] == value
+
+
+def test_snowflake_to_databricks_mapping_requires_snowflake_source(sample_project, monkeypatch):
+    report = ImportDiscoveryReport(
+        provider="databricks",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="databricks-live",
+            cloud="azure",
+            region="unknown",
+        ),
+    )
+    monkeypatch.setattr(
+        DatabricksProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportEngine(sample_project / "datamuru.yml").snowflake_to_databricks_mapping()
+
+    assert exc_info.value.context == {"provider": "databricks"}
+
+
+def test_snowflake_to_databricks_mapping_reports_missing_database(sample_project, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[ImportCatalogResource(name="AVAILABLE")],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportEngine(snowflake_project / "datamuru.yml").snowflake_to_databricks_mapping(
+            databases=["MISSING"]
+        )
+
+    assert exc_info.value.context["missing_databases"] == ["MISSING"]
+
+
+def test_snowflake_to_databricks_mapping_can_preserve_identifier_case(sample_project, monkeypatch):
+    snowflake_project = _configure_snowflake_project(sample_project)
+    report = ImportDiscoveryReport(
+        provider="snowflake",
+        environment="dev",
+        workspace=ImportWorkspaceResource(
+            name="snowflake-live",
+            cloud="snowflake",
+            region="unknown",
+            catalogs=[ImportCatalogResource(name="Finance-Curated")],
+        ),
+    )
+    monkeypatch.setattr(
+        SnowflakeProvider,
+        "discover_importable_resources",
+        lambda self, project, environment, **kwargs: report,
+    )
+
+    result = ImportEngine(snowflake_project / "datamuru.yml").snowflake_to_databricks_mapping(
+        identifier_case="preserve"
+    )
+
+    assert result.mapped_catalogs == ["Finance_Curated"]
 
 
 def _observed_catalog_state(sample_project, target: str) -> StateSnapshot:

@@ -23,6 +23,7 @@ from .models import (
     ImportGenerationResult,
     ImportProgressEvent,
     ImportProgressCallback,
+    SnowflakeToDatabricksMappingResult,
 )
 
 
@@ -318,6 +319,149 @@ class ImportEngine:
             selected_catalogs=selected_catalogs,
             mapped_databases=mapped_databases,
         )
+
+    def snowflake_to_databricks_mapping(
+        self,
+        *,
+        databases: list[str] | None = None,
+        target_workspace: str = "databricks-target",
+        target_cloud: str = "azure",
+        catalog_prefix: str | None = None,
+        identifier_case: str = "lower",
+        progress: ImportProgressCallback | None = None,
+    ) -> SnowflakeToDatabricksMappingResult:
+        if identifier_case not in {"lower", "preserve"}:
+            raise ValidationError(
+                description="Unsupported Databricks identifier naming mode.",
+                context={"identifier_case": identifier_case, "supported_modes": ["lower", "preserve"]},
+                suggestion="Use identifier_case lower or preserve.",
+            )
+        if target_cloud not in {"azure", "aws", "gcp"}:
+            raise ValidationError(
+                description="Unsupported Databricks target cloud.",
+                context={"target_cloud": target_cloud, "supported_clouds": ["azure", "aws", "gcp"]},
+                suggestion="Use target_cloud azure, aws, or gcp.",
+            )
+        report = self.discover(catalogs=databases, progress=progress)
+        if report.provider != "snowflake":
+            raise ValidationError(
+                description="Snowflake-to-Databricks mapping requires a Snowflake source provider.",
+                context={"provider": report.provider},
+                suggestion="Run this command from a DataMuru project configured with the Snowflake provider.",
+            )
+        selected_databases = sorted(databases or [catalog.name for catalog in report.workspace.catalogs])
+        available_databases = {catalog.name: catalog for catalog in report.workspace.catalogs}
+        missing_databases = [name for name in selected_databases if name not in available_databases]
+        if missing_databases:
+            raise ValidationError(
+                description="Requested mapping databases were not found in the Snowflake discovery result.",
+                context={
+                    "requested_databases": selected_databases,
+                    "missing_databases": missing_databases,
+                    "available_databases": sorted(available_databases),
+                },
+            )
+
+        database_mappings: dict[str, dict] = {}
+        mapped_catalogs: list[str] = []
+        catalog_sources: dict[str, list[str]] = {}
+        for database_name in selected_databases:
+            source = available_databases[database_name]
+            target_catalog = self._databricks_identifier(
+                f"{catalog_prefix}_{database_name}" if catalog_prefix else database_name,
+                identifier_case,
+            )
+            source_databases = catalog_sources.setdefault(target_catalog, [])
+            source_databases.append(database_name)
+            if len(source_databases) > 1:
+                raise ValidationError(
+                    description=(
+                        "Snowflake database names collide after Databricks identifier normalization."
+                    ),
+                    context={
+                        "target_identifier": target_catalog,
+                        "source_databases": sorted(source_databases),
+                    },
+                    suggestion=(
+                        "Change catalog_prefix, identifier_case, source names, or mapping scope."
+                    ),
+                )
+            schema_mappings: dict[str, str] = {}
+            schema_sources: dict[str, list[str]] = {}
+            for schema in source.schemas:
+                target_schema = self._databricks_identifier(schema.name, identifier_case)
+                source_schemas = schema_sources.setdefault(target_schema, [])
+                source_schemas.append(schema.name)
+                if len(source_schemas) > 1:
+                    raise ValidationError(
+                        description=(
+                            "Snowflake schema names collide after Databricks identifier normalization."
+                        ),
+                        context={
+                            "target_identifier": target_schema,
+                            "source_database": database_name,
+                            "source_schemas": sorted(source_schemas),
+                        },
+                        suggestion=(
+                            "Change identifier_case, source names, or mapping scope."
+                        ),
+                    )
+                schema_mappings[schema.name] = target_schema
+            mapped_catalogs.append(target_catalog)
+            database_mappings[database_name] = {
+                "catalog": target_catalog,
+                "schemas": schema_mappings,
+            }
+
+        payload = {
+            "migration": {
+                "name": f"{self._slug(report.workspace.name)}-to-{self._slug(target_workspace)}",
+                "source": {
+                    "provider": "snowflake",
+                    "workspace": report.workspace.name,
+                    "environment": report.environment,
+                },
+                "target": {
+                    "provider": "databricks",
+                    "workspace": target_workspace,
+                    "cloud": target_cloud,
+                },
+                "naming": {
+                    "catalog_prefix": catalog_prefix,
+                    "identifier_case": identifier_case,
+                },
+                "mappings": {"databases": database_mappings},
+                "review": {
+                    "status": "draft",
+                    "notes": [
+                        "Review catalog and schema names before implementation.",
+                        "This draft does not move data or apply Databricks changes.",
+                    ],
+                },
+            }
+        }
+        return SnowflakeToDatabricksMappingResult(
+            provider=report.provider,
+            environment=report.environment,
+            source_workspace=report.workspace.name,
+            target_workspace=target_workspace,
+            target_cloud=target_cloud,
+            mapping_file_text=yaml.safe_dump(payload, sort_keys=False),
+            selected_databases=selected_databases,
+            mapped_catalogs=mapped_catalogs,
+        )
+
+    @staticmethod
+    def _databricks_identifier(value: str, identifier_case: str) -> str:
+        normalized = re.sub(r"[^A-Za-z0-9_]+", "_", value)
+        normalized = re.sub(r"_+", "_", normalized).strip("_")
+        if not normalized:
+            raise ValidationError(
+                description="Source name cannot produce a Databricks identifier.",
+                context={"source_name": value},
+                suggestion="Rename the source object or select a different mapping scope.",
+            )
+        return normalized.lower() if identifier_case == "lower" else normalized
 
     @classmethod
     def _suite_paths(

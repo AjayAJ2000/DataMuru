@@ -860,7 +860,63 @@ Bug evidence to capture:
 - redacted `state` block;
 - whether any provider credential prompt or cloud access occurred.
 
-## 16. Documentation and schema coverage
+## 16. Databricks to Snowflake and Snowflake to Databricks mapping drafts
+
+Use separate `live-readonly` DataMuru projects for each source provider. Keep
+all credentials in the current shell or an approved secret store.
+
+From the Databricks source project, generate the existing forward draft:
+
+```powershell
+python -m datamuru.cli.main --no-banner import map-snowflake `
+  --config datamuru.yml `
+  --catalog <catalog_name> `
+  --target-account snowflake-target `
+  --target-workspace snowflake-live-readonly `
+  --out .\.datamuru\mappings\databricks-to-snowflake.yml
+```
+
+Expected result:
+
+- source provider is `databricks`;
+- target provider is `snowflake`;
+- review status is `draft`;
+- the command performs no Snowflake mutation or data movement.
+
+From the Snowflake source project, generate the reverse draft:
+
+```powershell
+python -m datamuru.cli.main --no-banner import map-databricks `
+  --config datamuru.yml `
+  --database <database_name> `
+  --target-workspace databricks-live-readonly `
+  --target-cloud azure `
+  --catalog-prefix sf `
+  --identifier-case lower `
+  --out .\.datamuru\mappings\snowflake-to-databricks.yml
+```
+
+Expected result:
+
+- source provider is `snowflake`;
+- target provider is `databricks`;
+- database maps to a catalog and schemas map to schemas;
+- review status is `draft`;
+- the command performs no Databricks mutation or data movement.
+
+Collision test:
+
+1. Use a fixture or sandbox inventory containing names that normalize to the
+   same target, such as `FINANCE-RAW` and `FINANCE_RAW`.
+2. Run `map-databricks` with `--identifier-case lower`.
+3. Confirm the command returns a validation error and does not write the output
+   file.
+
+For shared test evidence, record only provider direction, success state,
+review status, and aggregate mapping counts. Do not record tokens, hosts,
+usernames, workspace names, database names, catalog names, or mapping YAML.
+
+## 17. Documentation and schema coverage
 
 Confirm the milestone docs are discoverable:
 
@@ -887,7 +943,7 @@ Review these pages manually:
 - `docs/reference/root-config.md`;
 - `docs/operations/milestone-0-5-test-runbook.md`.
 
-## 17. Local quality gate
+## 18. Local quality gate
 
 Run this before reporting the milestone as tested:
 
