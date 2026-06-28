@@ -25,7 +25,10 @@ class SnowflakeProvider(DataMuruProvider):
         self.client = SnowflakeSqlClient(self.auth)
 
     def authenticate(self, credentials: dict) -> bool:
-        return bool(self.auth.resolve_account())
+        account_ready = bool(self.auth.resolve_account())
+        if self.auth.uses_programmatic_access_token():
+            return account_ready and bool(self.auth.resolve_token())
+        return account_ready
 
     def doctor(self, project, environment: str) -> DoctorReport:
         connector_available = self.client.connector_available()
@@ -72,6 +75,22 @@ class SnowflakeProvider(DataMuruProvider):
                 ),
             ),
         ]
+        if self.auth.uses_programmatic_access_token():
+            token_ready = bool(self.auth.resolve_token())
+            checks.append(
+                DoctorCheck(
+                    level="ok" if token_ready else "error",
+                    code="provider.pat",
+                    message=(
+                        "Snowflake Programmatic Access Token is available."
+                        if token_ready
+                        else (
+                            "Snowflake Programmatic Access Token is missing. Set "
+                            f"{self.auth.token_env or 'the configured token environment variable'}."
+                        )
+                    ),
+                )
+            )
         return DoctorReport(provider="snowflake", environment=environment, checks=checks)
 
     def build_desired_resources(self, project) -> list[ResourceDescriptor]:

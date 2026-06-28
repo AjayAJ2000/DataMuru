@@ -1,4 +1,6 @@
-# Authenticate to Databricks
+# Authenticate to data providers
+
+## Databricks
 
 DataMuru supports multiple Databricks authentication shapes. PAT auth is useful
 for local evaluation. Enterprise pilots should prefer Databricks CLI profiles,
@@ -93,3 +95,34 @@ customer environment.
 - Rotate a token immediately if it appears in logs, screenshots, or Git history.
 
 See [Security and credentials](../operations/security.md).
+
+## Snowflake Programmatic Access Token
+
+For non-interactive Snowflake discovery, keep all credential values in the
+environment and reference only their names in configuration:
+
+```yaml
+provider:
+  cloud: snowflake
+  host_env: SNOWFLAKE_HOST
+  user_env: SNOWFLAKE_USERNAME
+  token_env: SNOWFLAKE_TOKEN
+  auth_type: programmatic_access_token
+  warehouse: COMPUTE_WH
+  role: SYSADMIN
+  execution_mode: live-readonly
+```
+
+```powershell
+$env:SNOWFLAKE_HOST="https://your-account.snowflakecomputing.com"
+$env:SNOWFLAKE_USERNAME="your-user"
+$env:SNOWFLAKE_TOKEN="<token-from-secret-store>"
+datamuru doctor --config datamuru.yml
+```
+
+`doctor` reports whether the named PAT variable is available but never emits
+its value. The Snowflake user must satisfy Snowflake's network-policy
+requirement. DataMuru does not generate PATs or manage network policies.
+
+See [Snowflake provider](../reference/snowflake-provider.md) for account
+resolution, revocation, and bounded discovery guidance.

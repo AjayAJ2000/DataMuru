@@ -65,9 +65,24 @@ class SnowflakeSqlClient:
         except Exception as exc:  # pragma: no cover - exercised by integration tests.
             raise ProviderError(
                 description="Snowflake SQL request could not be completed.",
-                context={"statement": statement, "error": str(exc)},
+                context={"statement": statement, "error": self._redact_error_message(str(exc))},
                 suggestion="Verify Snowflake account, user, role, warehouse, authenticator, and network access.",
             ) from exc
+
+    def _redact_error_message(self, message: str) -> str:
+        sensitive_values = {
+            value
+            for value in (
+                self.auth.resolve_host(),
+                self.auth.resolve_user(),
+                self.auth.resolve_token(),
+                self.auth.resolve_account(),
+            )
+            if value
+        }
+        for value in sorted(sensitive_values, key=len, reverse=True):
+            message = message.replace(value, "[REDACTED]")
+        return message
 
     def _connection_kwargs(self) -> dict[str, Any]:
         account = self.auth.resolve_account()
@@ -81,12 +96,30 @@ class SnowflakeSqlClient:
             "account": account,
             "authenticator": self.auth.auth_type,
         }
+        host = self.auth.resolve_host()
+        if host:
+            kwargs["host"] = host
         user = self.auth.resolve_user()
         if user:
             kwargs["user"] = user
-        password = self.auth.resolve_password()
-        if password:
-            kwargs["password"] = password
+        if self.auth.uses_programmatic_access_token():
+            token = self.auth.resolve_token()
+            if not token:
+                raise ProviderError(
+                    description=(
+                        "Snowflake Programmatic Access Token is required for PAT authentication."
+                    ),
+                    context={"token_env": self.auth.token_env},
+                    suggestion=(
+                        "Set the configured token environment variable before live discovery."
+                    ),
+                )
+            kwargs["authenticator"] = "PROGRAMMATIC_ACCESS_TOKEN"
+            kwargs["token"] = token
+        else:
+            password = self.auth.resolve_password()
+            if password:
+                kwargs["password"] = password
         if self.auth.role:
             kwargs["role"] = self.auth.role
         if self.auth.warehouse:

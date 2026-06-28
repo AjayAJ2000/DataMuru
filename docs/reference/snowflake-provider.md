@@ -42,9 +42,11 @@ Supported auth fields:
 | Field | Purpose |
 | --- | --- |
 | `account` / `account_env` | Snowflake account identifier. |
+| `host` / `host_env` | Snowflake hostname or full HTTPS URL. PAT mode normalizes this in memory. |
 | `user` / `user_env` | User name when not resolved by SSO. |
-| `auth_type` | Snowflake connector authenticator, such as `externalbrowser`, `oauth`, `snowflake`, or key-pair-compatible modes. |
+| `auth_type` | Reviewed authentication mode: `externalbrowser`, `snowflake`, or `programmatic_access_token`. |
 | `password_env` | Optional environment variable for password auth when `auth_type: snowflake` is approved for a sandbox. |
+| `token_env` | Environment variable containing a Snowflake PAT when `auth_type: programmatic_access_token`. |
 | `warehouse` | Default Snowflake warehouse for discovery sessions. |
 | `role` | Role for discovery sessions. |
 
@@ -72,6 +74,55 @@ provider:
 Keep `SNOWFLAKE_PASSWORD` in the current shell or an approved secret store.
 Never write it into YAML or `.env.example`.
 
+## Programmatic Access Token authentication
+
+PAT authentication is supported for non-interactive `live-readonly` discovery:
+
+```yaml
+provider:
+  cloud: snowflake
+  host_env: SNOWFLAKE_HOST
+  user_env: SNOWFLAKE_USERNAME
+  token_env: SNOWFLAKE_TOKEN
+  auth_type: programmatic_access_token
+  warehouse: COMPUTE_WH
+  role: SYSADMIN
+  execution_mode: live-readonly
+```
+
+`SNOWFLAKE_HOST` may be either a hostname or full HTTPS URL. DataMuru removes
+the scheme, path, port, query, fragment, and trailing slash in memory. It
+rejects hosts outside `snowflakecomputing.com`.
+
+Account resolution uses literal `account`, then `account_env`, then the first
+DNS label of the normalized host. Set an explicit account when your Snowflake
+deployment requires an account identifier that differs from that label.
+
+Set the values only in your shell or approved secret store:
+
+```powershell
+$env:SNOWFLAKE_HOST="https://your-account.snowflakecomputing.com"
+$env:SNOWFLAKE_USERNAME="your-user"
+$env:SNOWFLAKE_TOKEN="<token-from-secret-store>"
+```
+
+Snowflake requires a PAT user to be subject to a network policy. DataMuru does
+not create or change that policy. Without one, the expected provider response
+is `Network policy is required`. Snowflake also supports a token-specific
+`MINS_TO_BYPASS_NETWORK_POLICY_REQUIREMENT` setting for at most 1440 minutes;
+use that only for an approved temporary trial because it does not bypass an
+existing policy.
+
+Create, rotate, and revoke PATs from an independently authenticated Snowflake
+administrative session. To revoke the test token:
+
+```sql
+ALTER USER IF EXISTS <username> REMOVE PAT terminal_token;
+```
+
+A PAT-authenticated session cannot revoke the PAT it is using. See Snowflake's
+[PAT removal reference](https://docs.snowflake.com/en/sql-reference/sql/alter-user-remove-programmatic-access-token).
+
 ## Current support
 
 | Capability | Status |
@@ -80,6 +131,7 @@ Never write it into YAML or `.env.example`.
 | State-only plan/apply/destroy | Available |
 | Database and schema desired resources | Available |
 | Live database/schema discovery | Available in `live-readonly` |
+| PAT authentication | Available in `live-readonly`; Snowflake network policy required |
 | Live SQL apply/destroy | Planned |
 | Grant import | Planned |
 

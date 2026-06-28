@@ -142,9 +142,17 @@ def test_init_command_creates_provider_specific_snowflake_project(tmp_path):
     assert "DATABRICKS_" not in provider_config
     assert "SNOWFLAKE_ACCOUNT=" in env_example
     assert "SNOWFLAKE_USER=" in env_example
+    assert "SNOWFLAKE_HOST=" in env_example
+    assert "SNOWFLAKE_USERNAME=" in env_example
+    assert "SNOWFLAKE_TOKEN=" in env_example
+    assert "SNOWFLAKE_TOKEN=replace" not in env_example
     assert "DATABRICKS_" not in env_example
     assert "## Snowflake testing" in readme
     assert "SNOWFLAKE_ACCOUNT" in readme
+    assert "host_env: SNOWFLAKE_HOST" in readme
+    assert "user_env: SNOWFLAKE_USERNAME" in readme
+    assert "token_env: SNOWFLAKE_TOKEN" in readme
+    assert "auth_type: programmatic_access_token" in readme
     assert "Databricks testing" not in readme
     assert readme.startswith("# snowflake-project\n\nThis project was generated")
     assert "\n        This project" not in readme

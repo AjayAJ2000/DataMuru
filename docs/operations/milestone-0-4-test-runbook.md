@@ -204,6 +204,81 @@ Expected result:
 - schemas are listed under each selected database;
 - apply and destroy remain blocked for live Snowflake mutation.
 
+### Snowflake PAT authentication
+
+Use this path for a non-interactive Snowflake trial or sandbox. Keep the token
+out of files, command history, screenshots, and bug reports.
+
+```yaml
+provider:
+  cloud: snowflake
+  host_env: SNOWFLAKE_HOST
+  user_env: SNOWFLAKE_USERNAME
+  token_env: SNOWFLAKE_TOKEN
+  auth_type: programmatic_access_token
+  warehouse: COMPUTE_WH
+  role: SYSADMIN
+  execution_mode: live-readonly
+```
+
+Set the three variables in the same PowerShell process that runs DataMuru:
+
+```powershell
+$env:SNOWFLAKE_HOST="https://<account>.snowflakecomputing.com"
+$env:SNOWFLAKE_USERNAME="<user>"
+$env:SNOWFLAKE_TOKEN="<token-from-secret-store>"
+```
+
+Run the redacted readiness checks:
+
+```powershell
+python -m datamuru.cli.main --no-banner validate --config datamuru.yml --strict
+python -m datamuru.cli.main --no-banner doctor --config datamuru.yml --output json
+```
+
+Expected result:
+
+- `provider.account`, `provider.user`, and `provider.pat` are `ok`;
+- `provider.connector` is `ok` when `datamuru[snowflake]` is installed;
+- output contains environment-variable names but no credential values.
+
+Run bounded discovery against one database:
+
+```powershell
+python -m datamuru.cli.main --no-banner import discover `
+  --config datamuru.yml `
+  --catalog <database_name>
+```
+
+Expected result:
+
+- the identity handshake and database/schema reads complete;
+- output is limited to the requested database;
+- no Snowflake mutation is attempted;
+- live apply and destroy remain unavailable.
+
+If Snowflake returns `Network policy is required`, stop and ask the Snowflake
+operator to attach an approved network policy to the PAT user. DataMuru does
+not create that policy. Snowflake's token-specific temporary bypass is limited
+to 1440 minutes and is suitable only for an explicitly approved trial.
+
+After testing, revoke the PAT from a separate browser SSO or administrative
+session, not from the session authenticated by that PAT:
+
+```sql
+ALTER USER IF EXISTS <username> REMOVE PAT terminal_token;
+```
+
+Then clear the local process value:
+
+```powershell
+Remove-Item Env:SNOWFLAKE_TOKEN
+```
+
+Record only pass/fail state, check codes, and aggregate database/schema counts.
+Never attach the PAT, username, host, inventory names, or raw connector output
+to a bug report.
+
 ## 6. Databricks-to-Snowflake mapping draft
 
 Run from a Databricks-configured project:

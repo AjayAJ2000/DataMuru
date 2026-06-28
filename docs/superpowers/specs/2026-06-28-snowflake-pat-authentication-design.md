@@ -1,6 +1,6 @@
 # Snowflake Programmatic Access Token Authentication Design
 
-Status: approved approach, pending written-spec review
+Status: implemented, pending milestone release
 
 ## Context
 

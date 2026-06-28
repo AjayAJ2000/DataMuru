@@ -41,6 +41,12 @@ def _environment_example(provider: str) -> str:
             # Browser SSO does not require a password in this file.
             SNOWFLAKE_ACCOUNT=your-organization-your-account
             SNOWFLAKE_USER=your-user
+
+            # Optional PAT mode. Leave the token empty in generated files and
+            # set its real value only in your shell or approved secret store.
+            SNOWFLAKE_HOST=your-organization-your-account.snowflakecomputing.com
+            SNOWFLAKE_USERNAME=your-user
+            SNOWFLAKE_TOKEN=
             """
         ).strip() + "\n"
     return textwrap.dedent(
@@ -86,6 +92,24 @@ def _readme(name: str, provider: str) -> str:
 
         Browser SSO is the safe default. Keep `execution_mode: live-readonly`;
         Snowflake live apply and destroy are not available in this alpha.
+
+        To use a Snowflake Programmatic Access Token, replace the provider
+        authentication fields with this explicit opt-in:
+
+        ```yaml
+        provider:
+          cloud: snowflake
+          host_env: SNOWFLAKE_HOST
+          user_env: SNOWFLAKE_USERNAME
+          token_env: SNOWFLAKE_TOKEN
+          auth_type: programmatic_access_token
+          warehouse: COMPUTE_WH
+          role: SYSADMIN
+          execution_mode: live-readonly
+        ```
+
+        Set the real token only in your shell or approved secret store. PAT
+        users must satisfy Snowflake's network-policy requirement.
         """
     else:
         provider_testing = """
