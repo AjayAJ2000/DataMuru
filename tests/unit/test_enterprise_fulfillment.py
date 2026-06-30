@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+from types import MappingProxyType
 from typing import Any
 
 import pytest
@@ -10,6 +11,7 @@ from datamuru.enterprise.fulfillment import (
     canonical_json,
     load_purchase_request,
     purchase_request_fingerprint,
+    validate_purchase_request,
 )
 from datamuru.errors import EnterpriseFulfillmentError
 
@@ -61,6 +63,97 @@ def test_canonical_json_is_sorted_compact_and_ascii():
     assert canonical_json({"z": "caf\u00e9", "a": {"b": 1}}) == (
         '{"a":{"b":1},"z":"caf\\u00e9"}'
     )
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_canonical_json_rejects_nonfinite_numbers_with_safe_error(value):
+    with pytest.raises(EnterpriseFulfillmentError) as exc_info:
+        canonical_json({"untrusted": value})
+
+    assert exc_info.value.code == "DMR-ENT-1001"
+    assert str(exc_info.value) == "Canonical JSON contains unsupported values."
+
+
+def _freeze_mappings(value):
+    if isinstance(value, dict):
+        return MappingProxyType({key: _freeze_mappings(item) for key, item in value.items()})
+    if isinstance(value, list):
+        return [_freeze_mappings(item) for item in value]
+    return value
+
+
+def test_validation_and_fingerprint_accept_mapping_inputs(ready_purchase_request):
+    request = _freeze_mappings(ready_purchase_request)
+
+    validate_purchase_request(request, for_approval=True)
+
+    assert canonical_json(request) == canonical_json(ready_purchase_request)
+    assert purchase_request_fingerprint(request) == purchase_request_fingerprint(
+        ready_purchase_request
+    )
+
+
+@pytest.mark.parametrize(
+    "secret_key",
+    ["license_key", "raw_token", "password", "private_key", "client_secret"],
+)
+def test_rejects_recursive_secret_bearing_keys_without_disclosing_values(
+    ready_purchase_request, secret_key
+):
+    request = deepcopy(ready_purchase_request)
+    if secret_key == "license_key":
+        request["license"][secret_key] = "secret-value"
+    else:
+        request["report"]["nested"] = {secret_key: "secret-value"}
+
+    with pytest.raises(EnterpriseFulfillmentError) as exc_info:
+        validate_purchase_request(request, for_approval=False)
+
+    assert exc_info.value.code == "DMR-ENT-1001"
+    assert "secret-value" not in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    ("status", "report"),
+    [
+        ("blocked", {"ready": True}),
+        ("ready", {}),
+        ("ready", {"ready": False}),
+        ("ready", {"ready": 1}),
+        ("ready", {"details": "present"}),
+    ],
+)
+def test_approval_requires_consistent_ready_status_and_report(
+    ready_purchase_request, status, report
+):
+    request = deepcopy(ready_purchase_request)
+    request["status"] = status
+    request["report"] = report
+
+    with pytest.raises(EnterpriseFulfillmentError) as exc_info:
+        validate_purchase_request(request, for_approval=True)
+
+    assert exc_info.value.code == "DMR-ENT-1001"
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "organization",
+        "contact_email",
+        "purchase_reference",
+        "support_plan",
+        "requested_entitlements",
+    ],
+)
+def test_validation_requires_commercial_identifiers(ready_purchase_request, field):
+    request = deepcopy(ready_purchase_request)
+    request["commercial"][field] = [] if field == "requested_entitlements" else "   "
+
+    with pytest.raises(EnterpriseFulfillmentError) as exc_info:
+        validate_purchase_request(request, for_approval=False)
+
+    assert exc_info.value.code == "DMR-ENT-1001"
 
 
 def _invalid_request(
