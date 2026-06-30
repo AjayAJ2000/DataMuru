@@ -6,7 +6,7 @@
       <img src="assets/datamuru-mark-canva.png" alt="DataMuru Vel Eye logo" width="144" height="144">
     </div>
     <div>
-      <p class="dm-eyebrow">Current documented release: 0.4.0a0 alpha</p>
+      <p class="dm-eyebrow">Current documented release: 0.5.0a0 alpha</p>
       <p class="dm-hero-lede">Python-first data infrastructure and governance, planned before it changes anything.</p>
       <div class="dm-hero-actions">
         <a class="dm-button dm-button-primary" href="getting-started/quickstart/">Start locally</a>
@@ -59,14 +59,14 @@ governance, brownfield adoption, and eventually multi-cloud execution.
 </div>
 
 ```powershell
-pip install "datamuru==0.4.0a0"
+pip install "datamuru==0.5.0a0"
 datamuru validate --config datamuru.yml
 datamuru doctor --config datamuru.yml
 datamuru plan --config datamuru.yml
 ```
 
 !!! warning "Alpha software"
-    DataMuru `0.4.0a0` is an alpha release. It supports real Databricks
+    DataMuru `0.5.0a0` is an alpha release. It supports real Databricks
     operations for the resource types listed in the
     [capability reference](reference/capabilities.md), but it is not yet a
     complete production platform. Test with non-production resources first.

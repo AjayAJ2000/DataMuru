@@ -10,8 +10,12 @@ MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 MARKDOWN_LINK_WITH_TEXT = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 VAGUE_LINK_TEXT = {"click here", "here", "this", "this link", "read more"}
-CANONICAL_ALPHA_VERSION = "0.4.0a0"
-STALE_ALPHA_VERSION = re.compile(r"\b0\.[123]\.0a0\b")
+CANONICAL_ALPHA_VERSION = "0.5.0a0"
+STALE_ALPHA_VERSION = re.compile(r"\b0\.[1-4]\.0a0\b")
+HISTORICAL_VERSION_PAGES = {
+    Path("docs/operations/milestone-0-4-test-runbook.md"),
+    Path("docs/product/github-project-board.md"),
+}
 
 
 def _nav_paths(value):
@@ -103,6 +107,8 @@ def test_public_documentation_has_no_local_windows_paths():
 def test_public_documentation_has_no_stale_alpha_versions():
     stale: list[str] = []
     for page in [REPOSITORY_ROOT / "README.md", *DOCS_ROOT.rglob("*.md")]:
+        if page.relative_to(REPOSITORY_ROOT) in HISTORICAL_VERSION_PAGES:
+            continue
         text = page.read_text(encoding="utf-8")
         for match in STALE_ALPHA_VERSION.finditer(text):
             stale.append(

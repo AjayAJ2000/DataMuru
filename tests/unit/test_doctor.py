@@ -5,7 +5,8 @@ from datamuru.providers.databricks.client import DatabricksWorkspaceClient
 from datamuru.providers.factory import load_provider
 
 
-def test_doctor_fails_when_pat_env_is_missing(sample_project):
+def test_doctor_fails_when_pat_env_is_missing(sample_project, monkeypatch):
+    monkeypatch.delenv("DATABRICKS_TOKEN", raising=False)
     provider_path = sample_project / "providers" / "databricks.yml"
     provider_path.write_text(
         "\n".join(

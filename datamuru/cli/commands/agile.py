@@ -33,7 +33,7 @@ def agile_group() -> None:
     help="Markdown source containing the backlog table.",
 )
 @click.option("--out", "output_dir", required=True, help="Directory where issue drafts will be written.")
-@click.option("--release-target", default=None, help="Only export rows for one release target, for example 0.4.0a0.")
+@click.option("--release-target", default=None, help="Only export rows for one release target, for example 0.5.0a0.")
 @click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
 @with_cli_errors
 def agile_export_command(

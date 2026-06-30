@@ -69,7 +69,7 @@ applied.
 | --- | --- | --- |
 | Catalog grants | Partial | Supported for selected Unity Catalog privileges. |
 | Schema grants | Partial | Supported for selected Unity Catalog privileges. |
-| Table, view, function, volume, and column grants | Roadmap | Model carefully, but do not assume live enforcement in `0.4.0a0`. |
+| Table, view, function, volume, and column grants | Roadmap | Model carefully, but do not assume live enforcement in `0.5.0a0`. |
 
 Common privilege names include `USE_CATALOG`, `USE_SCHEMA`, `CREATE_SCHEMA`,
 `CREATE_TABLE`, `MODIFY`, `SELECT`, `EXECUTE`, `READ_VOLUME`, and

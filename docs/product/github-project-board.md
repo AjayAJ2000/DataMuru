@@ -41,7 +41,7 @@ Create these custom fields:
 | Edition | Single select | OSS, Enterprise, Both |
 | Customer impact | Single select | Evaluation, Production, Security, Cost, Developer experience |
 | Risk | Single select | Low, Medium, High |
-| Release target | Text | Example: `0.4.0a0` |
+| Release target | Text | Example: `0.5.0a0` |
 | Evidence link | Text | PR, docs, CI, demo, test output, or release link |
 
 ## Initial backlog

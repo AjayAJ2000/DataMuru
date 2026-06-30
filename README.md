@@ -55,7 +55,7 @@ Enterprise extends the public core; it does not maintain a competing fork of the
 ## Quick start
 
 ```bash
-pip install "datamuru==0.4.0a0"
+pip install "datamuru==0.5.0a0"
 datamuru init --name quickstart --output-dir datamuru-quickstart
 cd datamuru-quickstart
 datamuru validate --config datamuru.yml

@@ -7,6 +7,8 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.5.0a0] - 2026-06-30
+
 ### Added
 - Added `datamuru import map-databricks` for review-only Snowflake-to-Databricks database and schema mapping drafts with collision checks.
 - Added explicit Snowflake Programmatic Access Token authentication for redacted live-readonly database and schema discovery.

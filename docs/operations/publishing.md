@@ -53,7 +53,7 @@ compatibility. DataMuru's docs dependency remains pinned to MkDocs `>=1.6,<2`.
 
 4. Commit and push the release changes.
 5. Confirm the **CI** and **Documentation** workflows pass.
-6. Create a GitHub release whose tag exactly matches the package version with a `v` prefix, for example `v0.4.0a0`.
+6. Create a GitHub release whose tag exactly matches the package version with a `v` prefix, for example `v0.5.0a0`.
 7. Publish the GitHub release.
 8. Approve the `pypi` environment deployment if protection is enabled.
 9. Verify `https://pypi.org/project/datamuru/`.
@@ -62,7 +62,7 @@ compatibility. DataMuru's docs dependency remains pinned to MkDocs `>=1.6,<2`.
 ```bash
 python -m venv .venv-release-check
 python -m pip install --upgrade pip
-python -m pip install "datamuru==0.4.0a0"
+python -m pip install "datamuru==0.5.0a0"
 datamuru --help
 ```
 

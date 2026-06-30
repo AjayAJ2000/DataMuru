@@ -1,6 +1,6 @@
 # Current capabilities and limits
 
-This page describes DataMuru OSS `0.4.0a0`. Treat it as the canonical status
+This page describes DataMuru OSS `0.5.0a0`. Treat it as the canonical status
 reference for current product capability claims.
 
 Status terms used across the docs:
@@ -24,7 +24,7 @@ Status terms used across the docs:
 | Local state backend | Supported | JSON state files with no remote locking. |
 | Remote state readiness inspection | Experimental | Configuration and planning boundary checks only. |
 | Hosted control plane handoff | Experimental | Contract and architecture export, not hosted tenant provisioning. |
-| Tenant entitlement record export | Experimental | Available on `main` for the planned 0.5.0a0 milestone as an immutable redacted offline contract; no hosted registry or tenant provisioning. |
+| Tenant entitlement record export | Experimental | Available in `0.5.0a0` as an immutable redacted offline contract; no hosted registry or tenant provisioning. |
 | Deterministic plan/apply/destroy | Partial | Local state and supported Databricks resources. |
 | Saved plans and targets | Supported | Reviewable plan artifacts and targeted execution. |
 | Databricks connectivity | Supported | PAT-based workspace connectivity. |
