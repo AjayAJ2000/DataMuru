@@ -7,6 +7,10 @@ from typing import Any
 
 import pytest
 
+from datamuru.enterprise.activation import (
+    ActivationReport,
+    build_activation_purchase_request,
+)
 from datamuru.enterprise.fulfillment import (
     canonical_json,
     load_purchase_request,
@@ -14,6 +18,13 @@ from datamuru.enterprise.fulfillment import (
     validate_purchase_request,
 )
 from datamuru.errors import EnterpriseFulfillmentError
+
+
+SECRET_HANDLING = (
+    "The license key value is intentionally omitted. The receiving workflow must "
+    "resolve the named environment variable or request the secret through an approved "
+    "secret manager."
+)
 
 
 @pytest.fixture
@@ -42,6 +53,7 @@ def ready_purchase_request() -> dict[str, Any]:
             "license_key_env": "DATAMURU_LICENSE_KEY",
             "license_key_present": True,
             "secret_values_included": False,
+            "secret_handling": SECRET_HANDLING,
         },
     }
 
@@ -95,7 +107,24 @@ def test_validation_and_fingerprint_accept_mapping_inputs(ready_purchase_request
 
 @pytest.mark.parametrize(
     "secret_key",
-    ["license_key", "raw_token", "password", "private_key", "client_secret"],
+    [
+        "license_key",
+        "raw_token",
+        "password",
+        "credential",
+        "access_key",
+        "api_key",
+        "private_key",
+        "client_secret",
+        "rawToken",
+        "refreshToken",
+        "secret_value",
+        "token_value",
+        "aws_secret_access_key",
+        "AwsSecretAccessKey",
+        "token-value",
+        "secret value",
+    ],
 )
 def test_rejects_recursive_secret_bearing_keys_without_disclosing_values(
     ready_purchase_request, secret_key
@@ -111,6 +140,72 @@ def test_rejects_recursive_secret_bearing_keys_without_disclosing_values(
 
     assert exc_info.value.code == "DMR-ENT-1001"
     assert "secret-value" not in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    ("metadata_key", "malicious_value"),
+    [
+        ("license_key_env", "DATAMURU_LICENSE_KEY;REMOVE_ALL"),
+        ("license_key_env", "datamuru_license_key"),
+        ("license_key_present", "true"),
+        ("secret_values_included", 0),
+        ("secret_handling", f"{SECRET_HANDLING} secret-value"),
+    ],
+)
+def test_rejects_invalid_safe_secret_metadata_values(
+    ready_purchase_request, metadata_key, malicious_value
+):
+    request = deepcopy(ready_purchase_request)
+    request["report"]["nested"] = {metadata_key: malicious_value}
+
+    with pytest.raises(EnterpriseFulfillmentError) as exc_info:
+        validate_purchase_request(request, for_approval=False)
+
+    assert exc_info.value.code == "DMR-ENT-1001"
+    assert "secret-value" not in str(exc_info.value)
+
+
+def test_accepts_purchase_request_generated_by_activation_producer():
+    report = ActivationReport(
+        project="analytics-platform",
+        edition="enterprise",
+        provider="databricks",
+        default_environment="prod",
+        ready=True,
+        payload={
+            "activation": {
+                "organization": "Acme Data",
+                "contact_email": "platform@acme.test",
+                "tenant_id": "acme-prod",
+                "deployment_region": "us-east-1",
+                "control_plane_url": "https://control.datamuru.example",
+                "license_key_env": "DATAMURU_LICENSE_KEY",
+                "license_key_present": True,
+            },
+            "features": {"hosted_control_plane": True},
+        },
+        checks=[],
+    )
+    request = build_activation_purchase_request(report).to_dict()
+
+    validate_purchase_request(request, for_approval=True)
+
+
+@pytest.mark.parametrize("field", ["purchase_reference", "support_plan"])
+@pytest.mark.parametrize(
+    "optional_value",
+    [pytest.param(None, id="null"), pytest.param("missing", id="missing")],
+)
+def test_accepts_missing_or_null_optional_commercial_fields(
+    ready_purchase_request, field, optional_value
+):
+    request = deepcopy(ready_purchase_request)
+    if optional_value == "missing":
+        del request["commercial"][field]
+    else:
+        request["commercial"][field] = optional_value
+
+    validate_purchase_request(request, for_approval=False)
 
 
 @pytest.mark.parametrize(
@@ -141,8 +236,6 @@ def test_approval_requires_consistent_ready_status_and_report(
     [
         "organization",
         "contact_email",
-        "purchase_reference",
-        "support_plan",
         "requested_entitlements",
     ],
 )

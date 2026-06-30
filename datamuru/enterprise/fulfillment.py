@@ -4,6 +4,7 @@ from collections.abc import Mapping
 import hashlib
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 from datamuru.errors import EnterpriseFulfillmentError
@@ -11,6 +12,11 @@ from datamuru.errors import EnterpriseFulfillmentError
 
 PURCHASE_REQUEST_SCHEMA = "datamuru.enterprise_purchase_request.v1"
 SUPPORTED_PURCHASE_REQUEST_SCHEMAS = frozenset({PURCHASE_REQUEST_SCHEMA})
+SECRET_HANDLING = (
+    "The license key value is intentionally omitted. The receiving workflow must "
+    "resolve the named environment variable or request the secret through an approved "
+    "secret manager."
+)
 SAFE_SECRET_METADATA_KEYS = frozenset(
     {
         "license_key_env",
@@ -19,21 +25,28 @@ SAFE_SECRET_METADATA_KEYS = frozenset(
         "secret_handling",
     }
 )
-SECRET_KEY_NAMES = frozenset(
+SECRET_KEY_TERMS = frozenset(
     {
-        "api_key",
-        "client_secret",
         "credential",
         "credentials",
-        "license_key",
         "password",
         "passphrase",
-        "private_key",
         "secret",
         "token",
     }
 )
-SECRET_KEY_SUFFIXES = tuple(f"_{name}" for name in SECRET_KEY_NAMES)
+SECRET_KEY_COMPOUNDS = frozenset(
+    {
+        ("private", "key"),
+        ("access", "key"),
+        ("api", "key"),
+        ("license", "key"),
+    }
+)
+ENVIRONMENT_VARIABLE_NAME = re.compile(r"[A-Z_][A-Z0-9_]*")
+ACRONYM_KEY_BOUNDARY = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
+CAMEL_KEY_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+NON_ALPHANUMERIC_KEY_CHARS = re.compile(r"[^A-Za-z0-9]+")
 
 
 def load_purchase_request(path: str | Path) -> dict[str, Any]:
@@ -96,7 +109,7 @@ def validate_purchase_request(
     if not isinstance(commercial, Mapping):
         _raise_validation_error("Commercial request details are required.", "commercial")
 
-    for field in ("organization", "contact_email", "purchase_reference", "support_plan"):
+    for field in ("organization", "contact_email"):
         value = commercial.get(field)
         if type(value) is not str or not value.strip():
             _raise_validation_error("Commercial identifier is required.", f"commercial.{field}")
@@ -181,8 +194,13 @@ def _require_boolean(
 def _contains_secret_bearing_key(value: Any) -> bool:
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if type(key) is str and _is_secret_bearing_key(key):
-                return True
+            if type(key) is str:
+                normalized_key = _normalize_key(key)
+                if normalized_key in SAFE_SECRET_METADATA_KEYS:
+                    if not _is_valid_safe_secret_metadata(normalized_key, item):
+                        return True
+                elif _is_secret_bearing_key(normalized_key):
+                    return True
             if _contains_secret_bearing_key(item):
                 return True
         return False
@@ -191,14 +209,30 @@ def _contains_secret_bearing_key(value: Any) -> bool:
     return False
 
 
-def _is_secret_bearing_key(key: str) -> bool:
-    normalized = key.casefold().replace("-", "_").replace(" ", "_")
-    if normalized in SAFE_SECRET_METADATA_KEYS:
-        return False
-    if normalized in SECRET_KEY_NAMES or normalized.endswith(SECRET_KEY_SUFFIXES):
-        return True
-    collapsed = normalized.replace("_", "")
-    return collapsed in {"apikey", "clientsecret", "licensekey", "privatekey"}
+def _normalize_key(key: str) -> str:
+    normalized = ACRONYM_KEY_BOUNDARY.sub("_", key)
+    normalized = CAMEL_KEY_BOUNDARY.sub("_", normalized)
+    return NON_ALPHANUMERIC_KEY_CHARS.sub("_", normalized).strip("_").casefold()
+
+
+def _is_secret_bearing_key(normalized_key: str) -> bool:
+    parts = normalized_key.split("_")
+    return bool(
+        SECRET_KEY_TERMS.intersection(parts)
+        or SECRET_KEY_COMPOUNDS.intersection(zip(parts, parts[1:]))
+    )
+
+
+def _is_valid_safe_secret_metadata(key: str, value: Any) -> bool:
+    if key == "license_key_env":
+        return type(value) is str and ENVIRONMENT_VARIABLE_NAME.fullmatch(value) is not None
+    if key == "license_key_present":
+        return type(value) is bool
+    if key == "secret_values_included":
+        return value is False
+    if key == "secret_handling":
+        return type(value) is str and value == SECRET_HANDLING
+    return False
 
 
 def _json_compatible(value: Any) -> Any:
