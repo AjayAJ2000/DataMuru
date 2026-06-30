@@ -19,6 +19,7 @@ build/
 site/
 *.egg-info/
 .datamuru/
+.worktrees/
 .pytest-tmp/
 .pytest-tmp-*/
 saved-plan.json
