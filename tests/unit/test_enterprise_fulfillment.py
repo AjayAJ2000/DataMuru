@@ -146,7 +146,9 @@ def test_rejects_recursive_secret_bearing_keys_without_disclosing_values(
     ("metadata_key", "malicious_value"),
     [
         ("license_key_env", "DATAMURU_LICENSE_KEY;REMOVE_ALL"),
-        ("license_key_env", "datamuru_license_key"),
+        ("license_key_env", "DATAMURU LICENSE KEY"),
+        ("license_key_env", "DATAMURU/LICENSE_KEY"),
+        ("license_key_env", "secret-value"),
         ("license_key_present", "true"),
         ("secret_values_included", 0),
         ("secret_handling", f"{SECRET_HANDLING} secret-value"),
@@ -165,7 +167,11 @@ def test_rejects_invalid_safe_secret_metadata_values(
     assert "secret-value" not in str(exc_info.value)
 
 
-def test_accepts_purchase_request_generated_by_activation_producer():
+@pytest.mark.parametrize(
+    "license_key_env",
+    ["DATAMURU_LICENSE_KEY", "datamuru_License_key"],
+)
+def test_accepts_purchase_request_generated_by_activation_producer(license_key_env):
     report = ActivationReport(
         project="analytics-platform",
         edition="enterprise",
@@ -179,7 +185,7 @@ def test_accepts_purchase_request_generated_by_activation_producer():
                 "tenant_id": "acme-prod",
                 "deployment_region": "us-east-1",
                 "control_plane_url": "https://control.datamuru.example",
-                "license_key_env": "DATAMURU_LICENSE_KEY",
+                "license_key_env": license_key_env,
                 "license_key_present": True,
             },
             "features": {"hosted_control_plane": True},

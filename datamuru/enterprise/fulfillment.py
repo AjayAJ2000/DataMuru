@@ -43,7 +43,7 @@ SECRET_KEY_COMPOUNDS = frozenset(
         ("license", "key"),
     }
 )
-ENVIRONMENT_VARIABLE_NAME = re.compile(r"[A-Z_][A-Z0-9_]*")
+ENVIRONMENT_VARIABLE_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 ACRONYM_KEY_BOUNDARY = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
 CAMEL_KEY_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 NON_ALPHANUMERIC_KEY_CHARS = re.compile(r"[^A-Za-z0-9]+")
