@@ -89,6 +89,12 @@ class ImportAdoptionError(DataMuruError):
     default_suggestion = "Resolve every reported conflict or missing live resource, then preview adoption again."
 
 
+class EnterpriseFulfillmentError(DataMuruError):
+    default_code = "DMR-ENT-1001"
+    default_title = "Enterprise Fulfillment Error"
+    default_suggestion = "Fix the purchase request and retry the offline fulfillment workflow."
+
+
 class UnsupportedOperationError(DataMuruError):
     default_code = "DMR-CORE-1001"
     default_title = "Unsupported Operation"
