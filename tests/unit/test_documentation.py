@@ -141,6 +141,9 @@ def test_enterprise_offline_fulfillment_is_documented_with_safety_boundaries():
     cli_reference = (DOCS_ROOT / "reference" / "cli.md").read_text(encoding="utf-8")
     python_reference = (DOCS_ROOT / "reference" / "python-api.md").read_text(encoding="utf-8")
     capabilities = (DOCS_ROOT / "reference" / "capabilities.md").read_text(encoding="utf-8")
+    project_board = (DOCS_ROOT / "product" / "github-project-board.md").read_text(
+        encoding="utf-8"
+    )
     runbook = (DOCS_ROOT / "operations" / "milestone-0-5-test-runbook.md").read_text(
         encoding="utf-8"
     )
@@ -154,6 +157,10 @@ def test_enterprise_offline_fulfillment_is_documented_with_safety_boundaries():
     assert "datamuru.enterprise_activation_receipt.v1" in runbook
     assert "tamper" in runbook.casefold()
     assert "Available in `0.5.1a0`" in capabilities
+    assert (
+        "| Enterprise purchase and license activation flow | Enterprise | "
+        "Provider-agnostic | Enterprise | Production | High | 0.5.1a0 |"
+    ) in project_board
     assert "$firstDecision.decision_fingerprint -ne $secondDecision.decision_fingerprint" in runbook
     assert "not a signed license" in capabilities.casefold()
     assert "not proof of tenant provisioning" in capabilities.casefold()

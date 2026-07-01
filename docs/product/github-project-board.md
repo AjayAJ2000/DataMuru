@@ -59,7 +59,7 @@ Create these items first:
 | Enterprise file naming convention enforcement | Core | Provider-agnostic | Both | Developer experience | Medium | 0.4.0a0 |
 | GitHub Projects issue export command | Core | Provider-agnostic | Both | Developer experience | Low | 0.4.0a0 |
 | Hosted control plane product architecture | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.0a0 |
-| Enterprise purchase and license activation flow | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.0a0 |
+| Enterprise purchase and license activation flow | Enterprise | Provider-agnostic | Enterprise | Production | High | 0.5.1a0 |
 | Enterprise activation readiness preflight | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | Enterprise activation handoff bundle export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | Enterprise activation handoff package export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
@@ -69,12 +69,13 @@ Create these items first:
 | Activation audit evidence export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | Snowflake-to-Databricks mapping draft | Provider | Provider-agnostic | Both | Production | Medium | 0.5.0a0 |
 
-The `0.5.0a0` backlog is implemented through offline OSS contracts and test
-evidence. For `Enterprise purchase and license activation flow`, Done means the
-redacted purchase request, explicit operator approval/rejection, deterministic
-entitlement evidence, and activation receipt are implemented. It does not mean
-DataMuru processes payment, signs a license, grants private package access, or
-provisions a hosted tenant. Those remain future private-backend work.
+The v0.5 backlog is implemented through offline OSS contracts and test
+evidence. `Enterprise purchase and license activation flow` was completed in
+`0.5.1a0`: Done means the redacted purchase request, explicit operator
+approval/rejection, deterministic entitlement evidence, and activation receipt
+are implemented. It does not mean DataMuru processes payment, signs a license,
+grants private package access, or provisions a hosted tenant. Those remain
+future private-backend work.
 
 ## Labels
 
