@@ -35,6 +35,11 @@ from .handoff import (
     build_activation_handoff_package,
     write_activation_handoff_package,
 )
+from .fulfillment import (
+    ActivationReceipt,
+    FulfillmentDecision,
+    build_fulfillment,
+)
 from .registry import (
     TenantEntitlementRecord,
     build_tenant_entitlement_record,
@@ -49,12 +54,14 @@ __all__ = [
     "ActivationHandoffPackage",
     "ActivationPurchaseRequest",
     "ActivationReport",
+    "ActivationReceipt",
     "ArchitectureComponent",
     "ArchitectureDecision",
     "ArchitectureWorkItem",
     "ControlPlaneCheck",
     "ControlPlaneContract",
     "EvidenceArtifact",
+    "FulfillmentDecision",
     "HostedControlPlaneArchitecture",
     "TenantEntitlementRecord",
     "build_activation_bundle",
@@ -62,6 +69,7 @@ __all__ = [
     "build_activation_handoff_package",
     "build_activation_purchase_request",
     "build_activation_report",
+    "build_fulfillment",
     "build_control_plane_contract",
     "build_hosted_control_plane_architecture",
     "build_tenant_entitlement_record",

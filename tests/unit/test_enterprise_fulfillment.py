@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import UTC, datetime
 import json
 from types import MappingProxyType
 from typing import Any
@@ -13,6 +14,7 @@ from datamuru.enterprise.activation import (
     build_activation_purchase_request,
 )
 from datamuru.enterprise.fulfillment import (
+    build_fulfillment,
     canonical_json,
     load_purchase_request,
     purchase_request_fingerprint,
@@ -320,3 +322,113 @@ def test_rejects_invalid_purchase_requests_without_disclosing_values(
 
     assert exc_info.value.code == "DMR-ENT-1001"
     assert "secret-value" not in str(exc_info.value)
+
+
+def test_builds_approved_decision_and_activation_receipt(ready_purchase_request):
+    decision, receipt = build_fulfillment(
+        ready_purchase_request,
+        decision="approve",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1234",
+        notes="Commercial review complete.",
+        generated_at=datetime(2026, 7, 1, 8, 30, tzinfo=UTC),
+    )
+
+    assert decision.schema_version == "datamuru.enterprise_fulfillment_decision.v1"
+    assert decision.decision == "approve"
+    assert decision.decision_id.startswith("fdr_")
+    assert decision.operator == "licensing@datamuru.com"
+    assert decision.entitlements["approved"] == ["hosted_control_plane"]
+    assert decision.entitlements["rejected"] == []
+    assert decision.security == {
+        "offline": True,
+        "payment_processed": False,
+        "cryptographically_signed": False,
+        "calls_license_server": False,
+        "provisions_tenant": False,
+        "secret_values_included": False,
+    }
+
+    assert receipt is not None
+    assert receipt.schema_version == "datamuru.enterprise_activation_receipt.v1"
+    assert receipt.receipt_id.startswith("far_")
+    assert receipt.decision_id == decision.decision_id
+    assert receipt.source_request_fingerprint == decision.source_request_fingerprint
+    assert receipt.entitlement["enabled_features"] == ["hosted_control_plane"]
+    assert receipt.security["cryptographically_signed"] is False
+    assert receipt.security["provisions_tenant"] is False
+
+
+def test_builds_rejection_without_activation_receipt(ready_purchase_request):
+    request = deepcopy(ready_purchase_request)
+    request["status"] = "blocked"
+    request["report"] = {"ready": False}
+
+    decision, receipt = build_fulfillment(
+        request,
+        decision="reject",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1235",
+        generated_at=datetime(2026, 7, 1, 8, 30, tzinfo=UTC),
+    )
+
+    assert decision.decision == "reject"
+    assert decision.entitlements["approved"] == []
+    assert decision.entitlements["rejected"] == ["hosted_control_plane"]
+    assert receipt is None
+
+
+def test_fulfillment_ids_are_stable_across_generation_times(ready_purchase_request):
+    first_decision, first_receipt = build_fulfillment(
+        ready_purchase_request,
+        decision="approve",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1234",
+        generated_at=datetime(2026, 7, 1, 8, 30, tzinfo=UTC),
+    )
+    second_decision, second_receipt = build_fulfillment(
+        ready_purchase_request,
+        decision="approve",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1234",
+        generated_at=datetime(2026, 7, 2, 9, 45, tzinfo=UTC),
+    )
+
+    assert first_receipt is not None and second_receipt is not None
+    assert first_decision.generated_at != second_decision.generated_at
+    assert first_decision.decision_id == second_decision.decision_id
+    assert first_decision.decision_fingerprint == second_decision.decision_fingerprint
+    assert first_receipt.receipt_id == second_receipt.receipt_id
+    assert first_receipt.decision_fingerprint == second_receipt.decision_fingerprint
+
+
+@pytest.mark.parametrize(
+    ("operator", "decision_reference"),
+    [("", "CRM-1234"), ("   ", "CRM-1234"), ("licensing@datamuru.com", "")],
+)
+def test_fulfillment_requires_operator_evidence(
+    ready_purchase_request, operator, decision_reference
+):
+    with pytest.raises(EnterpriseFulfillmentError):
+        build_fulfillment(
+            ready_purchase_request,
+            decision="approve",
+            operator=operator,
+            decision_reference=decision_reference,
+        )
+
+
+def test_fulfillment_blocks_approval_of_blocked_request(ready_purchase_request):
+    request = deepcopy(ready_purchase_request)
+    request["status"] = "blocked"
+    request["report"] = {"ready": False}
+
+    with pytest.raises(EnterpriseFulfillmentError) as exc_info:
+        build_fulfillment(
+            request,
+            decision="approve",
+            operator="licensing@datamuru.com",
+            decision_reference="CRM-1234",
+        )
+
+    assert "blocked" in str(exc_info.value).casefold()

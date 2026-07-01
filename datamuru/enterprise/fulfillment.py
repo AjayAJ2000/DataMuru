@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import UTC, datetime
 import hashlib
 import json
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, Literal
 
 from datamuru.enterprise.activation import LICENSE_SECRET_HANDLING
 from datamuru.errors import EnterpriseFulfillmentError
+from datamuru.modeling import DataMuruModel
 
 
 PURCHASE_REQUEST_SCHEMA = "datamuru.enterprise_purchase_request.v1"
@@ -65,6 +67,40 @@ ENVIRONMENT_VARIABLE_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 ACRONYM_KEY_BOUNDARY = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
 CAMEL_KEY_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 NON_ALPHANUMERIC_KEY_CHARS = re.compile(r"[^A-Za-z0-9]+")
+
+
+class FulfillmentDecision(DataMuruModel):
+    schema_version: str
+    generated_at: str
+    decision_id: str
+    decision_fingerprint: str
+    decision: str
+    operator: str
+    decision_reference: str
+    notes: str | None
+    source_request_fingerprint: str
+    tenant: dict[str, Any]
+    commercial: dict[str, Any]
+    entitlements: dict[str, list[str]]
+    security: dict[str, bool]
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.model_dump(mode="python")
+
+
+class ActivationReceipt(DataMuruModel):
+    schema_version: str
+    generated_at: str
+    receipt_id: str
+    decision_id: str
+    decision_fingerprint: str
+    source_request_fingerprint: str
+    tenant: dict[str, Any]
+    entitlement: dict[str, Any]
+    security: dict[str, bool]
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.model_dump(mode="python")
 
 
 def load_purchase_request(path: str | Path) -> dict[str, Any]:
@@ -195,6 +231,117 @@ def canonical_json(payload: Mapping[str, Any]) -> str:
 def purchase_request_fingerprint(request: Mapping[str, Any]) -> str:
     digest = hashlib.sha256(canonical_json(request).encode("utf-8")).hexdigest()
     return f"sha256:{digest}"
+
+
+def build_fulfillment(
+    request: Mapping[str, Any],
+    *,
+    decision: Literal["approve", "reject"],
+    operator: str,
+    decision_reference: str,
+    notes: str | None = None,
+    generated_at: datetime | None = None,
+) -> tuple[FulfillmentDecision, ActivationReceipt | None]:
+    if type(decision) is not str or decision not in {"approve", "reject"}:
+        _raise_validation_error("Fulfillment decision must be approve or reject.", "decision")
+    if type(operator) is not str or not operator.strip():
+        _raise_validation_error("Fulfillment operator is required.", "operator")
+    if type(decision_reference) is not str or not decision_reference.strip():
+        _raise_validation_error("Fulfillment decision reference is required.", "decision_reference")
+    if notes is not None and type(notes) is not str:
+        _raise_validation_error("Fulfillment notes must be text.", "notes")
+
+    validate_purchase_request(request, for_approval=decision == "approve")
+    timestamp = (generated_at or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
+    generated_at_text = timestamp.isoformat().replace("+00:00", "Z")
+    request_fingerprint = purchase_request_fingerprint(request)
+    commercial = request["commercial"]
+    fulfillment = request["fulfillment"]
+    requested_entitlements = sorted(set(commercial["requested_entitlements"]))
+    tenant = {
+        "organization": commercial["organization"],
+        "tenant_id": fulfillment["tenant_id"],
+        "deployment_region": fulfillment.get("deployment_region"),
+        "control_plane_url": fulfillment.get("control_plane_url"),
+    }
+    commercial_evidence = {
+        "contact_email": commercial["contact_email"],
+        "purchase_reference": commercial.get("purchase_reference"),
+        "support_plan": commercial.get("support_plan"),
+    }
+    entitlement_evidence = {
+        "requested": requested_entitlements,
+        "approved": requested_entitlements if decision == "approve" else [],
+        "rejected": requested_entitlements if decision == "reject" else [],
+    }
+    decision_identity = {
+        "source_request_fingerprint": request_fingerprint,
+        "decision": decision,
+        "operator": operator.strip(),
+        "decision_reference": decision_reference.strip(),
+        "tenant": tenant,
+        "commercial": commercial_evidence,
+        "entitlements": entitlement_evidence,
+    }
+    decision_digest = _sha256(decision_identity)
+    security = _security_posture()
+    decision_record = FulfillmentDecision(
+        schema_version="datamuru.enterprise_fulfillment_decision.v1",
+        generated_at=generated_at_text,
+        decision_id=f"fdr_{decision_digest[:20]}",
+        decision_fingerprint=f"sha256:{decision_digest}",
+        decision=decision,
+        operator=operator.strip(),
+        decision_reference=decision_reference.strip(),
+        notes=notes.strip() if notes and notes.strip() else None,
+        source_request_fingerprint=request_fingerprint,
+        tenant=tenant,
+        commercial=commercial_evidence,
+        entitlements=entitlement_evidence,
+        security=security,
+    )
+    if decision == "reject":
+        return decision_record, None
+
+    receipt_identity = {
+        "decision_id": decision_record.decision_id,
+        "decision_fingerprint": decision_record.decision_fingerprint,
+        "source_request_fingerprint": request_fingerprint,
+        "tenant": tenant,
+        "enabled_features": requested_entitlements,
+    }
+    receipt_digest = _sha256(receipt_identity)
+    receipt = ActivationReceipt(
+        schema_version="datamuru.enterprise_activation_receipt.v1",
+        generated_at=generated_at_text,
+        receipt_id=f"far_{receipt_digest[:20]}",
+        decision_id=decision_record.decision_id,
+        decision_fingerprint=decision_record.decision_fingerprint,
+        source_request_fingerprint=request_fingerprint,
+        tenant=tenant,
+        entitlement={
+            "enabled_features": requested_entitlements,
+            "support_plan": commercial.get("support_plan"),
+            "purchase_reference": commercial.get("purchase_reference"),
+        },
+        security=security,
+    )
+    return decision_record, receipt
+
+
+def _sha256(payload: Mapping[str, Any]) -> str:
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def _security_posture() -> dict[str, bool]:
+    return {
+        "offline": True,
+        "payment_processed": False,
+        "cryptographically_signed": False,
+        "calls_license_server": False,
+        "provisions_tenant": False,
+        "secret_values_included": False,
+    }
 
 
 def _require_boolean(
