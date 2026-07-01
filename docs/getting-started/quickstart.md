@@ -13,7 +13,7 @@ and does not contact Databricks.
     python -m venv .venv
     .\.venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
-    pip install datamuru==0.5.0a0
+    pip install datamuru==0.5.1a0
     ```
 
 === "macOS or Linux"
@@ -24,7 +24,7 @@ and does not contact Databricks.
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    pip install datamuru==0.5.0a0
+    pip install datamuru==0.5.1a0
     ```
 
 Verify the installation:

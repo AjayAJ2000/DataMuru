@@ -1,6 +1,6 @@
 # Milestone 0.5 test runbook
 
-Use this runbook to test the 0.5.0a0 milestone features end to end. Run each
+Use this runbook to test the 0.5.1a0 milestone features end to end. Run each
 feature independently and capture the command, output, generated files, and any
 redacted configuration snippets when reporting bugs.
 

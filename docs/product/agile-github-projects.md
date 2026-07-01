@@ -99,8 +99,8 @@ Scope one milestone at a time:
 ```powershell
 datamuru agile export `
   --format github-issues `
-  --release-target 0.5.0a0 `
-  --out .\github-issue-drafts\0.5.0a0
+  --release-target 0.5.1a0 `
+  --out .\github-issue-drafts\0.5.1a0
 ```
 
 Review the generated Markdown before creating public issues. Enterprise-only,

@@ -2,7 +2,7 @@
 
 ## Is DataMuru production-ready?
 
-Not generally. `0.5.0a0` is an alpha release with real but bounded provider
+Not generally. `0.5.1a0` is an alpha release with real but bounded provider
 support. Use the [production-readiness checklist](production-readiness.md)
 before a pilot.
 

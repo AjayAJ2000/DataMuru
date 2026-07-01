@@ -7,8 +7,10 @@ and this project aims to follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.5.1a0] - 2026-07-01
+
 ### Added
-- Added `datamuru enterprise activation fulfill` for validated offline approval/rejection evidence with deterministic request, decision, and receipt fingerprints.
+- Added `datamuru enterprise activation fulfill` for validated offline approval/rejection evidence with deterministic request and decision fingerprints plus stable decision and receipt IDs.
 - Added conflict-safe fulfillment writers, a config-independent Python API, redacted error handling, and milestone runbook coverage for tamper and leakage testing.
 
 ## [0.5.0a0] - 2026-06-30

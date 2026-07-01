@@ -1,7 +1,7 @@
 # Installation
 
 !!! note "Current documented release"
-    These docs describe DataMuru `0.5.0a0`, an alpha release. Pin this version
+    These docs describe DataMuru `0.5.1a0`, an alpha release. Pin this version
     for shared evaluation unless your team is intentionally testing a newer
     build.
 
@@ -28,19 +28,19 @@ python -m pip install -e .
 Once the package is published, the preferred team installation path should be:
 
 ```bash
-pip install "datamuru==0.5.0a0"
+pip install "datamuru==0.5.1a0"
 ```
 
 For Databricks SDK support:
 
 ```bash
-pip install "datamuru[databricks]==0.5.0a0"
+pip install "datamuru[databricks]==0.5.1a0"
 ```
 
 For pinned production or shared platform usage, prefer explicit version pinning:
 
 ```bash
-pip install "datamuru==0.5.0a0"
+pip install "datamuru==0.5.1a0"
 ```
 
 For internal rollout guides and enterprise onboarding, document the exact supported version instead of relying on `latest`.

@@ -5,7 +5,7 @@ idempotency model without contacting a cloud service.
 
 ## Prerequisites
 
-- DataMuru `0.5.0a0` installed
+- DataMuru `0.5.1a0` installed
 - an empty working directory
 
 ## Create the project

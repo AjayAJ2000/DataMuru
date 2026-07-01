@@ -15,7 +15,7 @@ breaking changes.
 ## Install a specific version
 
 ```powershell
-pip install --upgrade datamuru==0.5.0a0
+pip install --upgrade datamuru==0.5.1a0
 ```
 
 ## Verify

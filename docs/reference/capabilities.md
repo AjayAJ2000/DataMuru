@@ -1,10 +1,7 @@
 # Current capabilities and limits
 
-This page describes the published DataMuru OSS `0.5.0a0` release and clearly
-labels capabilities that exist only on repository main. Treat it as the
-canonical status reference for current product capability claims. **Unreleased
-on repository main** means the capability is implemented and tested in the
-repository but is not included in the published `0.5.0a0` package.
+This page describes DataMuru OSS `0.5.1a0`. Treat it as the canonical status
+reference for current product capability claims.
 
 Status terms used across the docs:
 
@@ -27,8 +24,8 @@ Status terms used across the docs:
 | Local state backend | Supported | JSON state files with no remote locking. |
 | Remote state readiness inspection | Experimental | Configuration and planning boundary checks only. |
 | Hosted control plane handoff | Experimental | Contract and architecture export, not hosted tenant provisioning. |
-| Tenant entitlement record export | Experimental | Available in `0.5.0a0` as an immutable redacted offline contract; no hosted registry or tenant provisioning. |
-| Enterprise purchase fulfillment evidence | Experimental | Unreleased on repository main. Records an offline approval or rejection with stable IDs and content-bound deterministic fingerprints. The receipt is not a signed license and is not proof of tenant provisioning or payment. |
+| Tenant entitlement record export | Experimental | Available in `0.5.1a0` as an immutable redacted offline contract; no hosted registry or tenant provisioning. |
+| Enterprise purchase fulfillment evidence | Experimental | Available in `0.5.1a0`. Records an offline approval or rejection with stable IDs and content-bound deterministic fingerprints. The receipt is not a signed license and is not proof of tenant provisioning or payment. |
 | Deterministic plan/apply/destroy | Partial | Local state and supported Databricks resources. |
 | Saved plans and targets | Supported | Reviewable plan artifacts and targeted execution. |
 | Databricks connectivity | Supported | PAT-based workspace connectivity. |

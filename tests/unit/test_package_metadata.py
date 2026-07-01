@@ -5,6 +5,7 @@ import datamuru
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+EXPECTED_RELEASE_VERSION = "0.5.1a0"
 
 
 def test_runtime_version_matches_package_metadata():
@@ -15,4 +16,5 @@ def test_runtime_version_matches_package_metadata():
     )
 
     assert package_version is not None
+    assert package_version.group(1) == EXPECTED_RELEASE_VERSION
     assert datamuru.__version__ == package_version.group(1)

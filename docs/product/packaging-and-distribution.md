@@ -26,7 +26,7 @@ The alpha already includes:
 
 - Merge only after CI succeeds.
 - Keep `pyproject.toml` and `datamuru.__version__` aligned.
-- Create a GitHub release tagged with the package version, such as `v0.5.0a0`.
+- Create a GitHub release tagged with the package version, such as `v0.5.1a0`.
 - The release workflow verifies the tag, builds the distributions, validates metadata, and publishes to PyPI.
 - Use a protected `pypi` GitHub environment and PyPI Trusted Publisher instead of a stored API token.
 

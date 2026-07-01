@@ -34,7 +34,7 @@ implemented.
 | --- | --- | --- |
 | Classification labels | Experimental | Use as reviewed metadata in configuration and plans. |
 | Built-in mask definitions | Experimental | Compile locally for future policy wiring. |
-| Live Databricks column masks | Roadmap | Do not rely on DataMuru to enforce masks in `0.5.0a0`. |
+| Live Databricks column masks | Roadmap | Do not rely on DataMuru to enforce masks in `0.5.1a0`. |
 | Enterprise policy workflows | Enterprise | Expected to require approval, evidence, and account controls. |
 
 For regulated data, keep existing Databricks policies and manual review gates in

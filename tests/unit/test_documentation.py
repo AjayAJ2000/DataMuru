@@ -10,8 +10,8 @@ MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 MARKDOWN_LINK_WITH_TEXT = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 VAGUE_LINK_TEXT = {"click here", "here", "this", "this link", "read more"}
-CANONICAL_ALPHA_VERSION = "0.5.0a0"
-STALE_ALPHA_VERSION = re.compile(r"\b0\.[1-4]\.0a0\b")
+CANONICAL_ALPHA_VERSION = "0.5.1a0"
+STALE_ALPHA_VERSION = re.compile(r"\b0\.\d+\.\d+a\d+\b")
 HISTORICAL_VERSION_PAGES = {
     Path("docs/operations/milestone-0-4-test-runbook.md"),
     Path("docs/product/github-project-board.md"),
@@ -107,12 +107,18 @@ def test_public_documentation_has_no_local_windows_paths():
 def test_public_documentation_has_no_stale_alpha_versions():
     stale: list[str] = []
     for page in [REPOSITORY_ROOT / "README.md", *DOCS_ROOT.rglob("*.md")]:
-        if page.relative_to(REPOSITORY_ROOT) in HISTORICAL_VERSION_PAGES:
+        relative_page = page.relative_to(REPOSITORY_ROOT)
+        if (
+            relative_page in HISTORICAL_VERSION_PAGES
+            or Path("docs/superpowers") in relative_page.parents
+        ):
             continue
         text = page.read_text(encoding="utf-8")
         for match in STALE_ALPHA_VERSION.finditer(text):
+            if match.group(0) == CANONICAL_ALPHA_VERSION:
+                continue
             stale.append(
-                f"{page.relative_to(REPOSITORY_ROOT)}: {match.group(0)} "
+                f"{relative_page}: {match.group(0)} "
                 f"should be {CANONICAL_ALPHA_VERSION}"
             )
 
@@ -147,7 +153,7 @@ def test_enterprise_offline_fulfillment_is_documented_with_safety_boundaries():
     assert "datamuru.enterprise_fulfillment_decision.v1" in runbook
     assert "datamuru.enterprise_activation_receipt.v1" in runbook
     assert "tamper" in runbook.casefold()
-    assert "Unreleased on repository main" in capabilities
+    assert "Available in `0.5.1a0`" in capabilities
     assert "$firstDecision.decision_fingerprint -ne $secondDecision.decision_fingerprint" in runbook
     assert "not a signed license" in capabilities.casefold()
     assert "not proof of tenant provisioning" in capabilities.casefold()
