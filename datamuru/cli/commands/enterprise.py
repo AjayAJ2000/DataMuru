@@ -10,6 +10,7 @@ from datamuru.enterprise import (
     write_activation_purchase_request,
     write_tenant_entitlement_record,
 )
+from datamuru.enterprise.fulfillment import write_fulfillment
 
 from ..guard import with_cli_errors
 from ..output import console
@@ -219,6 +220,46 @@ def activation_purchase_request(config_path: str, output_path: str, allow_blocke
     console.print(f"[{style}]Purchase request written:[/{style}] [code]{resolved}[/code]")
     if not report.ready:
         console.print("[warning]Purchase request includes blocked checks for support triage.[/warning]")
+
+
+@activation_group.command("fulfill")
+@click.option("--request", "request_path", required=True, type=click.Path(dir_okay=False, path_type=str))
+@click.option("--decision", required=True, type=click.Choice(["approve", "reject"]))
+@click.option("--operator", required=True, help="Operator identity recording the commercial decision.")
+@click.option("--decision-reference", required=True, help="CRM, ticket, or approval reference for the decision.")
+@click.option("--out", "output_dir", required=True, type=click.Path(file_okay=False, path_type=str))
+@click.option("--notes", default=None, help="Optional non-secret decision notes.")
+@click.option("--output", "output_format", default="text", type=click.Choice(["text", "json"]))
+@with_cli_errors
+def activation_fulfill(
+    request_path: str,
+    decision: str,
+    operator: str,
+    decision_reference: str,
+    output_dir: str,
+    notes: str | None,
+    output_format: str,
+) -> None:
+    result = write_fulfillment(
+        request_path,
+        output_dir,
+        decision=decision,
+        operator=operator,
+        decision_reference=decision_reference,
+        notes=notes,
+    )
+    if output_format == "json":
+        console.print_json(json.dumps(result.to_dict(), indent=2))
+        return
+
+    style = "success" if decision == "approve" else "warning"
+    verb = "approved" if decision == "approve" else "rejected"
+    console.print(f"[{style}]Enterprise activation request {verb}.[/{style}]")
+    console.print(f"Decision ID: [code]{result.decision.decision_id}[/code]")
+    console.print(f"Decision record: [code]{result.decision_path}[/code]")
+    if result.receipt is not None and result.receipt_path is not None:
+        console.print(f"Activation receipt: [code]{result.receipt_path}[/code]")
+    console.print("[accent]Offline evidence only; no payment, license signing, or tenant provisioning occurred.[/accent]")
 
 
 @activation_group.command("evidence")

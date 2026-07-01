@@ -7,8 +7,10 @@ from types import MappingProxyType
 from typing import Any
 
 import pytest
+from click.testing import CliRunner
 
 from datamuru.api import DataMuru
+from datamuru.cli.main import cli
 from datamuru.enterprise.activation import (
     ActivationReport,
     LICENSE_SECRET_HANDLING,
@@ -553,3 +555,121 @@ def test_python_api_fulfills_without_loading_project_config(tmp_path, ready_purc
 
     assert result.decision.decision == "approve"
     assert result.receipt is not None
+
+
+def test_fulfill_cli_approves_request_with_json_output(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "cli-approval"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "fulfill",
+            "--request",
+            str(request_path),
+            "--decision",
+            "approve",
+            "--operator",
+            "licensing@datamuru.com",
+            "--decision-reference",
+            "CRM-1234",
+            "--out",
+            str(output_dir),
+            "--output",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["decision"]["decision"] == "approve"
+    assert payload["decision"]["decision_id"].startswith("fdr_")
+    assert payload["receipt"]["receipt_id"].startswith("far_")
+    assert payload["decision_path"].endswith("fulfillment-decision.json")
+    assert payload["receipt_path"].endswith("activation-receipt.json")
+
+
+def test_fulfill_cli_rejects_request_without_receipt(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "cli-rejection"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "--no-banner",
+            "enterprise",
+            "activation",
+            "fulfill",
+            "--request",
+            str(request_path),
+            "--decision",
+            "reject",
+            "--operator",
+            "licensing@datamuru.com",
+            "--decision-reference",
+            "CRM-1235",
+            "--out",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "rejected" in result.output.casefold()
+    assert (output_dir / "fulfillment-decision.json").exists()
+    assert not (output_dir / "activation-receipt.json").exists()
+
+
+def test_fulfill_cli_requires_operator_evidence(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "enterprise",
+            "activation",
+            "fulfill",
+            "--request",
+            str(request_path),
+            "--decision",
+            "approve",
+            "--out",
+            str(tmp_path / "missing-evidence"),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--operator" in result.output
+
+
+def test_fulfill_cli_blocks_unsafe_request_without_echoing_secret(
+    tmp_path, ready_purchase_request
+):
+    request = deepcopy(ready_purchase_request)
+    request["report"]["Authorization"] = "secret-value"
+    request_path = _write_request(tmp_path, request)
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "--no-banner",
+            "enterprise",
+            "activation",
+            "fulfill",
+            "--request",
+            str(request_path),
+            "--decision",
+            "approve",
+            "--operator",
+            "licensing@datamuru.com",
+            "--decision-reference",
+            "CRM-1234",
+            "--out",
+            str(tmp_path / "unsafe"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "credential-bearing" in result.output
+    assert "secret-value" not in result.output
