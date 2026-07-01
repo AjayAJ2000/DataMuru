@@ -3,12 +3,14 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import UTC, datetime
 import json
+from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
 import pytest
 from click.testing import CliRunner
 
+import datamuru.enterprise.fulfillment as fulfillment_module
 from datamuru.api import DataMuru
 from datamuru.cli.main import cli
 from datamuru.enterprise.activation import (
@@ -143,6 +145,16 @@ def test_rejects_recursive_secret_bearing_keys_without_disclosing_values(
         validate_purchase_request(request, for_approval=False)
 
     assert exc_info.value.code == "DMR-ENT-1001"
+    assert "secret-value" not in str(exc_info.value)
+
+
+def test_rejects_connection_string_without_disclosing_value(ready_purchase_request):
+    request = deepcopy(ready_purchase_request)
+    request["report"]["connection_string"] = "secret-value"
+
+    with pytest.raises(EnterpriseFulfillmentError) as exc_info:
+        validate_purchase_request(request, for_approval=True)
+
     assert "secret-value" not in str(exc_info.value)
 
 
@@ -401,9 +413,31 @@ def test_fulfillment_ids_are_stable_across_generation_times(ready_purchase_reque
     assert first_receipt is not None and second_receipt is not None
     assert first_decision.generated_at != second_decision.generated_at
     assert first_decision.decision_id == second_decision.decision_id
-    assert first_decision.decision_fingerprint == second_decision.decision_fingerprint
+    assert first_decision.decision_fingerprint != second_decision.decision_fingerprint
     assert first_receipt.receipt_id == second_receipt.receipt_id
-    assert first_receipt.decision_fingerprint == second_receipt.decision_fingerprint
+    assert first_receipt.decision_fingerprint != second_receipt.decision_fingerprint
+
+
+def test_decision_fingerprint_binds_notes_and_security(ready_purchase_request):
+    first, _ = build_fulfillment(
+        ready_purchase_request,
+        decision="approve",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1234",
+        notes="First review note.",
+        generated_at=datetime(2026, 7, 1, 8, 30, tzinfo=UTC),
+    )
+    second, _ = build_fulfillment(
+        ready_purchase_request,
+        decision="approve",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1234",
+        notes="Changed review note.",
+        generated_at=datetime(2026, 7, 1, 8, 30, tzinfo=UTC),
+    )
+
+    assert first.decision_id == second.decision_id
+    assert first.decision_fingerprint != second.decision_fingerprint
 
 
 @pytest.mark.parametrize(
@@ -436,6 +470,36 @@ def test_fulfillment_blocks_approval_of_blocked_request(ready_purchase_request):
         )
 
     assert "blocked" in str(exc_info.value).casefold()
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["license_key_env", "license_key_present", "secret_handling"],
+)
+def test_approval_requires_complete_license_metadata(ready_purchase_request, field):
+    request = deepcopy(ready_purchase_request)
+    del request["license"][field]
+
+    with pytest.raises(EnterpriseFulfillmentError):
+        build_fulfillment(
+            request,
+            decision="approve",
+            operator="licensing@datamuru.com",
+            decision_reference="CRM-1234",
+        )
+
+
+def test_approval_requires_license_key_to_be_present(ready_purchase_request):
+    request = deepcopy(ready_purchase_request)
+    request["license"]["license_key_present"] = False
+
+    with pytest.raises(EnterpriseFulfillmentError):
+        build_fulfillment(
+            request,
+            decision="approve",
+            operator="licensing@datamuru.com",
+            decision_reference="CRM-1234",
+        )
 
 
 def _write_request(tmp_path, request):
@@ -540,6 +604,66 @@ def test_writer_blocks_rejection_beside_stale_receipt(tmp_path, ready_purchase_r
 
     assert stale_receipt.read_text(encoding="utf-8") == '{"stale":true}\n'
     assert not (output_dir / "fulfillment-decision.json").exists()
+
+
+def test_writer_does_not_overwrite_destination_created_during_publish(
+    tmp_path, ready_purchase_request, monkeypatch
+):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "raced-output"
+
+    def create_conflicting_destination(_source, destination):
+        destination = Path(destination)
+        destination.mkdir()
+        (destination / "racer-owned.txt").write_text("keep", encoding="utf-8")
+        raise FileExistsError("destination appeared")
+
+    monkeypatch.setattr(fulfillment_module.os, "rename", create_conflicting_destination)
+
+    with pytest.raises(EnterpriseFulfillmentError):
+        write_fulfillment(
+            request_path,
+            output_dir,
+            decision="approve",
+            operator="licensing@datamuru.com",
+            decision_reference="CRM-1234",
+        )
+
+    assert (output_dir / "racer-owned.txt").read_text(encoding="utf-8") == "keep"
+    assert not (output_dir / "fulfillment-decision.json").exists()
+
+
+def test_writer_removes_staging_when_receipt_write_fails(
+    tmp_path, ready_purchase_request, monkeypatch
+):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "failed-approval"
+    original_write = getattr(fulfillment_module, "_write_staged_file", None)
+
+    def fail_receipt_write(destination, content):
+        if destination.name == "activation-receipt.json":
+            raise OSError("simulated receipt failure")
+        if original_write is not None:
+            return original_write(destination, content)
+        destination.write_text(content, encoding="utf-8")
+
+    monkeypatch.setattr(
+        fulfillment_module,
+        "_write_staged_file",
+        fail_receipt_write,
+        raising=False,
+    )
+
+    with pytest.raises(EnterpriseFulfillmentError):
+        write_fulfillment(
+            request_path,
+            output_dir,
+            decision="approve",
+            operator="licensing@datamuru.com",
+            decision_reference="CRM-1234",
+        )
+
+    assert not output_dir.exists()
 
 
 def test_python_api_fulfills_without_loading_project_config(tmp_path, ready_purchase_request):

@@ -409,6 +409,7 @@ python -m datamuru.cli.main --no-banner enterprise activation fulfill `
   --decision approve `
   --operator licensing@datamuru.com `
   --decision-reference CRM-1234 `
+  --notes "Second evidence generation." `
   --out $secondOut `
   --output json | Out-Null
 
@@ -418,11 +419,16 @@ $firstReceipt = Get-Content "$fulfillmentOut\activation-receipt.json" | ConvertF
 $secondReceipt = Get-Content "$secondOut\activation-receipt.json" | ConvertFrom-Json
 
 $firstDecision.decision_id -eq $secondDecision.decision_id
-$firstDecision.decision_fingerprint -eq $secondDecision.decision_fingerprint
+$firstDecision.decision_fingerprint -ne $secondDecision.decision_fingerprint
 $firstReceipt.receipt_id -eq $secondReceipt.receipt_id
+$firstReceipt.decision_fingerprint -ne $secondReceipt.decision_fingerprint
 ```
 
-All three comparisons must return `True`. Generation timestamps may differ.
+All four comparisons must return `True`. The stable IDs prove the same request,
+decision, operator, and decision reference were used. The changed note and
+generation time produce a different decision fingerprint because the
+fingerprint binds the full decision record. The receipt carries that updated
+decision fingerprint while retaining its stable receipt identity.
 
 Run a tamper test without displaying the planted value:
 

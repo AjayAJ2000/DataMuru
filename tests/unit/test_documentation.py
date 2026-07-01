@@ -147,5 +147,7 @@ def test_enterprise_offline_fulfillment_is_documented_with_safety_boundaries():
     assert "datamuru.enterprise_fulfillment_decision.v1" in runbook
     assert "datamuru.enterprise_activation_receipt.v1" in runbook
     assert "tamper" in runbook.casefold()
+    assert "Unreleased on repository main" in capabilities
+    assert "$firstDecision.decision_fingerprint -ne $secondDecision.decision_fingerprint" in runbook
     assert "not a signed license" in capabilities.casefold()
     assert "not proof of tenant provisioning" in capabilities.casefold()
