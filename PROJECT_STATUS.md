@@ -1,6 +1,6 @@
 # DataMuru Project Status
 
-Last updated: 2026-06-23
+Last updated: 2026-07-01
 
 Project board: [DataMuru Product Roadmap](https://github.com/users/AjayAJ2000/projects/1)
 
@@ -21,7 +21,7 @@ milestones, labels, epics, actionable issues, completed evidence items, and
 delivery metadata. The board should be treated as the source of truth for
 planning and status; this file is the periodic written snapshot.
 
-## Issue count
+## Historical board snapshot
 
 Total GitHub issues created/reused in the board setup: 69
 
@@ -32,8 +32,8 @@ Total GitHub issues created/reused in the board setup: 69
 
 ## Count by status
 
-These counts are delivery classifications based on repository evidence and the
-board setup performed on 2026-06-19.
+These counts are the original board-setup snapshot from 2026-06-19, not current
+delivery totals. Use live GitHub Project filters for current counts.
 
 | Status | Count |
 | --- | ---: |
@@ -76,12 +76,12 @@ functional boundaries, such as security testing or governance documentation.
 | Milestone | Current posture |
 | --- | --- |
 | M0 - Project Foundation | Product docs exist; personas, KPIs, decision log, and risk register need formalization. |
-| M1 - Core Architecture | Architecture docs exist; hosted control plane and cross-provider mapping need design decisions. |
-| M2 - Backend and API Layer | Core CLI/API exists; resumable import, remote state, and multi-workspace planner are next. |
+| M1 - Core Architecture | Provider, state, hosted control plane, and cross-provider handoff contracts exist; production backend decisions remain. |
+| M2 - Backend and API Layer | Core CLI/API, resumable import, and remote-state boundaries exist; production remote state and multi-workspace planning remain. |
 | M3 - Frontend and User Experience | CLI-first UX is the active surface; the previous local web UI is de-scoped pending a later enterprise-grade redesign. |
-| M4 - Data Engineering and Governance | Databricks and basic governance exist; metadata model, audit reporting, and Snowflake mapping remain. |
-| M5 - Security, Access Control, and Compliance | Auth and RBAC basics exist; license, audit logging, SCIM hardening, and permission tests remain. |
-| M6 - Testing, QA, and Stabilization | Unit/e2e tests and CI exist; live integration, performance, coverage, and manual enterprise QA remain. |
+| M4 - Data Engineering and Governance | Databricks, basic governance, and bidirectional mapping drafts exist; metadata and live Snowflake governance remain. |
+| M5 - Security, Access Control, and Compliance | Auth, RBAC, redacted audit evidence, and offline fulfillment exist; hosted signing and SCIM hardening remain. |
+| M6 - Testing, QA, and Stabilization | Unit/e2e tests, CI, and manual live provider validation exist; performance and repeatable integration environments remain. |
 | M7 - Deployment, Monitoring, and Release | PyPI, CI, docs, and release workflow exist; security scans, rollback, and monitoring strategy remain. |
 | M8 - Documentation and Handover | Public docs exist; admin guide, demo script, handover, and maintenance guide remain. |
 
@@ -92,6 +92,11 @@ functional boundaries, such as security testing or governance documentation.
   `examples/` rather than tracked as top-level project state.
 - Enterprise activation handoff package export for Cline, onboarding, and
   support review workflows.
+- Offline Enterprise purchase approval/rejection evidence and activation
+  receipts with deterministic fingerprints and conflict-safe writes.
+- Resumable import checkpoints and structured progress evidence.
+- Snowflake PAT authentication and live-readonly database/schema discovery.
+- Review-only mappings in both Databricks-to-Snowflake directions.
 - Databricks catalog and schema live apply.
 - Scoped import controls and grant guardrails.
 - PyPI alpha release pipeline.
@@ -112,48 +117,45 @@ functional boundaries, such as security testing or governance documentation.
 
 ## Blocked work summary
 
-- Hosted control plane architecture: initial OSS activation-readiness contract is now in progress.
-- Enterprise license activation model: local preflight and redacted offline
-  purchase request exports exist; actual license issuance and tenant
-  provisioning remain blocked on Enterprise backend decisions.
-- Databricks live integration tests: blocked on a dedicated test workspace.
-- Snowflake trial integration tests: blocked on Snowflake trial credentials.
-- Snowflake grants import and RBAC mapping: blocked on Snowflake live discovery and account access.
+- Actual payment processing, private package authorization, cryptographic
+  license signing, hosted entitlement validation, and tenant provisioning need
+  a future private Enterprise backend.
+- Production remote state needs backend selection, locking, credentials, and
+  hosted operating-model decisions.
+- Snowflake grants import, RBAC mapping, and live mutation remain unimplemented.
 
 ## Top risks
 
-1. Large enterprise imports can run too long without resumable checkpoints.
-2. Snowflake is not yet live-discovery or live-apply capable.
-3. Enterprise hosted control plane scope is not finalized.
-4. Security, audit, and license flows need clearer production contracts.
-5. Live integration environments are required for trustworthy provider QA.
+1. Enterprise hosted control plane and private licensing scope is not finalized.
+2. Remote state remains contract-only without production locking.
+3. Snowflake live apply and governance parity trail Databricks.
+4. Governance taxonomy and masking are not enforced live.
+5. Alpha workflows still require manual review and controlled test accounts.
 6. GitHub Project view layout still needs manual configuration because the CLI does not expose saved view editing.
 
 ## Next 10 recommended actions
 
-1. Implement resumable import job checkpoint model.
-2. Add import ETA, progress, and scan budget telemetry.
-3. Add Databricks grant scan budgets by object type.
-4. Keep enterprise web UI redesign in backlog until CLI-first workflows, import performance, provider parity, and security are stable.
-5. Add remote state backend abstraction.
-6. Implement metadata asset model.
-7. Harden Databricks account SCIM identity support.
-8. Create Databricks live integration test environment.
-9. Create Snowflake trial validation environment.
-10. Connect offline Enterprise activation contracts to a future hosted
-    entitlement and tenant-provisioning backend.
+1. Review the live GitHub Project and select a bounded v0.6 implementation slice.
+2. Decide whether provider parity, governance enforcement, remote state, or
+   identity hardening is the highest-value next outcome.
+3. Define v0.6 acceptance criteria and a feature-by-feature runbook before code.
+4. Keep enterprise web UI redesign behind CLI, provider, and security maturity.
+5. Implement the selected metadata asset or governance expansion slice.
+6. Harden Databricks account SCIM identity support.
+7. Extend Snowflake grants discovery and RBAC mapping safely.
+8. Design production remote state locking and recovery boundaries.
+9. Evaluate a real DataMuru ASCII wordmark while preserving JSON and
+   `--no-banner` automation behavior.
+10. Keep hosted payment, signing, licensing, and provisioning in a private
+    backend design track.
 
 ## Readiness
 
-MVP readiness: 42%
-
-Production readiness: 18%
-
-These percentages are qualitative delivery-health estimates. MVP readiness is
-anchored on OSS package usefulness for local/alpha Databricks workflows.
-Production readiness is lower because resumable imports, remote state, live
-integration tests, audit evidence, security hardening, and Enterprise operating
-model work remain.
+DataMuru remains an alpha. It is suitable for controlled evaluation, local
+state workflows, scoped live-readonly discovery, supported Databricks changes,
+and reviewable offline evidence. Production adoption still requires manual
+approval controls, external secret management, independent audit retention,
+provider-specific rollback procedures, and a production state backend.
 
 ## Board maintenance instructions
 

@@ -69,6 +69,13 @@ Create these items first:
 | Activation audit evidence export | Enterprise | Provider-agnostic | Enterprise | Production | Medium | 0.5.0a0 |
 | Snowflake-to-Databricks mapping draft | Provider | Provider-agnostic | Both | Production | Medium | 0.5.0a0 |
 
+The `0.5.0a0` backlog is implemented through offline OSS contracts and test
+evidence. For `Enterprise purchase and license activation flow`, Done means the
+redacted purchase request, explicit operator approval/rejection, deterministic
+entitlement evidence, and activation receipt are implemented. It does not mean
+DataMuru processes payment, signs a license, grants private package access, or
+provisions a hosted tenant. Those remain future private-backend work.
+
 ## Labels
 
 Use these GitHub issue labels:

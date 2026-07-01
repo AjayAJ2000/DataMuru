@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from datamuru.core.engine import DataMuruEngine
 from datamuru.core.importer.models import ImportProgressCallback
@@ -16,7 +17,7 @@ class DataMuru:
         request_path: str | Path,
         output_dir: str | Path,
         *,
-        decision: str,
+        decision: Literal["approve", "reject"],
         operator: str,
         decision_reference: str,
         notes: str | None = None,

@@ -44,8 +44,6 @@ Focus:
 - Databricks-to-Snowflake mapping drafts
 - GitHub issue draft export for planning workflows
 
-## Next likely milestone
-
 ### v0.5
 
 - Enterprise activation readiness preflight for hosted control plane onboarding
@@ -53,7 +51,7 @@ Focus:
 - Hosted control plane product architecture and OSS extension contracts
 - Versioned hosted control plane reference architecture export
 - Redacted hosted control plane handoff contract generation
-- Enterprise purchase and license activation flow
+- Redacted offline purchase review, fulfillment decision, and activation receipt contracts
 - Single-directory Enterprise activation handoff package export
 - Immutable offline tenant entitlement record export for future registry ingestion
 - Remote-state planning boundary for multi-user hosted workflows
@@ -61,6 +59,19 @@ Focus:
 - Audit evidence and activation handoff documentation
 - Redacted activation audit evidence export
 - Snowflake-to-Databricks database/schema mapping drafts with collision checks
+
+The OSS milestone stops at redacted offline evidence. Payment processing,
+private package access, cryptographic license signing, and hosted tenant
+provisioning require a future private Enterprise backend.
+
+## Next likely milestone
+
+### v0.6 planning
+
+The v0.6 implementation slice is intentionally not fixed in this document yet.
+Start milestone planning by reviewing the live GitHub Project, current provider
+gaps, governance priorities, and operator feedback. Candidate directions are
+listed under the v1.0 target rather than presented as committed features.
 
 ### v1.0 target direction
 
