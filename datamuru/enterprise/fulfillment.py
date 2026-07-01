@@ -4,8 +4,10 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import tempfile
 from typing import Any, Literal
 
 from datamuru.enterprise.activation import LICENSE_SECRET_HANDLING
@@ -101,6 +103,25 @@ class ActivationReceipt(DataMuruModel):
 
     def to_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="python")
+
+
+class FulfillmentResult(DataMuruModel):
+    decision: FulfillmentDecision
+    receipt: ActivationReceipt | None
+    decision_path: str
+    receipt_path: str | None
+
+    @property
+    def decision_id(self) -> str:
+        return self.decision.decision_id
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "decision": self.decision.to_dict(),
+            "receipt": self.receipt.to_dict() if self.receipt else None,
+            "decision_path": self.decision_path,
+            "receipt_path": self.receipt_path,
+        }
 
 
 def load_purchase_request(path: str | Path) -> dict[str, Any]:
@@ -327,6 +348,95 @@ def build_fulfillment(
         security=security,
     )
     return decision_record, receipt
+
+
+def write_fulfillment(
+    request_path: str | Path,
+    output_dir: str | Path,
+    *,
+    decision: Literal["approve", "reject"],
+    operator: str,
+    decision_reference: str,
+    notes: str | None = None,
+    generated_at: datetime | None = None,
+) -> FulfillmentResult:
+    request = load_purchase_request(request_path)
+    decision_record, receipt = build_fulfillment(
+        request,
+        decision=decision,
+        operator=operator,
+        decision_reference=decision_reference,
+        notes=notes,
+        generated_at=generated_at,
+    )
+    resolved_dir = Path(output_dir).resolve()
+    decision_path = resolved_dir / "fulfillment-decision.json"
+    receipt_path = resolved_dir / "activation-receipt.json"
+    decision_text = json.dumps(decision_record.to_dict(), indent=2) + "\n"
+    receipt_text = json.dumps(receipt.to_dict(), indent=2) + "\n" if receipt else None
+
+    expected_files = [(decision_path, decision_text)]
+    if receipt_text is not None:
+        expected_files.append((receipt_path, receipt_text))
+    elif receipt_path.exists():
+        _raise_validation_error(
+            "Rejection output conflicts with an existing activation receipt.",
+            "output.activation_receipt",
+        )
+
+    for destination, expected_text in expected_files:
+        if destination.exists():
+            try:
+                existing_text = destination.read_text(encoding="utf-8")
+            except (OSError, UnicodeError) as exc:
+                raise EnterpriseFulfillmentError(
+                    "Existing fulfillment evidence could not be read.",
+                    context={"path": "output"},
+                ) from exc
+            if existing_text != expected_text:
+                _raise_validation_error(
+                    "Fulfillment output conflicts with existing evidence.",
+                    "output",
+                )
+
+    resolved_dir.mkdir(parents=True, exist_ok=True)
+    for destination, expected_text in expected_files:
+        if not destination.exists():
+            _atomic_write_text(destination, expected_text)
+
+    return FulfillmentResult(
+        decision=decision_record,
+        receipt=receipt,
+        decision_path=str(decision_path),
+        receipt_path=str(receipt_path) if receipt else None,
+    )
+
+
+def _atomic_write_text(destination: Path, content: str) -> None:
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="",
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            temporary.write(content)
+            temporary.flush()
+            os.fsync(temporary.fileno())
+            temporary_path = Path(temporary.name)
+        os.replace(temporary_path, destination)
+    except OSError as exc:
+        raise EnterpriseFulfillmentError(
+            "Fulfillment evidence could not be written.",
+            context={"path": "output"},
+        ) from exc
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink(missing_ok=True)
 
 
 def _sha256(payload: Mapping[str, Any]) -> str:

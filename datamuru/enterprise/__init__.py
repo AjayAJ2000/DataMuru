@@ -38,7 +38,9 @@ from .handoff import (
 from .fulfillment import (
     ActivationReceipt,
     FulfillmentDecision,
+    FulfillmentResult,
     build_fulfillment,
+    write_fulfillment,
 )
 from .registry import (
     TenantEntitlementRecord,
@@ -62,6 +64,7 @@ __all__ = [
     "ControlPlaneContract",
     "EvidenceArtifact",
     "FulfillmentDecision",
+    "FulfillmentResult",
     "HostedControlPlaneArchitecture",
     "TenantEntitlementRecord",
     "build_activation_bundle",
@@ -77,6 +80,7 @@ __all__ = [
     "write_activation_evidence_report",
     "write_activation_handoff_package",
     "write_activation_purchase_request",
+    "write_fulfillment",
     "write_control_plane_contract",
     "write_hosted_control_plane_architecture",
     "write_tenant_entitlement_record",

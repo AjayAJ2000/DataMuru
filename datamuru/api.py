@@ -4,11 +4,31 @@ from pathlib import Path
 
 from datamuru.core.engine import DataMuruEngine
 from datamuru.core.importer.models import ImportProgressCallback
+from datamuru.enterprise.fulfillment import FulfillmentResult, write_fulfillment
 
 
 class DataMuru:
     def __init__(self, config_path: str | Path, environment: str | None = None) -> None:
         self.engine = DataMuruEngine(config_path=config_path, environment=environment)
+
+    @staticmethod
+    def fulfill_enterprise_activation(
+        request_path: str | Path,
+        output_dir: str | Path,
+        *,
+        decision: str,
+        operator: str,
+        decision_reference: str,
+        notes: str | None = None,
+    ) -> FulfillmentResult:
+        return write_fulfillment(
+            request_path,
+            output_dir,
+            decision=decision,
+            operator=operator,
+            decision_reference=decision_reference,
+            notes=notes,
+        )
 
     def validate(self):
         return self.engine.validate()

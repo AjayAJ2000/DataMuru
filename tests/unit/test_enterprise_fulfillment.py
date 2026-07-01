@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from datamuru.api import DataMuru
 from datamuru.enterprise.activation import (
     ActivationReport,
     LICENSE_SECRET_HANDLING,
@@ -19,6 +20,7 @@ from datamuru.enterprise.fulfillment import (
     load_purchase_request,
     purchase_request_fingerprint,
     validate_purchase_request,
+    write_fulfillment,
 )
 from datamuru.errors import EnterpriseFulfillmentError
 
@@ -432,3 +434,122 @@ def test_fulfillment_blocks_approval_of_blocked_request(ready_purchase_request):
         )
 
     assert "blocked" in str(exc_info.value).casefold()
+
+
+def _write_request(tmp_path, request):
+    request_path = tmp_path / "purchase-request.json"
+    request_path.write_text(json.dumps(request), encoding="utf-8")
+    return request_path
+
+
+def test_writer_creates_approved_decision_and_receipt(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "fulfillment"
+
+    result = write_fulfillment(
+        request_path,
+        output_dir,
+        decision="approve",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1234",
+    )
+
+    assert result.decision_path == str((output_dir / "fulfillment-decision.json").resolve())
+    assert result.receipt_path == str((output_dir / "activation-receipt.json").resolve())
+    assert (output_dir / "fulfillment-decision.json").exists()
+    assert (output_dir / "activation-receipt.json").exists()
+    assert result.receipt is not None
+
+
+def test_writer_creates_rejection_without_receipt(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "rejection"
+
+    result = write_fulfillment(
+        request_path,
+        output_dir,
+        decision="reject",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1235",
+    )
+
+    assert result.receipt is None
+    assert result.receipt_path is None
+    assert (output_dir / "fulfillment-decision.json").exists()
+    assert not (output_dir / "activation-receipt.json").exists()
+
+
+def test_writer_allows_identical_rerun(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "fulfillment"
+    generated_at = datetime(2026, 7, 1, 8, 30, tzinfo=UTC)
+    arguments = {
+        "decision": "approve",
+        "operator": "licensing@datamuru.com",
+        "decision_reference": "CRM-1234",
+        "generated_at": generated_at,
+    }
+
+    first = write_fulfillment(request_path, output_dir, **arguments)
+    second = write_fulfillment(request_path, output_dir, **arguments)
+
+    assert second.decision_id == first.decision_id
+    assert second.receipt is not None and first.receipt is not None
+    assert second.receipt.receipt_id == first.receipt.receipt_id
+
+
+def test_writer_blocks_conflicting_output_before_mutation(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "fulfillment"
+    output_dir.mkdir()
+    decision_path = output_dir / "fulfillment-decision.json"
+    receipt_path = output_dir / "activation-receipt.json"
+    decision_path.write_text('{"existing":"decision"}\n', encoding="utf-8")
+    receipt_path.write_text('{"existing":"receipt"}\n', encoding="utf-8")
+
+    with pytest.raises(EnterpriseFulfillmentError):
+        write_fulfillment(
+            request_path,
+            output_dir,
+            decision="approve",
+            operator="licensing@datamuru.com",
+            decision_reference="CRM-1234",
+        )
+
+    assert decision_path.read_text(encoding="utf-8") == '{"existing":"decision"}\n'
+    assert receipt_path.read_text(encoding="utf-8") == '{"existing":"receipt"}\n'
+
+
+def test_writer_blocks_rejection_beside_stale_receipt(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+    output_dir = tmp_path / "fulfillment"
+    output_dir.mkdir()
+    stale_receipt = output_dir / "activation-receipt.json"
+    stale_receipt.write_text('{"stale":true}\n', encoding="utf-8")
+
+    with pytest.raises(EnterpriseFulfillmentError):
+        write_fulfillment(
+            request_path,
+            output_dir,
+            decision="reject",
+            operator="licensing@datamuru.com",
+            decision_reference="CRM-1235",
+        )
+
+    assert stale_receipt.read_text(encoding="utf-8") == '{"stale":true}\n'
+    assert not (output_dir / "fulfillment-decision.json").exists()
+
+
+def test_python_api_fulfills_without_loading_project_config(tmp_path, ready_purchase_request):
+    request_path = _write_request(tmp_path, ready_purchase_request)
+
+    result = DataMuru.fulfill_enterprise_activation(
+        request_path,
+        tmp_path / "api-fulfillment",
+        decision="approve",
+        operator="licensing@datamuru.com",
+        decision_reference="CRM-1234",
+    )
+
+    assert result.decision.decision == "approve"
+    assert result.receipt is not None
