@@ -7,16 +7,12 @@ from pathlib import Path
 import re
 from typing import Any
 
+from datamuru.enterprise.activation import LICENSE_SECRET_HANDLING
 from datamuru.errors import EnterpriseFulfillmentError
 
 
 PURCHASE_REQUEST_SCHEMA = "datamuru.enterprise_purchase_request.v1"
 SUPPORTED_PURCHASE_REQUEST_SCHEMAS = frozenset({PURCHASE_REQUEST_SCHEMA})
-SECRET_HANDLING = (
-    "The license key value is intentionally omitted. The receiving workflow must "
-    "resolve the named environment variable or request the secret through an approved "
-    "secret manager."
-)
 SAFE_SECRET_METADATA_KEYS = frozenset(
     {
         "license_key_env",
@@ -25,23 +21,45 @@ SAFE_SECRET_METADATA_KEYS = frozenset(
         "secret_handling",
     }
 )
-SECRET_KEY_TERMS = frozenset(
+SECRET_KEY_NAMES = frozenset(
     {
         "credential",
         "credentials",
+        "authorization",
+        "auth_header",
+        "bearer",
+        "cookie",
+        "session_cookie",
         "password",
         "passphrase",
         "secret",
+        "secret_value",
         "token",
+        "token_value",
+        "raw_token",
+        "refresh_token",
+        "access_token",
+        "id_token",
+        "client_secret",
+        "private_key",
+        "access_key",
+        "secret_access_key",
+        "aws_secret_access_key",
+        "api_key",
+        "license_key",
     }
 )
-SECRET_KEY_COMPOUNDS = frozenset(
-    {
-        ("private", "key"),
-        ("access", "key"),
-        ("api", "key"),
-        ("license", "key"),
-    }
+SECRET_KEY_SUFFIXES = (
+    "_password",
+    "_passphrase",
+    "_secret",
+    "_token",
+    "_private_key",
+    "_access_key",
+    "_api_key",
+    "_license_key",
+    "_authorization",
+    "_cookie",
 )
 ENVIRONMENT_VARIABLE_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 ACRONYM_KEY_BOUNDARY = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
@@ -216,22 +234,21 @@ def _normalize_key(key: str) -> str:
 
 
 def _is_secret_bearing_key(normalized_key: str) -> bool:
-    parts = normalized_key.split("_")
-    return bool(
-        SECRET_KEY_TERMS.intersection(parts)
-        or SECRET_KEY_COMPOUNDS.intersection(zip(parts, parts[1:]))
-    )
+    return normalized_key in SECRET_KEY_NAMES or normalized_key.endswith(SECRET_KEY_SUFFIXES)
 
 
 def _is_valid_safe_secret_metadata(key: str, value: Any) -> bool:
     if key == "license_key_env":
-        return type(value) is str and ENVIRONMENT_VARIABLE_NAME.fullmatch(value) is not None
+        if type(value) is not str or ENVIRONMENT_VARIABLE_NAME.fullmatch(value) is None:
+            return False
+        name_parts = _normalize_key(value).split("_")
+        return "license" in name_parts and "key" in name_parts
     if key == "license_key_present":
         return type(value) is bool
     if key == "secret_values_included":
         return value is False
     if key == "secret_handling":
-        return type(value) is str and value == SECRET_HANDLING
+        return type(value) is str and value == LICENSE_SECRET_HANDLING
     return False
 
 

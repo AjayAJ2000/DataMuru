@@ -19,6 +19,12 @@ REQUIRED_ACTIVATION_FIELDS = (
     "license_key_env",
 )
 
+LICENSE_SECRET_HANDLING = (
+    "The license key value is intentionally omitted. The receiving workflow must "
+    "resolve the named environment variable or request the secret through an approved "
+    "secret manager."
+)
+
 
 class ActivationCheck(DataMuruModel):
     level: str
@@ -185,11 +191,7 @@ def build_activation_purchase_request(
             "license_key_env": activation.get("license_key_env"),
             "license_key_present": activation.get("license_key_present", False),
             "secret_values_included": False,
-            "secret_handling": (
-                "The license key value is intentionally omitted. The receiving workflow must "
-                "resolve the named environment variable or request the secret through an approved "
-                "secret manager."
-            ),
+            "secret_handling": LICENSE_SECRET_HANDLING,
         },
     )
 

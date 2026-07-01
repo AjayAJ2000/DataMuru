@@ -9,6 +9,7 @@ import pytest
 
 from datamuru.enterprise.activation import (
     ActivationReport,
+    LICENSE_SECRET_HANDLING,
     build_activation_purchase_request,
 )
 from datamuru.enterprise.fulfillment import (
@@ -18,13 +19,6 @@ from datamuru.enterprise.fulfillment import (
     validate_purchase_request,
 )
 from datamuru.errors import EnterpriseFulfillmentError
-
-
-SECRET_HANDLING = (
-    "The license key value is intentionally omitted. The receiving workflow must "
-    "resolve the named environment variable or request the secret through an approved "
-    "secret manager."
-)
 
 
 @pytest.fixture
@@ -53,7 +47,7 @@ def ready_purchase_request() -> dict[str, Any]:
             "license_key_env": "DATAMURU_LICENSE_KEY",
             "license_key_present": True,
             "secret_values_included": False,
-            "secret_handling": SECRET_HANDLING,
+            "secret_handling": LICENSE_SECRET_HANDLING,
         },
     }
 
@@ -124,6 +118,10 @@ def test_validation_and_fingerprint_accept_mapping_inputs(ready_purchase_request
         "AwsSecretAccessKey",
         "token-value",
         "secret value",
+        "Authorization",
+        "auth_header",
+        "bearer",
+        "session_cookie",
     ],
 )
 def test_rejects_recursive_secret_bearing_keys_without_disclosing_values(
@@ -149,9 +147,11 @@ def test_rejects_recursive_secret_bearing_keys_without_disclosing_values(
         ("license_key_env", "DATAMURU LICENSE KEY"),
         ("license_key_env", "DATAMURU/LICENSE_KEY"),
         ("license_key_env", "secret-value"),
+        ("license_key_env", "sk_live_ABC123"),
+        ("license_key_env", "FOO"),
         ("license_key_present", "true"),
         ("secret_values_included", 0),
-        ("secret_handling", f"{SECRET_HANDLING} secret-value"),
+        ("secret_handling", f"{LICENSE_SECRET_HANDLING} secret-value"),
     ],
 )
 def test_rejects_invalid_safe_secret_metadata_values(
@@ -193,6 +193,19 @@ def test_accepts_purchase_request_generated_by_activation_producer(license_key_e
         checks=[],
     )
     request = build_activation_purchase_request(report).to_dict()
+
+    validate_purchase_request(request, for_approval=True)
+
+
+@pytest.mark.parametrize(
+    ("metadata_key", "metadata_value"),
+    [("token_count", 0), ("credential_source", "environment")],
+)
+def test_accepts_non_secret_metadata_with_security_words(
+    ready_purchase_request, metadata_key, metadata_value
+):
+    request = deepcopy(ready_purchase_request)
+    request["report"]["nested"] = {metadata_key: metadata_value}
 
     validate_purchase_request(request, for_approval=True)
 
