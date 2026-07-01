@@ -129,3 +129,23 @@ def test_snowflake_to_databricks_mapping_is_documented():
     assert "map-databricks" in cli_reference
     assert "Snowflake to Databricks" in runbook
     assert "guides/snowflake-to-databricks.md" in mkdocs
+
+
+def test_enterprise_offline_fulfillment_is_documented_with_safety_boundaries():
+    cli_reference = (DOCS_ROOT / "reference" / "cli.md").read_text(encoding="utf-8")
+    python_reference = (DOCS_ROOT / "reference" / "python-api.md").read_text(encoding="utf-8")
+    capabilities = (DOCS_ROOT / "reference" / "capabilities.md").read_text(encoding="utf-8")
+    runbook = (DOCS_ROOT / "operations" / "milestone-0-5-test-runbook.md").read_text(
+        encoding="utf-8"
+    )
+
+    for text in (cli_reference, runbook):
+        assert "enterprise activation fulfill" in text
+        assert "--operator" in text
+        assert "--decision-reference" in text
+    assert "fulfill_enterprise_activation" in python_reference
+    assert "datamuru.enterprise_fulfillment_decision.v1" in runbook
+    assert "datamuru.enterprise_activation_receipt.v1" in runbook
+    assert "tamper" in runbook.casefold()
+    assert "not a signed license" in capabilities.casefold()
+    assert "not proof of tenant provisioning" in capabilities.casefold()

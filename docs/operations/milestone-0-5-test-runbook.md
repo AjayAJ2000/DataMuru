@@ -14,6 +14,7 @@ This runbook covers:
 - redacted handoff bundle export from `datamuru enterprise activation export`;
 - redacted purchase and license activation request export from
   `datamuru enterprise activation purchase-request`;
+- offline approval/rejection evidence from `datamuru enterprise activation fulfill`;
 - redacted audit evidence export from `datamuru enterprise activation evidence`;
 - single-directory redacted handoff packages from `datamuru enterprise activation package`;
 - deterministic redacted tenant entitlement records from `datamuru enterprise control-plane tenant-record`;
@@ -343,6 +344,134 @@ Expected result:
 - request `status` is `blocked`;
 - failed activation checks are present;
 - license metadata still says no secret values are included.
+
+## 8A. Offline fulfillment decision
+
+Use the ready purchase request from section 8. Fulfillment is a post-decision
+workflow, so write it outside the pre-fulfillment handoff package.
+
+Approve the request:
+
+```powershell
+$fulfillmentOut = ".\.datamuru\activation\fulfillment-approved"
+
+python -m datamuru.cli.main --no-banner enterprise activation fulfill `
+  --request .\.datamuru\activation\purchase-request.json `
+  --decision approve `
+  --operator licensing@datamuru.com `
+  --decision-reference CRM-1234 `
+  --out $fulfillmentOut `
+  --output json
+```
+
+Expected result:
+
+- command exits successfully;
+- `fulfillment-decision.json` uses
+  `datamuru.enterprise_fulfillment_decision.v1`;
+- `activation-receipt.json` uses
+  `datamuru.enterprise_activation_receipt.v1`;
+- both files share the purchase-request fingerprint and decision identity;
+- security fields say `offline: true` and every payment, signing,
+  license-server, and provisioning flag is `false`;
+- neither file contains a license value, provider token, or raw request body.
+
+Reject the same request into a different directory:
+
+```powershell
+$rejectionOut = ".\.datamuru\activation\fulfillment-rejected"
+
+python -m datamuru.cli.main --no-banner enterprise activation fulfill `
+  --request .\.datamuru\activation\purchase-request.json `
+  --decision reject `
+  --operator licensing@datamuru.com `
+  --decision-reference CRM-1235 `
+  --notes "Commercial review did not approve fulfillment." `
+  --out $rejectionOut `
+  --output json
+```
+
+Expected result:
+
+- only `fulfillment-decision.json` is written;
+- the decision is `reject`;
+- requested entitlements appear under `rejected` and none appear under
+  `approved`;
+- no activation receipt exists.
+
+Verify stable identities across separate runs:
+
+```powershell
+$secondOut = ".\.datamuru\activation\fulfillment-approved-second"
+
+python -m datamuru.cli.main --no-banner enterprise activation fulfill `
+  --request .\.datamuru\activation\purchase-request.json `
+  --decision approve `
+  --operator licensing@datamuru.com `
+  --decision-reference CRM-1234 `
+  --out $secondOut `
+  --output json | Out-Null
+
+$firstDecision = Get-Content "$fulfillmentOut\fulfillment-decision.json" | ConvertFrom-Json
+$secondDecision = Get-Content "$secondOut\fulfillment-decision.json" | ConvertFrom-Json
+$firstReceipt = Get-Content "$fulfillmentOut\activation-receipt.json" | ConvertFrom-Json
+$secondReceipt = Get-Content "$secondOut\activation-receipt.json" | ConvertFrom-Json
+
+$firstDecision.decision_id -eq $secondDecision.decision_id
+$firstDecision.decision_fingerprint -eq $secondDecision.decision_fingerprint
+$firstReceipt.receipt_id -eq $secondReceipt.receipt_id
+```
+
+All three comparisons must return `True`. Generation timestamps may differ.
+
+Run a tamper test without displaying the planted value:
+
+```powershell
+$tampered = Get-Content .\.datamuru\activation\purchase-request.json | ConvertFrom-Json
+$tampered.report | Add-Member -NotePropertyName Authorization -NotePropertyValue "test-secret-sentinel"
+$tampered | ConvertTo-Json -Depth 30 | Set-Content .\.datamuru\activation\tampered-request.json
+
+$tamperOutput = python -m datamuru.cli.main --no-banner enterprise activation fulfill `
+  --request .\.datamuru\activation\tampered-request.json `
+  --decision approve `
+  --operator licensing@datamuru.com `
+  --decision-reference CRM-TAMPER `
+  --out .\.datamuru\activation\tampered-output 2>&1
+
+$LASTEXITCODE
+Test-Path .\.datamuru\activation\tampered-output
+$tamperOutput -match "test-secret-sentinel"
+```
+
+Expected values are nonzero, `False`, and `False`. The error names a
+credential-bearing field without echoing its value.
+
+Verify conflict protection by modifying a copy of an existing decision, then
+targeting that directory again. The command must exit nonzero and must not
+change either existing artifact.
+
+Finally, scan every generated fulfillment file for test secrets:
+
+```powershell
+$secretPatterns = "test-license-value|test-secret-sentinel|DATABRICKS_TOKEN|SNOWFLAKE_TOKEN"
+$matches = Get-ChildItem .\.datamuru\activation\fulfillment-* -Recurse -File |
+  Select-String -Pattern $secretPatterns
+$matches.Count
+```
+
+Expected value: `0`.
+
+The activation receipt is not a signed license, proof of payment, or proof of
+tenant provisioning. Cryptographic signing and hosted provisioning remain
+future private control-plane responsibilities.
+
+Bug evidence to capture:
+
+- approve/reject command and redacted output;
+- both decision records and the approval receipt;
+- stable identity comparison results;
+- tamper and conflict exit codes;
+- recursive secret-scan count.
 
 ## 9. Activation audit evidence export
 

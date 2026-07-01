@@ -32,6 +32,7 @@ DataMuru(config_path: str | Path, environment: str | None = None)
 | `enterprise_control_plane_contract()` | hosted control plane handoff contract |
 | `enterprise_tenant_entitlement_record()` | immutable redacted tenant entitlement record |
 | `enterprise_control_plane_architecture()` | hosted control plane reference architecture |
+| `DataMuru.fulfill_enterprise_activation(...)` | config-independent offline fulfillment result |
 | `write_enterprise_activation_bundle(output_path)` | redacted activation handoff bundle path |
 | `write_enterprise_activation_purchase_request(output_path)` | redacted purchase/license activation request path |
 | `write_enterprise_activation_evidence(output_path)` | redacted activation audit evidence path |
@@ -86,5 +87,25 @@ if destructive:
 
 result = dm.apply(target="catalog:analytics")
 ```
+
+## Offline fulfillment
+
+Offline fulfillment does not require a project configuration:
+
+```python
+from datamuru.api import DataMuru
+
+result = DataMuru.fulfill_enterprise_activation(
+    ".datamuru/activation/purchase-request.json",
+    ".datamuru/activation/fulfillment",
+    decision="approve",
+    operator="licensing@datamuru.com",
+    decision_reference="CRM-1234",
+)
+```
+
+The result contains a versioned decision record and, for approval, an activation
+receipt. Both are offline evidence rather than signed licenses or hosted tenant
+provisioning results.
 
 The Python contracts are alpha APIs. Pin the package version and test upgrades.

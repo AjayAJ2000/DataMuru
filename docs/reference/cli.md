@@ -275,6 +275,25 @@ metadata, requested entitlements, tenant fulfillment fields, and license
 environment-variable status. It does not provision a tenant, call a license
 server, or include the license key value.
 
+## `enterprise activation fulfill`
+
+```text
+datamuru enterprise activation fulfill
+  --request TEXT
+  --decision approve|reject
+  --operator TEXT
+  --decision-reference TEXT
+  --out DIRECTORY
+  [--notes TEXT]
+  [--output text|json]
+```
+
+Validates a redacted purchase request and records an offline operator decision.
+Approval writes a versioned fulfillment decision and activation receipt;
+rejection writes only the decision. Conflicting existing evidence blocks the
+command. It performs no payment processing, license signing, network request,
+provider mutation, state mutation, or tenant provisioning.
+
 ## `enterprise activation evidence`
 
 ```text

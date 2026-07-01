@@ -97,6 +97,30 @@ The request includes:
 It does not contain the license key value. If activation is blocked, the command
 does not write a file unless `--allow-blocked` is supplied for support triage.
 
+## Record an offline fulfillment decision
+
+After an authorized operator reviews the purchase request, record an explicit
+approval or rejection in a separate post-decision directory:
+
+```powershell
+datamuru enterprise activation fulfill `
+  --request .\.datamuru\activation\purchase-request.json `
+  --decision approve `
+  --operator licensing@datamuru.com `
+  --decision-reference CRM-1234 `
+  --out .\.datamuru\activation\fulfillment `
+  --output json
+```
+
+Approval writes `fulfillment-decision.json` and `activation-receipt.json`.
+Rejection writes only the decision record. The operator and decision reference
+are required audit evidence. The command validates readiness, redaction, tenant
+identity, entitlements, and output conflicts before writing anything.
+
+These files are offline handoff evidence. They are not proof of payment, a
+signed license, or proof that a tenant was provisioned. DataMuru does not call a
+license server or hosted control plane during fulfillment.
+
 ## Export audit evidence
 
 Generate a redacted evidence report for an onboarding, audit, or support ticket:

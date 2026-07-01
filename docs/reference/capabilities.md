@@ -25,6 +25,7 @@ Status terms used across the docs:
 | Remote state readiness inspection | Experimental | Configuration and planning boundary checks only. |
 | Hosted control plane handoff | Experimental | Contract and architecture export, not hosted tenant provisioning. |
 | Tenant entitlement record export | Experimental | Available in `0.5.0a0` as an immutable redacted offline contract; no hosted registry or tenant provisioning. |
+| Enterprise purchase fulfillment evidence | Experimental | Records an offline approval or rejection with deterministic fingerprints. The receipt is not a signed license and is not proof of tenant provisioning or payment. |
 | Deterministic plan/apply/destroy | Partial | Local state and supported Databricks resources. |
 | Saved plans and targets | Supported | Reviewable plan artifacts and targeted execution. |
 | Databricks connectivity | Supported | PAT-based workspace connectivity. |
